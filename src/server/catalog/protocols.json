@@ -1,0 +1,33 @@
+{
+  "bridges": [
+    {"name": "StargateRouter", "address": "0x8731d54E9D02c286767d56ac03e8037C07e01e98"},
+    {"name": "AcrossSpokePool", "address": "0xA306F2dB03b7eAA4d4C2B7F3f2d5fAeAe0C4C5dF"},
+    {"name": "HopBridgeUSDC", "address": "0x22D5f9B75c524Fec1D6619787e582644CD4D7422"},
+    {"name": "PolygonPoS", "address": "0xA0c68C638235ee32657e8f720a23ceC1bFc77C77"},
+    {"name": "ArbitrumOne", "address": "0x8315177aB297bA92A06054cE80a67Ed4DBd7ed3a"},
+    {"name": "OptimismGateway", "address": "0x99C9fc46f92E8a1c0deC1b1747d010903E884bE1"},
+    {"name": "BaseBridge", "address": "0x3154Cf16ccdb4C6d922629664174b904d80F2C35"},
+    {"name": "ZKSyncEra", "address": "0x32400084C286CF3E17e7B677ea9583e60a000324"},
+    {"name": "LineaBridge", "address": "0x504A330327A089d8364C4ab3811Ee26976d388CE2"},
+    {"name": "ScrollBridge", "address": "0x13FBE0D0e5552b8c9c4AE9e2435F38f373559506"},
+    {"name": "MantleBridge", "address": "0x95fC37A27a2f68e3A647CDc081F0A89bb47c3012"},
+    {"name": "CelerBridge", "address": "0x5427FEFA711Eff984124bFBB1AB6fbf5E3DA1820"},
+    {"name": "SynapseBridge", "address": "0x2796317b0fF8538F253012862c06787Adfb8cEb5"},
+    {"name": "WormholeCore", "address": "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B"},
+    {"name": "MultichainRouter", "address": "0x765277EebeCA2e31912C9946eAe1021199B39C61"}
+  ],
+  "aggregators": [
+    {"name": "ZeroExProxy", "address": "0xdef1c0ded9bec7f1a1670819833240f027b25eff"},
+    {"name": "1inchAggregationRouterV5", "address": "0x1111111254eeb25477b68fb85ed929f73a960582"},
+    {"name": "ParaswapAugustus", "address": "0xdef171fe48cf0115b1d80b88dc8eab59176fee57"},
+    {"name": "KyberNetworkProxy", "address": "0x9aab3f75489902f3a48495025729a0af77d4b11e"},
+    {"name": "DodoV2Proxy", "address": "0xa356867fDCEa8e71AEaF87805808803806231FdC"},
+    {"name": "FirebirdRouter", "address": "0xE3F85aAd0c8DD7337427B9dF5d0fB741d65EEEB"},
+    {"name": "HashflowRouter", "address": "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"},
+    {"name": "OpenOceanExchange", "address": "0x6352a56caadc4f1e25cd6c75970fa768a3304e64"},
+    {"name": "CowSwapSettlement", "address": "0xc92e8bdf79f0507f65a392b0ab4667716bfe0110"}
+  ],
+  "nft_markets": [
+    {"name": "Seaport", "address": "0x00000000006c3852cbEf3e08E8dF289169EdE581"}
+  ]
+}

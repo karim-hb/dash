@@ -1,0 +1,42 @@
+{
+  "name": "tracker_web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "PORT=3007 next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "server": "PORT=3005 UI_WS_PORT=3006 tsx src/server/index.ts",
+    "ws-server": "UI_WS_PORT=3006 tsx src/server/ws-server.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.5",
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.12",
+    "@types/ws": "^8.18.1",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
+    "ethers": "^6.15.0",
+    "mongodb": "^6.20.0",
+    "next": "16.0.0",
+    "pino": "^10.1.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "recharts": "^3.3.0",
+    "ws": "^8.18.3",
+    "zod": "^4.1.12",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.20.6",
+    "typescript": "^5"
+  }
+}

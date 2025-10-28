@@ -1,0 +1,204 @@
+{
+  "routers": {
+    "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865": {
+      "name": "PancakeSwapV3Router",
+      "version": "v3"
+    },
+    "0x10ed43c718714eb63d5aa57b78b54704e256024e": {
+      "name": "PancakeSwapRouterV2",
+      "version": "v2"
+    },
+    "0x1111111254eeb25477b68fb85ed929f73a960582": {
+      "name": "1inchAggregationRouterV5",
+      "version": "agg"
+    },
+    "0x1111111254fb6c44bac0bed2854e76f90643097d": {
+      "name": "1inchAggregationRouterV4",
+      "version": "agg"
+    },
+    "0x1c87257f5e8609940bc751a07bb085bb7f8cdbe6": {
+      "name": "SushiV2RouterLegacy",
+      "version": "v2"
+    },
+    "0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce": {
+      "name": "BeethovenXVault",
+      "version": "bal"
+    },
+    "0x220ed61d1cbc9350b15e2bf1ad9c7c1c6b2c1b": {
+      "name": "KyberNetworkProxy",
+      "version": "agg"
+    },
+    "0x27182842E098f60e3D576794A5bFFb0777E025d3": {
+      "name": "EulerVault",
+      "version": "lend"
+    },
+    "0x3432B6A60D23Ca0CFf4BeEbfAd655C94458b1DB": {
+      "name": "FraxStaking",
+      "version": "yield"
+    },
+    "0x39da41747a83aeE658334415666f3EF92DD0D541": {
+      "name": "BlurExchange",
+      "version": "nft"
+    },
+    "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD": {
+      "name": "HashflowRouter",
+      "version": "agg"
+    },
+    "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad": {
+      "name": "UniswapUniversalRouter",
+      "version": "uni"
+    },
+    "0x5138a24f1Ad5B6F0B2F6B7b1e8C8b5c8B7c8D8E8": {
+      "name": "ClipperRouter",
+      "version": "agg"
+    },
+    "0x5523985926Aa12BA58DC5Ad00DDca99678fC12": {
+      "name": "IntegralRouter",
+      "version": "agg"
+    },
+    "0x59728544B08AB483533076417FbBB2fD0B17CE3a": {
+      "name": "LooksRareExchange",
+      "version": "nft"
+    },
+    "0x60aE616a2155Ee3d9A68541Ba4544862310933d4": {
+      "name": "TraderJoeRouter",
+      "version": "v2"
+    },
+    "0x6352a56caadc4f1e25cd6c75970fa768a3304e64": {
+      "name": "OpenOceanExchange",
+      "version": "agg"
+    },
+    "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45": {
+      "name": "UniswapV3Router",
+      "version": "v3"
+    },
+    "0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3": {
+      "name": "X2Y2Exchange",
+      "version": "nft"
+    },
+    "0x7a250d5630b4cf539739df2c5dacb4c659f2488d": {
+      "name": "UniswapV2Router02",
+      "version": "v2"
+    },
+    "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9": {
+      "name": "AaveV2Pool",
+      "version": "lend"
+    },
+    "0x8290333ceF9e6D528dD5618Fb97a76f268f3EDD4": {
+      "name": "AnkrETH",
+      "version": "yield"
+    },
+    "0x853d955aCEf822Db058eb8505911ED77F175b99e": {
+      "name": "FraxToken",
+      "version": "yield"
+    },
+    "0x91716C4EDA1Fb55e84Bf8b4c7085f84285c19085": {
+      "name": "MaverickRouter",
+      "version": "maverick"
+    },
+    "0x9759A6Ac90977b93B58547b4A71c78317f391A28": {
+      "name": "MakerDAOProxy",
+      "version": "lend"
+    },
+    "0x9aab3f75489902f3a48495025729a0af77d4b11e": {
+      "name": "KyberRouter",
+      "version": "agg"
+    },
+    "0xA17581A9E3356d9A858b789D68B4d866e593aE94": {
+      "name": "CompoundV3CometWETH",
+      "version": "lend"
+    },
+    "0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F": {
+      "name": "SynthetixToken",
+      "version": "deriv"
+    },
+    "0xC13e21B648A5Ee794902342038FF3aDAB66BE987": {
+      "name": "SparkPool",
+      "version": "lend"
+    },
+    "0xD33526068D116cE69F19A9ee46F0bd304F21A51f": {
+      "name": "RocketPoolETH",
+      "version": "yield"
+    },
+    "0xE04c26444d37fd81362E5626d9a5Cf6a0EE5c0c0": {
+      "name": "AlgebraRouter",
+      "version": "v3"
+    },
+    "0xE3F85aAd0c8DD7337427B9dF5d0fB741d65EEEB": {
+      "name": "FirebirdRouter",
+      "version": "agg"
+    },
+    "0xF403C135812408BFbE8713b5A23a04b3D48AAE31": {
+      "name": "ConvexBooster",
+      "version": "yield"
+    },
+    "0xF491e7B69E4244ad4002BC14e878a34207E38c29": {
+      "name": "SpookySwapRouter",
+      "version": "v2"
+    },
+    "0xa356867fDCEa8e71AEaF87805808803806231FdC": {
+      "name": "DodoV2Proxy",
+      "version": "agg"
+    },
+    "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84": {
+      "name": "LidoStETH",
+      "version": "yield"
+    },
+    "0xb16c1342E617A5B6E4b631EB114483FDB289c0A59": {
+      "name": "SudoSwapFactory",
+      "version": "nft"
+    },
+    "0xba12222222228d8ba445958a75a0704d566bf2c8": {
+      "name": "BalancerVault",
+      "version": "bal"
+    },
+    "0xc00e94Cb662C3520282E6f5717214004A7f26888": {
+      "name": "CompoundComptroller",
+      "version": "lend"
+    },
+    "0xc3d688B66703497DAA19211EEdff47f25384cdc3": {
+      "name": "CompoundV3CometUSDC",
+      "version": "lend"
+    },
+    "0xc92e8bdf79f0507f65a392b0ab4667716bfe0110": {
+      "name": "CowSwapSettlement",
+      "version": "agg"
+    },
+    "0xcDA72070E455bb31C7690a170224Ce43623d0B6f": {
+      "name": "FoundationTreasury",
+      "version": "nft"
+    },
+    "0xcb859ea579b28e02b87a1fde08d087ab9dbfead": {
+      "name": "PancakeSwapRouter",
+      "version": "v2"
+    },
+    "0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f": {
+      "name": "SushiSwapRouter",
+      "version": "v2"
+    },
+    "0xdef171fe48cf0115b1d80b88dc8eab59176fee57": {
+      "name": "ParaswapAugustus",
+      "version": "agg"
+    },
+    "0xdef1c0ded9bec7f1a1670819833240f027b25eff": {
+      "name": "ZeroExProxy",
+      "version": "agg"
+    },
+    "0xe592427a0aece92de3edee1f18e0157c05861564": {
+      "name": "UniswapV3Router2",
+      "version": "v3"
+    },
+    "0xe66b31678d6c16e9ebf358268a790b763c133750": {
+      "name": "CurveRouter",
+      "version": "curve"
+    },
+    "0xef1c6e67703c7bd7107eed8303fbe6ec2554bf6b": {
+      "name": "UniswapUniversalRouter2",
+      "version": "uni"
+    },
+    "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a": {
+      "name": "GMXToken",
+      "version": "deriv"
+    }
+  }
+}

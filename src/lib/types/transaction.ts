@@ -26,7 +26,27 @@ export const DecodedCallSchema = z.object({
   decoded: z.boolean().optional(),
 });
 
+// Decoded event log schema
+export const DecodedEventSchema = z.object({
+  event: z.string(),
+  signature: z.string(),
+  args: z.array(z.object({
+    name: z.string(),
+    type: z.string(),
+    value: z.any(),
+    indexed: z.boolean().optional(),
+  })),
+  address: z.string(),
+  topics: z.array(z.string()),
+  data: z.string(),
+  confidence: z.number().optional(),
+  decoded: z.boolean().optional(),
+});
+
 export type DecodedCall = z.infer<typeof DecodedCallSchema>;
+
+// Decoded event type
+export type DecodedEvent = z.infer<typeof DecodedEventSchema>;
 
 // State transition schema (state change log)
 export const StateTransitionSchema = z.object({
@@ -74,6 +94,7 @@ export const TransactionSchema = z.object({
   // Extended fields
   category_key: CategoryKeySchema,
   _decoded_fn: DecodedCallSchema.optional(),
+  _decoded_events: z.array(DecodedEventSchema).optional(),
   _swap_details: SwapDetailsSchema.optional(),
   _first_seen_ts: z.number(),
   _last_seen_ts: z.number(),

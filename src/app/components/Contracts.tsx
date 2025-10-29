@@ -1,46 +1,119 @@
 'use client';
 
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
+import { useFilters } from '../hooks/useFilters';
+import Card from './Card';
+import Table from './Table';
 
 export default function Contracts() {
   const { snapshot } = useWsSnapshot();
-  const txs = snapshot?.live || [];
+  const filters = useFilters();
+  const filteredTxs = filters.applyFilters(snapshot?.live || []);
   const counts = new Map<string, number>();
-  for (const tx of txs) {
+
+  for (const tx of filteredTxs) {
     const key = (tx.to || '').toLowerCase();
     if (!key) continue;
     counts.set(key, (counts.get(key) || 0) + 1);
   }
-  const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 20);
+
+  const topContracts = Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15);
+
+  const columns = [
+    {
+      key: 'rank',
+      header: 'RANK',
+      render: (_: any, __: any, index: number) => (
+        <span className="inline-flex items-center justify-center w-8 h-8 bg-indigo-500 text-white text-xs font-bold rounded-full font-mono">
+          {index + 1}
+        </span>
+      ),
+      className: 'w-16'
+    },
+    {
+      key: 'address',
+      header: 'CONTRACT ADDRESS',
+      render: (value: string) => (
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
+          <span className="font-mono text-cyan-400 text-sm">
+            {value.slice(0, 6)}...{value.slice(-4)}
+          </span>
+        </div>
+      ),
+      className: 'font-mono'
+    },
+    {
+      key: 'count',
+      header: 'TRANSACTIONS',
+      render: (value: number) => (
+        <div className="flex items-center gap-2">
+          <span className="terminal-badge text-purple-400">
+            {value}
+          </span>
+          <div className="terminal-progress w-16">
+            <div
+              className="terminal-progress-bar"
+              style={{ width: `${Math.min((value / 50) * 100, 100)}%` }}
+            ></div>
+          </div>
+        </div>
+      ),
+      className: 'text-right'
+    },
+    {
+      key: 'percentage',
+      header: 'MARKET SHARE',
+      render: (_: any, row: any, index: number) => {
+        const total = topContracts.reduce((sum, [, count]) => sum + count, 0);
+        const percentage = total > 0 ? (row.count / total) * 100 : 0;
+        return (
+          <div className="text-right">
+            <div className="text-sm font-mono text-slate-300">
+              {percentage.toFixed(1)}%
+            </div>
+            <div className="text-xs text-slate-500 font-mono">
+              {index === 0 ? 'LEADER' : index < 3 ? 'TOP 3' : 'ACTIVE'}
+            </div>
+          </div>
+        );
+      },
+      className: 'text-right'
+    }
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4 text-indigo-400">TOP CONTRACTS</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="text-gray-300">
-              <tr className="border-b border-gray-700">
-                <th className="py-2 pr-4 text-left">#</th>
-                <th className="py-2 pr-4 text-left">Address</th>
-                <th className="py-2 pr-4 text-left">Count</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-200">
-              {top.length === 0 && (
-                <tr><td colSpan={3} className="py-8 text-center text-gray-400">No contract activity yet</td></tr>
-              )}
-              {top.map(([addr, count], i) => (
-                <tr key={addr} className="border-b border-gray-800 hover:bg-gray-700/30">
-                  <td className="py-2 pr-4">{i + 1}</td>
-                  <td className="py-2 pr-4 font-mono">{addr}</td>
-                  <td className="py-2 pr-4">{count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <Card
+      title="TOP CONTRACTS"
+      icon={<span className="text-indigo-400">🏛️</span>}
+      badge={topContracts.length > 0 ? `${topContracts.length} ACTIVE` : undefined}
+      variant="terminal"
+      className="h-full"
+    >
+      <div className="mb-4 p-3 glass-card border border-slate-700/30">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-emerald-400">📊</span>
+          <span className="text-sm font-mono font-semibold text-slate-300">[ANALYTICS]</span>
+        </div>
+        <div className="grid grid-cols-2 gap-4 text-xs text-slate-400 font-mono">
+          <div>
+            <div className="text-slate-300 font-semibold">TOTAL CONTRACTS</div>
+            <div className="text-cyan-400">{counts.size}</div>
+          </div>
+          <div>
+            <div className="text-slate-300 font-semibold">FILTERED TXS</div>
+            <div className="text-purple-400">{filteredTxs.length}</div>
+          </div>
         </div>
       </div>
-    </div>
+
+      <Table
+        data={topContracts.map(([address, count]) => ({ address, count }))}
+        columns={columns}
+        emptyMessage="[NO CONTRACT ACTIVITY DETECTED • WAITING FOR TRANSACTIONS]"
+      />
+    </Card>
   );
 }

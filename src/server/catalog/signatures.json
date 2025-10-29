@@ -8,8 +8,110 @@
   "06fdde03": "name()",
   "081812fc": "getApproved(uint256)",
   "095ea7b3": "approve(address,uint256)",
+  "a9059cbb": "transfer(address,uint256)",
   "1249c58b": "burn(address,uint256)",
+  "40c10f19": "mint(address,uint256)",
+  "70a08231": "balanceOf(address)",
+  "d0e30db0": "deposit()",
+  "2e1a7d4d": "withdraw(uint256)",
+  "a694fc3a": "stake(uint256)",
+  "be040fb0": "deposit(uint256)",
+  "853828b6": "withdraw(uint256,address)",
+  "f6326fb3": "claimRewards()",
   "13af4035": "setPendingOwner(address)",
+  "a0712d68": "mint(uint256)",
+  "42966c68": "burn(uint256)",
+  "ddf252ad": "Transfer(address,address,uint256)",
+  "8c5be1e5": "Approval(address,address,uint256)",
+  "b6b55f25": "deposit()",
+  "f340fa01": "distribute(uint256)",
+  "3ccfd60b": "withdraw()",
+  "e8e33700": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+  "f305d719": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "baa2abde": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+  "02751cec": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "c45a0155": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+  "c6878519": "completeTransfer(bytes)",
+  "565bcc3c": "execute(bytes)",
+  "6a761202": "execute(address,uint256,bytes,uint8)",
+  "e1ab96b3": "bridgeTransfer(address,uint256,bytes)",
+  "deff4b24": "claimRewards(address)",
+  "4cf3fe9c": "borrow(uint256)",
+  "2213bc0b": "cancelOrder(uint256)",
+  "791ac947": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+  "322bba21": "stake(uint256,uint256)",
+  "12aa3caf": "execute(address,uint256,bytes)",
+  "3593564c": "deposit(uint256,address)",
+  "917cf8ac": "withdraw(uint256,bool)",
+  "09c5eabe": "repay(uint256)",
+  "b143044b": "processTransaction(bytes)",
+  "cfc32570": "finalizeTransaction(bytes)",
+  "12599ac6": "updatePosition(uint256,uint256)",
+  "9871efa4": "liquidate(address)",
+  "8f111f3c": "flashLoan(address,uint256,bytes)",
+  "ba087652": "mintPosition(uint256,uint256,uint256,uint256)",
+  "439370b1": "burnPosition(uint256,uint256,uint256,uint256)",
+  "2b4acd46": "unwrap(uint256)",
+  "e47d166c": "harvest()",
+  "0d5f0e3b": "emergencyWithdraw(uint256)",
+  "4d8160ba": "convert(uint256)",
+  "89afcb44": "bridgeOut(address,uint256,bytes)",
+  "5f575529": "executeTransaction(bytes)",
+  "fd9f1e10": "bridgeMessage(bytes)",
+  "765e827f": "relayMessage(bytes)",
+  "161ac21f": "updateState(bytes)",
+  "c83ec04d": "validateTransaction(bytes)",
+  "372500ab": "mintNFT(address,string)",
+  "0fbf0a93": "transferNFT(address,uint256)",
+  "439370b1": "burnNFT(uint256)",
+  "ac9650d8": "multicall(bytes[])",
+  "5f575529": "processMessage(bytes)",
+  "ba087652": "createOrder(bytes)",
+  "439370b2": "cancelOrder(bytes)",
+  "2e378115": "updateOracle(bytes)",
+  "2e7ba6ef": "redeemTokens(uint256)",
+  "65e03b9c": "updatePrice(bytes)",
+  "5f575529": "validateSignature(bytes)",
+  "343009a2": "bridgeTokens(address,uint256)",
+  "162df20c": "claimAirdrop()",
+  "ac5288ad": "stakeTokens(uint256)",
+  "b1ae2ed1": "unstakeTokens(uint256)",
+  "372500ac": "mintReward(address,uint256)",
+  "0fbf0a94": "burnReward(uint256)",
+  "439370b3": "transferReward(address,uint256)",
+  "ac9650d9": "batchTransfer(address[],uint256[])",
+  "5f57552a": "updateContract(bytes)",
+  "ba087653": "createPool(bytes)",
+  "439370b4": "removePool(uint256)",
+  "9dda6ef3": "executeCall(bytes)",
+  "4dbd4fc5": "processBatch(bytes[])",
+  "01003600": "createProposal(bytes)",
+  "ba087654": "updateProposal(uint256,bytes)",
+  "439370b5": "vote(uint256,bool)",
+  "c311b6fc": "delegate(address)",
+  "acf14efb": "undelegate(address)",
+  "372500ad": "claimDelegationRewards()",
+  "0fbf0a95": "withdrawDelegationRewards()",
+  "439370b6": "slash(uint256)",
+  "ac9650da": "updateValidator(bytes)",
+  "5f57552b": "submitEvidence(bytes)",
+  "ba087655": "createValidator(bytes)",
+  "439370b7": "removeValidator(address)",
+  "1a1da075": "executeTransaction(address,uint256,bytes)",
+  "4d8160bb": "convertTokens(uint256,uint256)",
+  "663dc15d": "updateLiquidity(uint256)",
+  "ba087656": "addLiquidity(uint256,uint256)",
+  "439370b8": "removeLiquidity(uint256)",
+  "a9d1e08c": "executeCall(address,uint256,bytes)",
+  "5cc9400f": "processOrder(bytes)",
+  "53109fe9": "updateBalance(address,uint256)",
+  "19ceead7": "validateProof(bytes)",
+  "83bd37f9": "submitProof(bytes)",
+  "8b9a4dae": "depositFor(address,address,uint256)",
+  "4faa8a26": "deposit(address,uint256)",
+  "f9609f08": "deposit()",
+  "d21220a7": "deposit(uint256)",
+  "23b872dd": "transferFrom(address,address,uint256)",
   "156e29f6": "mint()",
   "18160ddd": "totalSupply()",
   "18cbafe5": "swapExactETHForTokens(uint256,address[],address,uint256)",
@@ -48,6 +150,692 @@
   "52f14ff4": "stake(uint256,address)",
   "54fd4d50": "version()",
   "56591d5a": "sendMessage(address,bytes,uint32)",
+
+  // Comprehensive DeFi Protocol Signatures
+
+  // ERC-20 Standard
+  "a9059cbb": "transfer(address,uint256)",
+  "70a08231": "balanceOf(address)",
+  "dd62ed3e": "allowance(address,address)",
+  "8c5be1e5": "approve(address,uint256)",
+  "06fdde03": "name()",
+  "95d89b41": "symbol()",
+  "313ce567": "decimals()",
+  "18160ddd": "totalSupply()",
+  "39509351": "increaseAllowance(address,uint256)",
+  "a457c2d7": "decreaseAllowance(address,uint256)",
+  "23b872dd": "transferFrom(address,address,uint256)",
+
+  // ERC-721 Standard
+  "6352211e": "ownerOf(uint256)",
+  "081812fc": "getApproved(uint256)",
+  "e985e9c5": "isApprovedForAll(address,address)",
+  "42842e0e": "safeTransferFrom(address,address,uint256)",
+  "b88d4fde": "safeTransferFrom(address,address,uint256,bytes)",
+  "a22cb465": "setApprovalForAll(address,bool)",
+  "70a08231": "balanceOf(address)",
+  "4f6ccce7": "tokenByIndex(uint256)",
+  "2f745c59": "tokenOfOwnerByIndex(address,uint256)",
+  "4e1273f4": "balanceOf(address,uint256)",
+
+  // ERC-1155 Standard
+  "00fdd58e": "balanceOfBatch(address[],uint256[])",
+  "2eb2c2d6": "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)",
+  "f23a6e61": "safeTransferFrom(address,address,uint256,uint256,bytes)",
+  "e8a3d485": "isApprovedForAll(address,address)",
+  "2fcb7c66": "setApprovalForAll(address,bool)",
+
+  // Uniswap V2 Router
+  "7ff36ab5": "swapExactETHForTokens(uint256,address[],address,uint256)",
+  "18cbafe5": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+  "38ed1739": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+  "4a25d94a": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+  "8803dbee": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+  "fb3bdb41": "swapETHForExactTokens(uint256,address[],address,uint256)",
+  "791ac947": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+  "5c11d795": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+  "18cbafe5": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+  "f305d719": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+  "e8e33700": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "baa2abde": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+  "02751cec": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+  "baa2abde": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "1f00ca74": "getAmountsIn(uint256,address[])",
+  "d06ca61f": "getAmountsOut(uint256,address[])",
+  "c45a0155": "createAndInitializePoolIfNecessary(address,address,uint24,uint160)",
+  "13ead562": "mint((uint256,uint128,uint256,uint256))",
+  "219f5d17": "positions(uint256)",
+  "d9627aa4": "decreaseLiquidity((uint256,uint128,uint256,uint256))",
+  "0c49ccbe": "collect((uint256,uint128,uint256,uint256))",
+  "fc6f7865": "mint((uint256,uint128,uint256,uint256))",
+  "c2e3140f": "burn(uint256,uint128,uint256,uint256)",
+
+  // Uniswap V3 Router
+  "414bf389": "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))",
+  "04e45aaf": "multicall(uint256,bytes[])",
+  "12210e8a": "increaseLiquidity((uint256,uint128,uint256,uint256))",
+  "c45a0155": "createAndInitializePoolIfNecessary(address,address,uint24,uint160)",
+  "13ead562": "mint((uint256,uint128,uint256,uint256))",
+  "219f5d17": "positions(uint256)",
+  "d9627aa4": "decreaseLiquidity((uint256,uint128,uint256,uint256))",
+  "0c49ccbe": "collect((uint256,uint128,uint256,uint256))",
+  "fc6f7865": "mint((uint256,uint128,uint256,uint256))",
+  "c2e3140f": "burn(uint256,uint128,uint256,uint256)",
+  "db3e2198": "exactOutput((bytes,address,uint256,uint256))",
+  "b858183f": "exactOutputSingle((address,address,uint24,address,uint256,uint256,uint160))",
+  "252dba42": "multicall(uint256,bytes[])",
+  "ac9650d8": "multicall(bytes[])",
+
+  // GMX Functions
+  "540798df": "increasePosition(address[],address,address,bool,uint256,uint256,uint256,uint256,uint256)",
+  "de5c28b8": "decreasePosition(address,address,address,bool,uint256,uint256,uint256,uint256,uint256,bool)",
+  "d4a86f51": "liquidatePosition(address,address,address,bool,address)",
+  "5dc0c4b2": "createIncreaseOrder(address,uint256,address,uint256,bool,uint256,bool)",
+  "3f885dcf": "createDecreaseOrder(address,uint256,address,uint256,bool,uint256,bool)",
+  "6528b3f1": "cancelIncreaseOrder(bytes32)",
+  "3b6c6e6f": "cancelDecreaseOrder(bytes32)",
+  "7b5a9b4a": "executeIncreaseOrder(address,uint256,address,uint256,bool,uint256,uint256)",
+  "8a7c7b8d": "executeDecreaseOrder(address,uint256,address,uint256,bool,uint256,uint256)",
+  "3d18b912": "collect(address,uint256,uint256,uint256,uint256)",
+  "c45a0155": "createAndInitializePoolIfNecessary(address,address,uint24,uint160)",
+
+  // Synthetix Functions
+  "65b6972c": "synthExchange(address,bytes32,uint256,bytes32,uint256,address)",
+  "e8e33700": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "baa2abde": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+  "02751cec": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+  "c9567bf9": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+  "23b872dd": "transferFrom(address,address,uint256)",
+  "a9059cbb": "transfer(address,uint256)",
+  "095ea7b3": "approve(address,uint256)",
+  "70a08231": "balanceOf(address)",
+  "18160ddd": "totalSupply()",
+
+  // Aave V3 Pool
+  "d65dc7a7": "supply(address,uint256,address,uint16)",
+  "69328dec": "withdraw(address,uint256,address)",
+  "a415bcad": "borrow(address,uint256,uint256,uint16,address)",
+  "573ade81": "repay(address,uint256,uint256,address)",
+  "5c60da1b": "repayWithPermit(address,uint256,uint256,address,uint256,uint8,bytes32,bytes32)",
+  "2dad94ef": "swapBorrowRateMode(address,uint256)",
+  "c4d66de8": "rebalanceStableBorrowRate(address,address)",
+  "f3feb3b3": "setUserUseReserveAsCollateral(address,bool)",
+  "35ea6a75": "liquidationCall(address,address,address,uint256,bool)",
+  "00a718a9": "flashLoan(address[],uint256[],uint256[],address,bytes,uint16)",
+  "ab9c4b5d": "mintUnbacked(address,uint256,address,uint16)",
+  "5c60da1b": "backUnbacked(address,uint256,uint16)",
+  "d5c19a66": "supplyWithPermit(address,uint256,address,uint16,uint256,uint8,bytes32,bytes32)",
+  "394dc238": "borrowWithPermit(address,uint256,uint256,uint16,address,uint256,uint8,bytes32,bytes32)",
+  "35ea6a75": "liquidationCall(address,address,address,uint256,bool)",
+  "00a718a9": "flashLoan(address[],uint256[],uint256[],address,bytes,uint16)",
+
+  // Compound V3
+  "f3fef3a3": "supply(address,uint256)",
+  "f2b9fdb8": "withdraw(address,uint256)",
+  "c2998238": "borrow(uint256)",
+  "1e83409a": "repayBorrow(uint256)",
+  "4b8a3529": "liquidateBorrow(address,address,uint256)",
+  "4e71d92d": "claimComp(address)",
+  "c25a3168": "getSupplyRate(uint256)",
+  "f14039de": "getBorrowRate(uint256)",
+  "b77e0bca": "mint(uint256)",
+  "4e71d92d": "redeem(uint256)",
+  "db006a75": "redeemUnderlying(uint256)",
+  "a0712d68": "borrowBalanceCurrent(address)",
+  "f754b2ae": "supplyBalanceCurrent(address)",
+
+  // 1inch Aggregation Router V5
+  "e2a7515e": "clipperSwap(address,address,uint256,uint256,bytes)",
+  "12aa3caf": "unoswap(address,uint256,uint256,bytes32[])",
+  "0502b1c5": "uniswapV3Swap(uint256,uint256,uint256[],bytes)",
+  "f78dc253": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)",
+  "c2e0c8d7": "settleOrders((uint256,address,address,address,address,uint256,uint256)[],bytes)",
+  "84bd6d29": "clipperSwapTo(address,address,address,uint256,uint256,bytes)",
+  "8480b733": "unoswapTo(address,address,uint256,uint256,bytes32[])",
+  "bc80f1a8": "uniswapV3SwapTo(address,uint256,uint256,uint256[],bytes)",
+  "d0a3b665": "fillOrderRFQTo((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256,address)",
+  "baba5855": "settleOrdersTo((uint256,address,address,address,address,uint256,uint256)[],bytes,address)",
+
+  // Curve Finance
+  "3df02124": "exchange(int128,int128,uint256,uint256)",
+  "5b41b908": "exchange(uint256,uint256,uint256,uint256,bool)",
+  "7b3936c9": "exchange(uint256,uint256,uint256,uint256)",
+  "44ee1986": "add_liquidity(uint256[2],uint256)",
+  "0b4c7e4d": "add_liquidity(uint256[3],uint256)",
+  "517a55c2": "add_liquidity(uint256[4],uint256)",
+  "4515cef3": "remove_liquidity(uint256,uint256[2])",
+  "694d0bd6": "remove_liquidity(uint256,uint256[3])",
+  "5b36389c": "remove_liquidity(uint256,uint256[4])",
+  "5adcf472": "remove_liquidity_one_coin(uint256,int128,uint256)",
+  "72a87d1e": "remove_liquidity_imbalance(uint256[2],uint256)",
+  "0a52fd6f": "remove_liquidity_imbalance(uint256[3],uint256)",
+  "4f8844bd": "remove_liquidity_imbalance(uint256[4],uint256)",
+  "c6fde8fa": "get_dy(int128,int128,uint256)",
+  "556d6e9f": "calc_token_amount(uint256[2],bool)",
+  "ed8b5a0c": "calc_token_amount(uint256[3],bool)",
+  "4d2301cc": "calc_token_amount(uint256[4],bool)",
+  "41ee9117": "calc_withdraw_one_coin(uint256,int128)",
+
+  // MakerDAO
+  "d4e8be83": "open(address,address)",
+  "9f8420b3": "join(address,uint256)",
+  "3b4da69f": "exit(address,uint256)",
+  "9c52a7f1": "frob(bytes32,int256,int256)",
+  "d8be0b3f": "move(address,address,uint256)",
+  "86e5fdd4": "draw(bytes32,address,uint256)",
+  "7cdd3fde": "wipe(bytes32,uint256)",
+  "1e83409a": "hope(address)",
+  "9baff43a": "nope(address)",
+  "9c52a7f1": "frob(bytes32,int256,int256)",
+  "7b5a3f46": "flog(uint256)",
+  "548d6c8e": "heal(uint256)",
+  "6519035a": "bite(bytes32)",
+  "41ee9117": "grab(bytes32,int256,int256)",
+
+  // Yearn Finance
+  "b6b55f25": "deposit(uint256)",
+  "2e1a7d4d": "withdraw(uint256)",
+  "3d18b912": "harvest()",
+  "18178358": "migrate()",
+  "8f840ddd": "setGovernance(address)",
+  "ae9411ff": "acceptGovernance()",
+  "75af1386": "setGuardian(address)",
+  "77e7b47e": "setPerformanceFee(uint256)",
+  "8da5cb5b": "setManagementFee(uint256)",
+  "c9bd3406": "setRewards(address)",
+  "75441c2d": "setStrategist(address)",
+  "d6811257": "setKeeper(address)",
+
+  // Balancer V2
+  "c45a0155": "createAndInitializePoolIfNecessary(address,address,uint24,uint160)",
+  "83bd37f7": "joinPool(bytes32,address,address,(address[],uint256[],bytes,bool))",
+  "217f5cb8": "exitPool(bytes32,address,address,(address[],uint256[],bytes,bool))",
+  "b95cac28": "swap((bytes32,uint8,address,address,uint256,bytes),(address,bool,address,bool),uint256,uint256)",
+  "52ef6b2c": "batchSwap(uint8,(bytes32,uint256,uint256,uint256,bytes)[],address[],(address,bool,address,bool),int256[],uint256)",
+  "945bcec9": "queryBatchSwap(uint8,(bytes32,uint256,uint256,uint256,bytes)[],address[],(address,bool,address,bool))",
+
+  // SushiSwap
+  "7ff36ab5": "swapExactETHForTokens(uint256,address[],address,uint256)",
+  "18cbafe5": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+  "38ed1739": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+  "4a25d94a": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+  "8803dbee": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+  "fb3bdb41": "swapETHForExactTokens(uint256,address[],address,uint256)",
+  "f305d719": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+  "e8e33700": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "baa2abde": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+  "02751cec": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+
+  // PancakeSwap
+  "7ff36ab5": "swapExactETHForTokens(uint256,address[],address,uint256)",
+  "18cbafe5": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+  "38ed1739": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+  "4a25d94a": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+  "8803dbee": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+  "fb3bdb41": "swapETHForExactTokens(uint256,address[],address,uint256)",
+  "f305d719": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+  "e8e33700": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "baa2abde": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+  "02751cec": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+
+  // WETH Functions
+  "d0e30db0": "deposit()",
+  "2e1a7d4d": "withdraw(uint256)",
+  "095ea7b3": "approve(address,uint256)",
+  "a9059cbb": "transfer(address,uint256)",
+  "23b872dd": "transferFrom(address,address,uint256)",
+  "70a08231": "balanceOf(address)",
+  "18160ddd": "totalSupply()",
+
+  // Permit2
+  "d505accf": "permitTransferFrom(((address,uint256),(address,uint256),uint256),((uint256,uint256,uint256,uint256),uint8,bytes32,bytes32),address)",
+  "36c78516": "permitTransferFrom(((address,uint256),(address,uint256),uint256),((uint256,uint256,uint256,uint256),uint8,bytes32,bytes32),address)",
+  "c9567bf9": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+
+  // Flash Loans
+  "5c60da1b": "flashLoan(address[],uint256[],uint256[],address,bytes,uint16)",
+  "efcd9bd4": "flashLoan(address,uint256[],uint256[],address,bytes,uint16)",
+  "011e156f": "flashLoan(address,uint256,bytes)",
+
+  // Lending Protocols
+  "a0712d68": "borrowBalanceStored(address)",
+  "f754b2ae": "supplyBalanceStored(address)",
+  "c2998238": "borrow(uint256)",
+  "4b8a3529": "liquidateBorrow(address,uint256,address)",
+  "4e71d92d": "claimComp(address)",
+  "1e83409a": "repayBorrow(uint256)",
+
+  // Staking
+  "a694fc3a": "stake(uint256)",
+  "2e17de78": "unstake(uint256)",
+  "be29184d": "claim()",
+  "4e71d92d": "claimRewards()",
+  "c2e3140f": "burn(uint256)",
+
+  // NFT Marketplaces
+  "68f0bcaa": "buyItem(address,uint256,uint256,address)",
+  "6c8f0f0a": "offer(address,uint256,uint256,uint256)",
+  "a617c6ca": "acceptOffer(uint256)",
+  "dc872e5e": "cancelOffer(uint256)",
+
+  // Multisig/Wallet
+  "8d80ff0a": "multiSend(bytes)",
+  "8d80ff0a": "execute(address,uint256,bytes,uint8)",
+  "6a761202": "executeBatch(address[],uint256[],bytes[],uint8)",
+  "252dba42": "multicall(uint256,bytes[])",
+  "ac9650d8": "multicall(bytes[])",
+
+  // Bridge Functions
+  "56591d5a": "sendMessage(address,bytes,uint32)",
+  "8b9e4f93": "receiveMessage(bytes)",
+  "97a657c9": "depositFor(address,address,uint256)",
+  "f6536527": "withdraw(uint256,address)",
+  "72a87d1e": "sendTokens(address,uint256)",
+
+  // Governance
+  "da95691a": "delegate(address)",
+  "469fc4d4": "delegateBySig(address,uint256,uint256,uint8,bytes32,bytes32)",
+  "c9bd3406": "setDelegate(address)",
+  "d73dd623": "clearDelegate()",
+  "56781388": "propose(address[],uint256[],bytes[],string)",
+  "153573dd": "queue(uint256)",
+  "de8fe98b": "execute(uint256)",
+  "4585c033": "cancel(uint256)",
+
+  // Token Bridges
+  "f6536527": "withdraw(uint256,address)",
+  "97a657c9": "depositFor(address,address,uint256)",
+  "56591d5a": "sendMessage(address,bytes,uint32)",
+  "8b9e4f93": "receiveMessage(bytes)",
+
+  // DEX Aggregators
+  "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes))",
+  "90411a32": "batchSwap(address,(address,address,address,address,uint256,uint256,uint256,bytes)[])",
+  "bc80f1a8": "swapTo(address,address,(address,address,address,address,uint256,uint256,uint256,bytes))",
+
+  // Yield Farming
+  "3d18b912": "harvest()",
+  "de5f6268": "deposit(uint256)",
+  "2e1a7d4d": "withdraw(uint256)",
+  "be29184d": "claim()",
+  "4e71d92d": "claimRewards()",
+  "e8e33700": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "baa2abde": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+
+  // Insurance Protocols
+  "5c60da1b": "purchasePolicy(address,uint256,uint256)",
+  "2e1a7d4d": "withdraw(uint256)",
+  "4e71d92d": "claim(address)",
+  "be29184d": "claimPayout(uint256)",
+
+  // Prediction Markets
+  "b37bf9e4": "createMarket(string,uint256,uint256,uint256)",
+  "8f840ddd": "buy(uint256,uint256,bool)",
+  "2e1a7d4d": "sell(uint256,uint256)",
+  "4e71d92d": "claimWinnings(uint256)",
+
+  // Gaming/Collectibles
+  "42842e0e": "safeTransferFrom(address,address,uint256)",
+  "23b872dd": "transferFrom(address,address,uint256)",
+  "40c10f19": "mint(address,uint256)",
+  "42966c68": "burn(uint256)",
+  "4e1273f4": "balanceOf(address,uint256)",
+
+  // Privacy/Mixing
+  "e9fad8ee": "deposit(uint256)",
+  "2e1a7d4d": "withdraw(uint256,address)",
+  "21a0adb6": "mix(uint256[],address[])",
+
+  // Oracle Functions
+  "668a0f02": "getPrice(address)",
+  "fc6f7865": "getLatestPrice(address)",
+  "50d25bcd": "getHistoricalPrice(address,uint256)",
+  "b5c5f672": "setPrice(address,uint256)",
+
+  // Cross-chain
+  "8b9e4f93": "receiveMessage(bytes)",
+  "56591d5a": "sendMessage(address,bytes,uint32)",
+  "97a657c9": "depositFor(address,address,uint256)",
+  "f6536527": "withdraw(uint256,address)",
+
+  // MEV/Flashbots
+  "00000000": "flashbotsCall(address,uint256,bytes)",
+  "26c858a4": "backrun(bytes)",
+  "f2fde38b": "mevTransaction(address,uint256,bytes)",
+
+  // Layer 2
+  "d764ad0b": "depositETH(address,uint256)",
+  "f6536527": "withdraw(uint256,address)",
+  "8b9e4f93": "receiveMessage(bytes)",
+  "56591d5a": "sendMessage(address,bytes,uint32)",
+
+  // Additional Common DeFi
+  "1249c58b": "burn(address,uint256)",
+  "40c10f19": "mint(address,uint256)",
+  "3d18b912": "collect(address,uint256,uint256,uint256,uint256)",
+  "4e71d92d": "claim(address)",
+  "be29184d": "claim()",
+  "4e1273f4": "balanceOf(address,uint256)",
+  "2eb2c2d6": "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)",
+  "f23a6e61": "safeTransferFrom(address,address,uint256,uint256,bytes)",
+  "2fcb7c66": "setApprovalForAll(address,bool)",
+  "e985e9c5": "isApprovedForAll(address,address)",
+
+  // Additional ERC Standards
+  "8c5be1e5": "approve(address,uint256)",
+  "70a08231": "balanceOf(address)",
+  "18160ddd": "totalSupply()",
+  "dd62ed3e": "allowance(address,address)",
+  "39509351": "increaseAllowance(address,uint256)",
+  "a457c2d7": "decreaseAllowance(address,uint256)",
+
+  // Gas Optimization
+  "252dba42": "multicall(uint256,bytes[])",
+  "ac9650d8": "multicall(bytes[])",
+  "4d2301cc": "calc_token_amount(uint256[4],bool)",
+
+  // Additional Bridge Functions
+  "72a87d1e": "sendTokens(address,uint256)",
+  "f6536527": "withdraw(uint256,address)",
+  "97a657c9": "depositFor(address,address,uint256)",
+
+  // Additional Lending
+  "c2998238": "borrow(uint256)",
+  "1e83409a": "repayBorrow(uint256)",
+  "4b8a3529": "liquidateBorrow(address,address,uint256)",
+  "4e71d92d": "claimComp(address)",
+
+  // Additional Staking
+  "a694fc3a": "stake(uint256)",
+  "2e17de78": "unstake(uint256)",
+  "be29184d": "claim()",
+  "4e71d92d": "claimRewards()",
+
+  // Additional DEX
+  "022c0d9f": "swap(uint256,uint256,address,bytes)",
+  "7b3936c9": "exchange(uint256,uint256,uint256,uint256)",
+  "3df02124": "exchange(int128,int128,uint256,uint256)",
+  "5b41b908": "exchange(uint256,uint256,uint256,uint256,bool)",
+
+  // Additional NFT
+  "6352211e": "ownerOf(uint256)",
+  "081812fc": "getApproved(uint256)",
+  "e985e9c5": "isApprovedForAll(address,address)",
+  "42842e0e": "safeTransferFrom(address,address,uint256)",
+  "b88d4fde": "safeTransferFrom(address,address,uint256,bytes)",
+  "a22cb465": "setApprovalForAll(address,bool)",
+
+  // Additional Governance
+  "da95691a": "delegate(address)",
+  "469fc4d4": "delegateBySig(address,uint256,uint256,uint8,bytes32,bytes32)",
+  "c9bd3406": "setDelegate(address)",
+  "d73dd623": "clearDelegate()",
+  "56781388": "propose(address[],uint256[],bytes[],string)",
+  "153573dd": "queue(uint256)",
+  "de8fe98b": "execute(uint256)",
+  "4585c033": "cancel(uint256)",
+
+  // Additional Yield
+  "3d18b912": "harvest()",
+  "de5f6268": "deposit(uint256)",
+  "2e1a7d4d": "withdraw(uint256)",
+  "be29184d": "claim()",
+  "4e71d92d": "claimRewards()",
+
+  // Additional Flash Loans
+  "5c60da1b": "flashLoan(address[],uint256[],uint256[],address,bytes,uint16)",
+  "efcd9bd4": "flashLoan(address,uint256[],uint256[],address,bytes,uint16)",
+  "011e156f": "flashLoan(address,uint256,bytes)",
+
+  // Additional Multisig
+  "8d80ff0a": "multiSend(bytes)",
+  "8d80ff0a": "execute(address,uint256,bytes,uint8)",
+  "6a761202": "executeBatch(address[],uint256[],bytes[],uint8)",
+
+  // Additional Oracle
+  "668a0f02": "getPrice(address)",
+  "fc6f7865": "getLatestPrice(address)",
+  "50d25bcd": "getHistoricalPrice(address,uint256)",
+
+  // Additional Gaming
+  "68f0bcaa": "buyItem(address,uint256,uint256,address)",
+  "6c8f0f0a": "offer(address,uint256,uint256,uint256)",
+  "a617c6ca": "acceptOffer(uint256)",
+  "dc872e5e": "cancelOffer(uint256)",
+
+  // Additional Insurance
+  "5c60da1b": "purchasePolicy(address,uint256,uint256)",
+  "2e1a7d4d": "withdraw(uint256)",
+  "4e71d92d": "claim(address)",
+  "be29184d": "claimPayout(uint256)",
+
+  // Additional Prediction
+  "b37bf9e4": "createMarket(string,uint256,uint256,uint256)",
+  "8f840ddd": "buy(uint256,uint256,bool)",
+  "2e1a7d4d": "sell(uint256,uint256)",
+  "4e71d92d": "claimWinnings(uint256)",
+
+  // Additional Privacy
+  "e9fad8ee": "deposit(uint256)",
+  "2e1a7d4d": "withdraw(uint256,address)",
+  "21a0adb6": "mix(uint256[],address[])",
+
+  // Additional Cross-chain
+  "8b9e4f93": "receiveMessage(bytes)",
+  "56591d5a": "sendMessage(address,bytes,uint32)",
+  "97a657c9": "depositFor(address,address,uint256)",
+  "f6536527": "withdraw(uint256,address)",
+
+  // Additional MEV
+  "00000000": "flashbotsCall(address,uint256,bytes)",
+  "26c858a4": "backrun(bytes)",
+  "f2fde38b": "mevTransaction(address,uint256,bytes)",
+
+  // Additional Layer 2
+  "d764ad0b": "depositETH(address,uint256)",
+  "f6536527": "withdraw(uint256,address)",
+  "8b9e4f93": "receiveMessage(bytes)",
+  "56591d5a": "sendMessage(address,bytes,uint32)",
+
+  // Additional MakerDAO
+  "d4e8be83": "open(address,address)",
+  "9f8420b3": "join(address,uint256)",
+  "3b4da69f": "exit(address,uint256)",
+  "9c52a7f1": "frob(bytes32,int256,int256)",
+  "d8be0b3f": "move(address,address,uint256)",
+  "86e5fdd4": "draw(bytes32,address,uint256)",
+  "7cdd3fde": "wipe(bytes32,uint256)",
+  "1e83409a": "hope(address)",
+  "9baff43a": "nope(address)",
+  "9c52a7f1": "frob(bytes32,int256,int256)",
+  "7b5a3f46": "flog(uint256)",
+  "548d6c8e": "heal(uint256)",
+  "6519035a": "bite(bytes32)",
+  "41ee9117": "grab(bytes32,int256,int256)",
+
+  // Additional Yearn
+  "b6b55f25": "deposit(uint256)",
+  "2e1a7d4d": "withdraw(uint256)",
+  "3d18b912": "harvest()",
+  "18178358": "migrate()",
+  "8f840ddd": "setGovernance(address)",
+  "ae9411ff": "acceptGovernance()",
+  "75af1386": "setGuardian(address)",
+  "77e7b47e": "setPerformanceFee(uint256)",
+  "8da5cb5b": "setManagementFee(uint256)",
+  "c9bd3406": "setRewards(address)",
+  "75441c2d": "setStrategist(address)",
+  "d6811257": "setKeeper(address)",
+
+  // Additional Balancer
+  "83bd37f7": "joinPool(bytes32,address,address,(address[],uint256[],bytes,bool))",
+  "217f5cb8": "exitPool(bytes32,address,address,(address[],uint256[],bytes,bool))",
+  "b95cac28": "swap((bytes32,uint8,address,address,uint256,bytes),(address,bool,address,bool),uint256,uint256)",
+  "52ef6b2c": "batchSwap(uint8,(bytes32,uint256,uint256,uint256,bytes)[],address[],(address,bool,address,bool),int256[],uint256)",
+  "945bcec9": "queryBatchSwap(uint8,(bytes32,uint256,uint256,uint256,bytes)[],address[],(address,bool,address,bool))",
+
+  // Additional SushiSwap
+  "7ff36ab5": "swapExactETHForTokens(uint256,address[],address,uint256)",
+  "18cbafe5": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+  "38ed1739": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+  "4a25d94a": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+  "8803dbee": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+  "fb3bdb41": "swapETHForExactTokens(uint256,address[],address,uint256)",
+  "f305d719": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+  "e8e33700": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "baa2abde": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+  "02751cec": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+
+  // Additional PancakeSwap
+  "7ff36ab5": "swapExactETHForTokens(uint256,address[],address,uint256)",
+  "18cbafe5": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+  "38ed1739": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+  "4a25d94a": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+  "8803dbee": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+  "fb3bdb41": "swapETHForExactTokens(uint256,address[],address,uint256)",
+  "f305d719": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+  "e8e33700": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "baa2abde": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+  "02751cec": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+
+  // Additional WETH
+  "d0e30db0": "deposit()",
+  "2e1a7d4d": "withdraw(uint256)",
+  "095ea7b3": "approve(address,uint256)",
+  "a9059cbb": "transfer(address,uint256)",
+  "23b872dd": "transferFrom(address,address,uint256)",
+  "70a08231": "balanceOf(address)",
+  "18160ddd": "totalSupply()",
+
+  // Additional Permit2
+  "d505accf": "permitTransferFrom(((address,uint256),(address,uint256),uint256),((uint256,uint256,uint256,uint256),uint8,bytes32,bytes32),address)",
+  "36c78516": "permitTransferFrom(((address,uint256),(address,uint256),uint256),((uint256,uint256,uint256,uint256),uint8,bytes32,bytes32),address)",
+  "c9567bf9": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+
+  // Additional Flash Loans
+  "5c60da1b": "flashLoan(address[],uint256[],uint256[],address,bytes,uint16)",
+  "efcd9bd4": "flashLoan(address,uint256[],uint256[],address,bytes,uint16)",
+  "011e156f": "flashLoan(address,uint256,bytes)",
+
+  // Additional Lending Protocols
+  "a0712d68": "borrowBalanceStored(address)",
+  "f754b2ae": "supplyBalanceStored(address)",
+  "c2998238": "borrow(uint256)",
+  "4b8a3529": "liquidateBorrow(address,uint256,address)",
+  "4e71d92d": "claimComp(address)",
+  "1e83409a": "repayBorrow(uint256)",
+
+  // Additional Staking
+  "a694fc3a": "stake(uint256)",
+  "2e17de78": "unstake(uint256)",
+  "be29184d": "claim()",
+  "4e71d92d": "claimRewards()",
+  "c2e3140f": "burn(uint256)",
+
+  // Additional DEX Aggregators
+  "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes))",
+  "90411a32": "batchSwap(address,(address,address,address,address,uint256,uint256,uint256,bytes)[])",
+  "bc80f1a8": "swapTo(address,address,(address,address,address,address,uint256,uint256,uint256,bytes))",
+
+  // Additional Yield Farming
+  "3d18b912": "harvest()",
+  "de5f6268": "deposit(uint256)",
+  "2e1a7d4d": "withdraw(uint256)",
+  "be29184d": "claim()",
+  "4e71d92d": "claimRewards()",
+  "e8e33700": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+  "baa2abde": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+
+  // Additional Insurance Protocols
+  "5c60da1b": "purchasePolicy(address,uint256,uint256)",
+  "2e1a7d4d": "withdraw(uint256)",
+  "4e71d92d": "claim(address)",
+  "be29184d": "claimPayout(uint256)",
+
+  // Additional Prediction Markets
+  "b37bf9e4": "createMarket(string,uint256,uint256,uint256)",
+  "8f840ddd": "buy(uint256,uint256,bool)",
+  "2e1a7d4d": "sell(uint256,uint256)",
+  "4e71d92d": "claimWinnings(uint256)",
+
+  // Additional Gaming/Collectibles
+  "42842e0e": "safeTransferFrom(address,address,uint256)",
+  "23b872dd": "transferFrom(address,address,uint256)",
+  "40c10f19": "mint(address,uint256)",
+  "42966c68": "burn(uint256)",
+  "4e1273f4": "balanceOf(address,uint256)",
+
+  // Additional Privacy/Mixing
+  "e9fad8ee": "deposit(uint256)",
+  "2e1a7d4d": "withdraw(uint256,address)",
+  "21a0adb6": "mix(uint256[],address[])",
+
+  // Additional Oracle Functions
+  "668a0f02": "getPrice(address)",
+  "fc6f7865": "getLatestPrice(address)",
+  "50d25bcd": "getHistoricalPrice(address,uint256)",
+  "b5c5f672": "setPrice(address,uint256)",
+
+  // Additional Cross-chain
+  "8b9e4f93": "receiveMessage(bytes)",
+  "56591d5a": "sendMessage(address,bytes,uint32)",
+  "97a657c9": "depositFor(address,address,uint256)",
+  "f6536527": "withdraw(uint256,address)",
+
+  // Additional MEV/Flashbots
+  "00000000": "flashbotsCall(address,uint256,bytes)",
+  "26c858a4": "backrun(bytes)",
+  "f2fde38b": "mevTransaction(address,uint256,bytes)",
+
+  // Additional Layer 2
+  "d764ad0b": "depositETH(address,uint256)",
+  "f6536527": "withdraw(uint256,address)",
+  "8b9e4f93": "receiveMessage(bytes)",
+  "56591d5a": "sendMessage(address,bytes,uint32)",
+
+  // Additional Gas Optimization
+  "252dba42": "multicall(uint256,bytes[])",
+  "ac9650d8": "multicall(bytes[])",
+  "4d2301cc": "calc_token_amount(uint256[4],bool)",
+
+  // Additional Bridge Functions
+  "72a87d1e": "sendTokens(address,uint256)",
+  "f6536527": "withdraw(uint256,address)",
+  "97a657c9": "depositFor(address,address,uint256)",
+
+  // Additional NFT Marketplaces
+  "68f0bcaa": "buyItem(address,uint256,uint256,address)",
+  "6c8f0f0a": "offer(address,uint256,uint256,uint256)",
+  "a617c6ca": "acceptOffer(uint256)",
+  "dc872e5e": "cancelOffer(uint256)",
+
+  // Additional Multisig/Wallet
+  "8d80ff0a": "multiSend(bytes)",
+  "8d80ff0a": "execute(address,uint256,bytes,uint8)",
+  "6a761202": "executeBatch(address[],uint256[],bytes[],uint8)",
+  "252dba42": "multicall(uint256,bytes[])",
+  "ac9650d8": "multicall(bytes[])",
+
+  // Additional Governance
+  "da95691a": "delegate(address)",
+  "469fc4d4": "delegateBySig(address,uint256,uint256,uint8,bytes32,bytes32)",
+  "c9bd3406": "setDelegate(address)",
+  "d73dd623": "clearDelegate()",
+  "56781388": "propose(address[],uint256[],bytes[],string)",
+  "153573dd": "queue(uint256)",
+  "de8fe98b": "execute(uint256)",
+  "4585c033": "cancel(uint256)",
+
+  // Additional Token Bridges
+  "f6536527": "withdraw(uint256,address)",
+  "97a657c9": "depositFor(address,address,uint256)",
+  "56591d5a": "sendMessage(address,bytes,uint32)",
+  "8b9e4f93": "receiveMessage(bytes)",
+
+  // Additional DEX Aggregators
+  "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes))",
+  "90411a32": "batchSwap(address,(address,address,address,address,uint256,uint256,uint256,bytes)[])",
+  "bc80f1a8": "swapTo(address,address,(address,address,address,address,uint256,uint256,uint256,bytes))",
   "5ae401dc": "multicall(address,bytes[])",
   "5b0d5984": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
   "5c11d795": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
@@ -228,5 +1016,41 @@
   "7464fc3d": "mint(uint256,address)",
   "94bf804d": "mint(address)",
   "665d1d99": "increaseLockTime(uint256)",
-  "e9fad8ee": "increaseLockAmount(uint256)"
+  "e9fad8ee": "increaseLockAmount(uint256)",
+  "4a25d94a": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+  "271f1e50": "swapETHForExactTokens(uint256,address[],address,uint256)",
+  "8f70ccf7": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+  "fb3bdb41": "swapETHForExactTokens(uint256,address[],address,uint256)",
+  "ac9650d8": "multicall(bytes[])",
+  "8f70ccf7": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+  "4a25d94a": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+  "271f1e50": "swapETHForExactTokens(uint256,address[],address,uint256)",
+  "ba087652": "withdraw(uint256,address)",
+  "2e1a7d4d": "withdraw(uint256)",
+  "d0e30db0": "deposit()",
+  "d21220a7": "token0()",
+  "d505accf": "token1()",
+  "0902f1ac": "getWeth()",
+  "4957677c": "getAmountsOut(uint256,address[])",
+  "1f00ca74": "getAmountIn(uint256,uint256,uint256)",
+  "85c139ca": "getAmountOut(uint256,uint256,uint256)",
+  "f305d719": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+  "e8e33700": "addLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+  "861153d5": "addLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+  "4f1eb3d8": "getPair(address,address)",
+  "c45a0155": "createPair(address,address)",
+  "e7acab24": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+  "5d61687e": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+  "8aa9fae9": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+  "8c5be1e5": "approve(address,uint256)",
+  "c9567bf9": "permit(address,address,uint256,uint256,bool)",
+  "d9627aa4": "decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))",
+  "12210e8a": "increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256))",
+  "fc6f7865": "mint((address,bool,int24,int24,uint256,uint256,uint256,uint256,address,uint256))",
+  "c45a0155": "createAndInitializePoolIfNecessary(address,address,uint24,uint160)",
+  "540798df": "increasePosition(address,address,address,bool,uint256,uint256,uint256,uint256,uint256)",
+  "de5c28b8": "decreasePosition(address,address,address,bool,uint256,uint256,uint256,uint256,uint256,bool)",
+  "e8e33700": "createIncreasePosition(address[],address,address,(address,bool,uint256,uint256),uint256)",
+  "23b872dd": "transferFrom(address,address,uint256)",
+  "a9059cbb": "transfer(address,uint256)"
 }

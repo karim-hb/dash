@@ -29,14 +29,20 @@ export class AbiRegistry {
         }
       }
 
-      // Load selectors mapping
-      const selectorsPath = path.join(process.cwd(), 'src/server/catalog/selectors.json');
-      if (fs.existsSync(selectorsPath)) {
-        const selectorsData = JSON.parse(fs.readFileSync(selectorsPath, 'utf8'));
-        // Process selectors if needed
+      // Load 4byte cache as additional signatures
+      const cachePath = path.join(process.cwd(), 'src/server/catalog/4byte_cache.json');
+      if (fs.existsSync(cachePath)) {
+        const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+        for (const [selector, signature] of Object.entries(cacheData)) {
+          const sel = selector.toLowerCase();
+          if (!this.signatures.has(sel)) { // Don't overwrite existing signatures
+            this.signatures.set(sel, signature as string);
+            this.reverseSignatures.set(signature as string, sel);
+          }
+        }
       }
 
-      console.log(`✅ Loaded ${this.signatures.size} signatures`);
+      console.log(`✅ Loaded ${this.signatures.size} signatures (main + 4byte cache)`);
       this.loaded = true;
     } catch (error) {
       console.error('Failed to load signatures:', error);

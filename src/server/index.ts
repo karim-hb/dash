@@ -105,7 +105,9 @@ function startBroadcastLoop(): void {
   broadcastInterval = setInterval(async () => {
     try {
       const snapshot = await generateUiSnapshot(aggregator);
-      const message = JSON.stringify(snapshot);
+      const message = JSON.stringify(snapshot, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      );
       const dead: any[] = [];
       // @ts-ignore
       wss?.clients.forEach((client: any) => {

@@ -2,6 +2,8 @@
 
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
 import { useFilters } from '../hooks/useFilters';
+import Card from './Card';
+import Table from './Table';
 
 function short(s: string, n = 10) { return s && s.length > n ? `${s.slice(0, n)}…` : (s || ''); }
 function fmtGwei(hex?: string) { try { return hex ? (parseInt(hex, 16) / 1e9).toFixed(1) : '-'; } catch { return '-'; } }
@@ -29,77 +31,91 @@ function getProtocolDisplay(categoryKey: string): string {
   return 'Contract';
 }
 
-// Calculate amount display (same as app.py)
-function calculateAmount(tx: any): string {
-  try {
-    if (!tx) return '-';
-    const valueWei = parseInt(tx.value || '0x0', 16);
-    if (valueWei > 0) {
-      const eth = valueWei / 1e18;
-      if (eth < 0.001) {
-        return (eth * 1e6).toFixed(2) + 'μ';
-      } else if (eth < 1) {
-        return eth.toFixed(4);
-      } else {
-        return eth.toFixed(2);
-      }
-    }
-    return '-';
-  } catch {
-    return '-';
-  }
-}
+// Import shared amount decoding utilities
+import { calculateAmount } from '../utils/amountUtils';
 
 export default function Live() {
   const { snapshot } = useWsSnapshot();
   const filters = useFilters();
   const rows = filters.applyFilters(snapshot?.live || []);
+  const columns = [
+    {
+      key: '_first_seen_ts',
+      header: 'Time',
+      render: (value: number) => value ? new Date(value * 1000).toLocaleTimeString() : '--:--:--',
+      className: 'text-gray-400'
+    },
+    {
+      key: 'hash',
+      header: 'Hash',
+      render: (value: string) => (
+        <span className="font-mono text-cyan-400 hover:text-cyan-300 cursor-pointer">
+          {short(value, 12)}
+        </span>
+      ),
+      className: 'font-mono'
+    },
+    {
+      key: 'from',
+      header: 'From',
+      render: (value: string) => short(value || '', 10),
+      className: 'font-mono text-gray-400'
+    },
+    {
+      key: 'to',
+      header: 'To',
+      render: (value: string) => short(value || '', 10),
+      className: 'font-mono text-gray-400'
+    },
+    {
+      key: 'category_key',
+      header: 'Type',
+      render: (value: string) => value || '-'
+    },
+    {
+      key: 'category_key',
+      header: 'Protocol',
+      render: (value: string) => getProtocolDisplay(value)
+    },
+    {
+      key: '_decoded_fn',
+      header: 'Function',
+      render: (value: any) => value?.function || '-',
+      className: 'text-purple-400'
+    },
+    {
+      key: 'value',
+      header: 'Amount',
+      render: (_: any, row: any) => calculateAmount(row),
+      className: 'text-green-400 font-medium'
+    },
+    {
+      key: 'maxFeePerGas',
+      header: 'Gas',
+      render: (value: string, row: any) => `${fmtGwei(value || row.gasPrice)}g`,
+      className: 'text-orange-400'
+    },
+    {
+      key: '_first_seen_ts',
+      header: 'Age',
+      render: (value: number) => fmtAge(value),
+      className: 'text-blue-400'
+    }
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4 text-blue-400">LIVE TRANSACTIONS</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="text-gray-300">
-              <tr className="border-b border-gray-700">
-                <th className="py-2 pr-4 text-left">Time</th>
-                <th className="py-2 pr-4 text-left">Hash</th>
-                <th className="py-2 pr-4 text-left">From</th>
-                <th className="py-2 pr-4 text-left">To</th>
-                <th className="py-2 pr-4 text-left">Type</th>
-                <th className="py-2 pr-4 text-left">Protocol</th>
-                <th className="py-2 pr-4 text-left">Function</th>
-                <th className="py-2 pr-4 text-left">Amount</th>
-                <th className="py-2 pr-4 text-left">Gas</th>
-                <th className="py-2 pr-4 text-left">Age</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-200">
-              {rows.length === 0 && (
-                <tr><td colSpan={10} className="py-8 text-center text-gray-400">Waiting for live data…</td></tr>
-              )}
-              {rows.map((tx: any) => {
-                const seenTime = tx._first_seen_ts ? new Date(tx._first_seen_ts * 1000).toLocaleTimeString() : '--:--:--';
-                return (
-                  <tr key={tx.hash} className="border-b border-gray-800 hover:bg-gray-700/30">
-                    <td className="py-2 pr-4">{seenTime}</td>
-                    <td className="py-2 pr-4 font-mono">{short(tx.hash, 16)}</td>
-                    <td className="py-2 pr-4 font-mono">{short(tx.from || '', 14)}</td>
-                    <td className="py-2 pr-4 font-mono">{short(tx.to || '', 14)}</td>
-                    <td className="py-2 pr-4">{tx.category_key || '-'}</td>
-                    <td className="py-2 pr-4">{getProtocolDisplay(tx.category_key)}</td>
-                    <td className="py-2 pr-4">{tx._decoded_fn?.function || '-'}</td>
-                    <td className="py-2 pr-4">{calculateAmount(tx)}</td>
-                    <td className="py-2 pr-4">{fmtGwei(tx.maxFeePerGas || tx.gasPrice)}g</td>
-                    <td className="py-2 pr-4">{fmtAge(tx._first_seen_ts)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <Card
+      title="LIVE TRANSACTIONS"
+      icon={<span className="text-blue-400">⚡</span>}
+      badge={rows.length > 0 ? `${rows.length} ACTIVE` : undefined}
+      variant="terminal"
+      className="h-full"
+    >
+      <Table
+        data={rows}
+        columns={columns}
+        emptyMessage="[WAITING FOR LIVE TRANSACTION DATA...]"
+      />
+    </Card>
   );
 }

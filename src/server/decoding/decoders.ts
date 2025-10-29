@@ -15,6 +15,14 @@ export async function decodeFunctionAndArgs(tx: Transaction): Promise<DecodedCal
   return null;
 }
 
+// Decode events from transaction
+export async function decodeTransactionEvents(tx: Transaction): Promise<DecodedEvent[]> {
+  const decoder = getCoreDecoder();
+  const result = await decoder.decodeTransaction(tx);
+
+  return result.events || [];
+}
+
 // Decode swap details from transaction
 export function decodeSwapDetails(tx: Transaction): SwapDetails {
   const decoder = getCoreDecoder();

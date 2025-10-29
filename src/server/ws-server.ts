@@ -152,6 +152,7 @@ class TrackerWebSocketServer {
         score: tx._score || 0,
         category_key: tx.category_key,
         decoded_fn: tx._decoded_fn,
+        decoded_events: tx._decoded_events,
       }));
 
     return {

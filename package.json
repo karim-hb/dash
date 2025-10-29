@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "PORT=3007 next dev",
+    "dev": "PORT=3015 bash -c 'lsof -ti:3015 | xargs -r kill -9 2>/dev/null || true; sleep 1; next dev'",
+    "dev:kill": "lsof -ti:3015 | xargs -r kill -9 2>/dev/null || true",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

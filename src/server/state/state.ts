@@ -1,7 +1,7 @@
 import { Transaction, Receipt, TxState } from '@/lib/types';
 import { getTransactionsCollection, getReceiptsCollection } from '@/lib/db/mongo';
 import { classifyTx } from '../classify';
-import { decodeFunctionAndArgs } from '../decoding/decoders';
+import { decodeFunctionAndArgs, decodeTransactionEvents } from '../decoding/decoders';
 
 // In-memory state management with MongoDB persistence
 export class TrackerState {
@@ -34,7 +34,19 @@ export class TrackerState {
           tx._decoded_fn = decoded;
         }
       } catch (error) {
-        console.error(`Failed to decode tx ${hash}:`, error);
+        console.error(`Failed to decode function for tx ${hash}:`, error);
+      }
+    }
+
+    // Decode events if not already decoded and transaction has receipt
+    if (!tx._decoded_events && tx._receipt && tx._state === 'INCLUDED') {
+      try {
+        const decodedEvents = await decodeTransactionEvents(tx);
+        if (decodedEvents.length > 0) {
+          tx._decoded_events = decodedEvents;
+        }
+      } catch (error) {
+        console.error(`Failed to decode events for tx ${hash}:`, error);
       }
     }
 

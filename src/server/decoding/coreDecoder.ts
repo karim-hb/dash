@@ -1,6 +1,8 @@
 import { Transaction, DecodedCall, SwapDetails } from '@/lib/types';
 import { selector, wordAt, hexToNumber, decodeAddressArray } from '@/lib/util/hex';
 import { getAbiRegistry } from './abiRegistry';
+import { getAbiCache } from './abiCache';
+import { Interface } from 'ethers';
 
 // Decoded call result
 export interface DecodeResult {
@@ -19,6 +21,12 @@ export class CoreDecoder {
       const input = tx.input;
       if (!input || input === '0x') {
         return { decoded: false };
+      }
+
+      // Try full contract ABI decoding via etherscan
+      const contractAbiResult = await this.decodeWithContractAbi(tx);
+      if (contractAbiResult) {
+        return { decoded: true, function: contractAbiResult };
       }
 
       // Try ABI-based decoding first
@@ -50,8 +58,11 @@ export class CoreDecoder {
     const sel = selector(input);
     if (!sel) return null;
 
-    const signature = this.registry.resolveSignature(sel);
-    if (!signature) return null;
+    let signature = this.registry.resolveSignature(sel);
+    if (!signature) {
+      signature = await this.registry.resolveSignatureRemote(sel) || null;
+      if (!signature) return null;
+    }
 
     try {
       // Parse signature to extract function name and parameter types
@@ -102,6 +113,38 @@ export class CoreDecoder {
 
     } catch (error) {
       console.error('ABI decode error:', error);
+      return null;
+    }
+  }
+
+  // Decode using on-chain contract ABI via Etherscan + ethers Interface
+  private async decodeWithContractAbi(tx: Transaction): Promise<DecodedCall | null> {
+    const to = tx.to?.toLowerCase();
+    const data = tx.input;
+    if (!to || !data || data === '0x') return null;
+    try {
+      const abi = await (async () => {
+        const cache = getAbiCache();
+        const fromCache = cache.get(to);
+        if (fromCache) return fromCache;
+        return await cache.fetchFromEtherscan(to);
+      })();
+      if (!abi) return null;
+      const iface = new Interface(abi as any);
+      const parsed = iface.parseTransaction({ data });
+      if (!parsed) return null;
+      const args = parsed.functionFragment.inputs.map((inp, idx) => ({
+        name: inp.name || `arg${idx}`,
+        type: inp.format(),
+        value: parsed.args?.[idx]
+      }));
+      return {
+        function: parsed.name,
+        args,
+        confidence: 0.98,
+        decoded: true
+      };
+    } catch (err) {
       return null;
     }
   }

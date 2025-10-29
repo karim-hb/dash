@@ -38,8 +38,32 @@ export class TrackerState {
       }
     }
 
+    // Update state transition history and normalized fields
+    const prev = this.txs.get(hash);
+    const next: Transaction = { ...tx } as Transaction;
+
+    try {
+      // Maintain numeric aliases for inclusion/confirmation if present
+      if (next._inclusion_block) {
+        const num = parseInt(next._inclusion_block, 16);
+        if (!isNaN(num)) next.inclusion_block = num;
+      }
+      if (typeof next._confirmation_depth === 'number') {
+        next.confirmation_depth = next._confirmation_depth;
+      }
+
+      // Initialize state history if missing
+      if (!next.state_history) next.state_history = [];
+
+      // Append state transition if changed
+      const prevState = prev?._state;
+      if (!prevState || prevState !== next._state) {
+        next.state_history.push({ state: next._state, timestamp: Math.floor(Date.now() / 1000) });
+      }
+    } catch {}
+
     // Update in-memory state
-    this.txs.set(hash, { ...tx });
+    this.txs.set(hash, next);
 
     // Persist to MongoDB
     if (this.persistenceEnabled) {
@@ -80,6 +104,12 @@ export class TrackerState {
     tx._state = TxState.INCLUDED;
     tx._inclusion_block = blockNumber;
     tx._inclusion_ts = Date.now() / 1000;
+    try {
+      const num = parseInt(blockNumber, 16);
+      if (!isNaN(num)) tx.inclusion_block = num;
+      if (!tx.state_history) tx.state_history = [];
+      tx.state_history.push({ state: TxState.INCLUDED, timestamp: Math.floor(Date.now() / 1000) });
+    } catch {}
 
     await this.upsert(tx);
   }
@@ -137,12 +167,18 @@ export class TrackerState {
         if (!isNaN(inclusionBlock)) {
           const depth = currentBlock - inclusionBlock;
           tx._confirmation_depth = Math.max(0, depth);
+          tx.confirmation_depth = tx._confirmation_depth;
 
           // Update state based on confirmations
+          const prevState = tx._state;
           if (depth >= 12) {
             tx._state = TxState.FINALIZED;
           } else if (depth >= 1) {
             tx._state = TxState.CONFIRMED;
+          }
+          if (prevState !== tx._state) {
+            if (!tx.state_history) tx.state_history = [];
+            tx.state_history.push({ state: tx._state, timestamp: Math.floor(Date.now() / 1000) });
           }
 
           updates.push(this.upsert(tx));

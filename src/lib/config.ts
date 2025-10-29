@@ -10,6 +10,8 @@ const configSchema = z.object({
   UI_REFRESH_MS: z.string().transform(Number).default('200'),
   RECEIPT_CONCURRENCY: z.string().transform(Number).default('8'),
   TOKEN_CONCURRENCY: z.string().transform(Number).default('4'),
+  ETHERSCAN_API_KEY: z.string().optional(),
+  ETHERSCAN_BASE_URL: z.string().default('https://api.etherscan.io'),
 });
 
 export type Config = z.infer<typeof configSchema>;

@@ -62,6 +62,9 @@ export async function processTxpoolContent(): Promise<void> {
     const state = getTrackerState();
     let updated = 0;
 
+    // Build sender->nonce->txs map to detect replacements
+    const bySenderNonce: Map<string, Map<string, any[]>> = new Map();
+
     // Process pending transactions
     for (const [sender, txs] of Object.entries(content.pending)) {
       for (const [nonce, tx] of Object.entries(txs)) {
@@ -104,6 +107,51 @@ export async function processTxpoolContent(): Promise<void> {
               console.error(`Failed to add txpool tx ${tx.hash}:`, error);
             }
           }
+
+          // Group by sender/nonce for replacement detection
+          const s = sender.toLowerCase();
+          const n = nonce.toString();
+          if (!bySenderNonce.has(s)) bySenderNonce.set(s, new Map());
+          const inner = bySenderNonce.get(s)!;
+          if (!inner.has(n)) inner.set(n, []);
+          inner.get(n)!.push(tx);
+        }
+      }
+    }
+
+    // Detect replacements: same sender and nonce, multiple hashes
+    for (const [sender, byNonce] of bySenderNonce.entries()) {
+      for (const [nonce, txs] of byNonce.entries()) {
+        if (txs.length <= 1) continue;
+        // Sort by effective gas (prefer maxFeePerGas then gasPrice)
+        const withGas = txs.map(t => ({
+          t,
+          gas: parseInt(t.maxFeePerGas || t.gasPrice || '0x0', 16) || 0
+        })).sort((a, b) => b.gas - a.gas);
+        const winner = withGas[0].t;
+        const losers = withGas.slice(1).map(x => x.t);
+
+        for (const loser of losers) {
+          const loserTx = state.getTx(loser.hash);
+          if (loserTx && loserTx._state === TxState.PENDING) {
+            loserTx._state = TxState.REPLACED;
+            loserTx.replaced_by = winner.hash;
+            loserTx.drop_reason = 'replaced_by_higher_gas';
+            if (!loserTx.state_history) loserTx.state_history = [];
+            loserTx.state_history.push({ state: TxState.REPLACED, timestamp: Math.floor(Date.now() / 1000), reason: 'replaced_by_higher_gas' });
+            await state.upsert(loserTx);
+          }
+          // Also set backlink on winner if we have it
+          const winnerTx = state.getTx(winner.hash);
+          if (winnerTx) {
+            winnerTx.replacement_tx = loser.hash;
+            if (winnerTx._state === TxState.PENDING) {
+              winnerTx._state = TxState.RESUBMITTED;
+              if (!winnerTx.state_history) winnerTx.state_history = [];
+              winnerTx.state_history.push({ state: TxState.RESUBMITTED, timestamp: Math.floor(Date.now() / 1000), reason: 'nonce_resubmission' });
+            }
+            await state.upsert(winnerTx);
+          }
         }
       }
     }
@@ -141,8 +189,11 @@ export async function cleanupDroppedTransactions(): Promise<void> {
 
     for (const tx of snapshot.txs) {
       if (tx._state === TxState.PENDING && !pendingHashes.has(tx.hash.toLowerCase())) {
-        // Mark as dropped (might have been included or replaced)
+        // Mark as dropped (not in txpool; may be included or replaced elsewhere)
         tx._state = TxState.DROPPED;
+        tx.drop_reason = tx.drop_reason || 'not_in_txpool';
+        if (!tx.state_history) tx.state_history = [];
+        tx.state_history.push({ state: TxState.DROPPED, timestamp: Math.floor(Date.now() / 1000), reason: tx.drop_reason });
         await state.upsert(tx);
         dropped++;
       }

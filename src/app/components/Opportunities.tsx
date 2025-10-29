@@ -1,6 +1,7 @@
 'use client';
 
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
+import { useFilters } from '../hooks/useFilters';
 
 function short(s: string, n = 10) { return s && s.length > n ? `${s.slice(0, n)}…` : (s || ''); }
 function fmtGwei(hex?: string) { try { return hex ? (parseInt(hex, 16) / 1e9).toFixed(1) : '-'; } catch { return '-'; } }
@@ -67,6 +68,7 @@ function calculateAmount(tx: any): string {
 
 export default function Opportunities() {
   const { snapshot } = useWsSnapshot();
+  const filters = useFilters();
 
   // Get opportunities and enrich with full transaction data from live
   const liveTxs = snapshot?.live || [];
@@ -75,7 +77,7 @@ export default function Opportunities() {
     return { ...opp, ...fullTx };
   }) || [];
 
-  const rows = enrichedOpportunities;
+  const rows = filters.applyFilters(enrichedOpportunities);
 
   return (
     <div className="space-y-6">

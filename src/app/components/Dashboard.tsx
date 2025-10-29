@@ -2,81 +2,52 @@
 
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
 import { useFilters } from '../hooks/useFilters';
-import { useState, useEffect, useMemo } from 'react';
-import Card from './Card';
+import { useState, useEffect } from 'react';
 import Table from './Table';
 import SparklineChart from './charts/SparklineChart';
 import BarChart from './charts/BarChart';
 import TimeSeriesChart from './charts/TimeSeriesChart';
-import HeatmapChart from './charts/HeatmapChart';
 import PieChart from './charts/PieChart';
-import AreaChart from './charts/AreaChart';
-import ScatterPlot from './charts/ScatterPlot';
-import { decodeAddress, getCategoryColor, getAddressLabel } from '../utils/addressDecoder';
 
 export default function Dashboard() {
   const { snapshot } = useWsSnapshot();
   const filters = useFilters();
-  
-  // Real-time data tracking (last 60 seconds)
+
+  // Real-time data tracking
   const [gasPriceHistory, setGasPriceHistory] = useState<number[]>([]);
   const [ingressHistory, setIngressHistory] = useState<Array<{ time: string; ingress: number; egress: number }>>([]);
-  const [gasHeatmapData, setGasHeatmapData] = useState<Array<{ x: string; y: string; value: number }>>([]);
 
   useEffect(() => {
     if (snapshot?.gas?.base_fee) {
       const gasPrice = snapshot.gas.base_fee / 1e9;
       setGasPriceHistory(prev => {
         const newHistory = [...prev, gasPrice];
-        return newHistory.slice(-60); // Keep last 60 data points
+        return newHistory.slice(-60);
       });
     }
 
-    if (snapshot?.summary) {
-      const now = new Date();
-      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-      
-      setIngressHistory(prev => {
-        const newHistory = [...prev, {
-          time: timeStr,
-          ingress: snapshot.summary.ingress_per_sec || 0,
-          egress: snapshot.summary.egress_per_sec || 0
-        }];
-        return newHistory.slice(-20); // Keep last 20 data points (5 minutes at 15s intervals)
-      });
-    }
+    // Always update ingress/egress data, even if summary exists
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+    const ingressValue = snapshot?.summary?.ingress_per_sec || 0;
+    const egressValue = snapshot?.summary?.egress_per_sec || 0;
+
+    setIngressHistory(prev => {
+      const newHistory = [...prev, {
+        time: timeStr,
+        ingress: ingressValue,
+        egress: egressValue
+      }];
+      return newHistory.slice(-20);
+    });
+
   }, [snapshot]);
-
-  // Generate heatmap data for gas prices over time
-  useEffect(() => {
-    if (snapshot?.gas?.base_fee) {
-      const now = new Date();
-      const hour = now.getHours();
-      const minute = Math.floor(now.getMinutes() / 10) * 10;
-      const gasPrice = snapshot.gas.base_fee / 1e9;
-      
-      setGasHeatmapData(prev => {
-        const key = `${hour}:${minute.toString().padStart(2, '0')}`;
-        const existing = prev.find(d => d.x === key);
-        
-        if (existing) {
-          return prev.map(d => d.x === key ? { ...d, value: gasPrice } : d);
-        } else {
-          const newData = [...prev, { x: key, y: 'Gas', value: gasPrice }];
-          return newData.slice(-12); // Keep last 2 hours
-        }
-      });
-    }
-  }, [snapshot?.gas?.base_fee]);
 
   if (!snapshot) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-cyan-500 mx-auto mb-4"></div>
-          <span className="text-slate-400 font-mono text-lg">CONNECTING TO MEMPOOL TERMINAL...</span>
-          <div className="mt-4 text-slate-600 font-mono text-sm">Establishing WebSocket connection</div>
-        </div>
+        <div className="text-gray-600 font-mono text-[10px]">CONNECTING TO MEMPOOL TERMINAL...</div>
       </div>
     );
   }
@@ -94,7 +65,7 @@ export default function Dashboard() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
 
-  // Sender analysis
+  // Sender analysis for Top Senders by Volume
   const senderCounts = new Map<string, number>();
   const senderVolumes = new Map<string, bigint>();
   for (const tx of filteredTxs) {
@@ -106,6 +77,7 @@ export default function Dashboard() {
       senderVolumes.set(key, currentVolume + txValue);
     }
   }
+
   const topSenders = Array.from(senderCounts.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
@@ -119,41 +91,24 @@ export default function Dashboard() {
       count: senderCounts.get(address) || 0
     }));
 
-  // Protocol usage (transaction types)
+  // Protocol usage
   const protocolData = Object.entries(summary.by_type || {})
     .sort(([, a], [, b]) => (b as number) - (a as number))
     .slice(0, 8)
     .map(([name, value]) => ({
       name: name.length > 15 ? name.slice(0, 15) + '...' : name,
-      value: value as number,
-      color: undefined
-    }));
-
-  // Transaction type distribution for bar chart
-  const txTypeDistribution = Object.entries(summary.by_type || {})
-    .sort(([, a], [, b]) => (b as number) - (a as number))
-    .slice(0, 6)
-    .map(([name, value]) => ({
-      name: name.length > 10 ? name.slice(0, 10) + '...' : name,
       value: value as number
     }));
 
-  // Gas buckets for distribution
+  // Gas distribution
   const gasBuckets = summary.gas_buckets || {};
   const gasDistribution = [
-    { name: '≥100G', value: gasBuckets.gte_100 || 0, color: '#10b981' },
-    { name: '≥150G', value: gasBuckets.gte_150 || 0, color: '#f59e0b' },
-    { name: '≥200G', value: gasBuckets.gte_200 || 0, color: '#f97316' },
-    { name: '≥300G', value: gasBuckets.gte_300 || 0, color: '#ef4444' }
+    { name: '≥100G', value: gasBuckets.gte_100 || 0 },
+    { name: '≥150G', value: gasBuckets.gte_150 || 0 },
+    { name: '≥200G', value: gasBuckets.gte_200 || 0 },
+    { name: '≥300G', value: gasBuckets.gte_300 || 0 }
   ];
 
-  // Mempool health indicators
-  const congestionLevel = summary.total_pending > 150 ? 'HIGH' : 
-                          summary.total_pending > 75 ? 'MEDIUM' : 'LOW';
-  const congestionColor = congestionLevel === 'HIGH' ? 'text-red-400' :
-                          congestionLevel === 'MEDIUM' ? 'text-yellow-400' : 'text-green-400';
-  const avgWaitTime = summary.age_p50?.toFixed(1) || '—';
-  
   // Gas oracle data
   const baseFee = gas?.base_fee ? (gas.base_fee / 1e9).toFixed(2) : '—';
   const priorityFees = {
@@ -162,392 +117,485 @@ export default function Dashboard() {
     standard: gas?.tips?.['5_blocks'] || 0
   };
 
-  // Transaction value distribution (histogram data)
-  const valueRanges = [
-    { name: '0-0.01', min: 0, max: 0.01 },
-    { name: '0.01-0.1', min: 0.01, max: 0.1 },
-    { name: '0.1-1', min: 0.1, max: 1 },
-    { name: '1-10', min: 1, max: 10 },
-    { name: '>10', min: 10, max: Infinity }
-  ];
-  const valueDist = valueRanges.map(range => {
-    const count = filteredTxs.filter(tx => {
-      const value = tx.value ? Number(BigInt(tx.value)) / 1e18 : 0;
-      return value >= range.min && value < range.max;
-    }).length;
-    return { name: range.name + ' ETH', value: count };
-  });
+  // Mempool health indicators
+  const congestionLevel = summary.total_pending > 150 ? 'HIGH' :
+                          summary.total_pending > 75 ? 'MEDIUM' : 'LOW';
+  const congestionColor = congestionLevel === 'HIGH' ? 'text-red-400' :
+                          congestionLevel === 'MEDIUM' ? 'text-yellow-400' : 'text-green-400';
+  const avgWaitTime = summary.age_p50?.toFixed(1) || '—';
 
-  // State flow visualization data
-  const stateFlowData = Object.entries(summary.state_counts || {}).map(([state, count]) => ({
-    name: state.toUpperCase(),
-    value: count as number
-  }));
-
-  const contractColumns = [
-    {
-      key: 'rank',
-      header: 'RANK',
-      render: (_: any, __: any, index: number) => (
-        <span className="inline-flex items-center justify-center w-7 h-7 bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-full font-mono shadow-lg">
-          {index + 1}
-        </span>
-      ),
-      className: 'w-16 text-center'
-    },
-    {
-      key: 'address',
-      header: 'CONTRACT',
-      render: (value: string) => {
-        const decoded = decodeAddress(value);
-        return (
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-              {decoded.label ? (
-                <span className={`font-mono text-sm font-semibold ${getCategoryColor(decoded.category)}`}>
-                  {decoded.label}
-                </span>
-              ) : (
-                <span className="font-mono text-cyan-300 text-sm tracking-wider">
-                  {value.slice(0, 8)}...{value.slice(-6)}
-                </span>
-              )}
-            </div>
-            {decoded.category && (
-              <span className="text-xs text-slate-500 font-mono ml-4">
-                {decoded.category}
-              </span>
-            )}
-          </div>
-        );
-      },
-      className: 'font-mono'
-    },
-    {
-      key: 'count',
-      header: 'TXS',
-      render: (value: number) => (
-        <span className="terminal-badge text-cyan-400 font-bold">{value}</span>
-      ),
-      className: 'text-center'
-    }
-  ];
-
-  const senderColumns = [
-    {
-      key: 'rank',
-      header: 'RANK',
-      render: (_: any, __: any, index: number) => (
-        <span className="inline-flex items-center justify-center w-7 h-7 bg-gradient-to-br from-purple-500 to-pink-600 text-white text-xs font-bold rounded-full font-mono shadow-lg">
-          {index + 1}
-        </span>
-      ),
-      className: 'w-16 text-center'
-    },
-    {
-      key: 'address',
-      header: 'SENDER',
-      render: (value: string) => {
-        const decoded = decodeAddress(value);
-        return (
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-              {decoded.label ? (
-                <span className={`font-mono text-sm font-semibold ${getCategoryColor(decoded.category)}`}>
-                  {decoded.label}
-                </span>
-              ) : (
-                <span className="font-mono text-purple-300 text-sm tracking-wider">
-                  {value.slice(0, 8)}...{value.slice(-6)}
-                </span>
-              )}
-            </div>
-            {decoded.category && (
-              <span className="text-xs text-slate-500 font-mono ml-4">
-                {decoded.category}
-              </span>
-            )}
-          </div>
-        );
-      },
-      className: 'font-mono'
-    },
-    {
-      key: 'count',
-      header: 'TXS',
-      render: (value: number) => (
-        <span className="terminal-badge text-purple-400 font-bold">{value}</span>
-      ),
-      className: 'text-center'
-    }
-  ];
-
+  // Top Senders by Volume columns with ranking colors
   const volumeColumns = [
-    ...senderColumns.slice(0, 2),
+    {
+      key: 'rank',
+      header: '#',
+      render: (_: any, __: any, index: number) => {
+        const rank = index + 1;
+        const rankStr = rank.toString().padStart(2, '0');
+        let colorClass = 'text-gray-600';
+        if (rank === 1) colorClass = 'text-yellow-400';
+        else if (rank === 2) colorClass = 'text-gray-400';
+        else if (rank === 3) colorClass = 'text-orange-500';
+        else if (rank <= 5) colorClass = 'text-emerald-400';
+        else if (rank <= 10) colorClass = 'text-sky-400';
+        return <span className={`${colorClass} font-mono font-bold`}>{rankStr}</span>;
+      },
+      className: 'font-mono'
+    },
+    {
+      key: 'address',
+      header: 'Address',
+      render: (value: string) => (
+        <span className="font-mono text-cyan-400 hover:text-cyan-300 cursor-pointer">
+          {value.slice(0, 6)}...{value.slice(-4)}
+        </span>
+      ),
+      className: 'font-mono'
+    },
     {
       key: 'volume',
-      header: 'VOLUME (ETH)',
-      render: (value: number) => (
-        <span className="terminal-badge text-emerald-400 font-bold">
-          {value.toFixed(4)}
-        </span>
-      ),
-      className: 'text-center'
+      header: 'Volume (ETH)',
+      render: (value: number) => {
+        if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+        if (value >= 1) return value.toFixed(3);
+        if (value >= 0.001) return `${(value * 1000).toFixed(0)}m`;
+        return `${(value * 1e6).toFixed(0)}μ`;
+      },
+      className: 'text-green-400 font-medium font-mono'
     },
     {
       key: 'count',
-      header: 'TXS',
-      render: (value: number) => (
-        <span className="terminal-badge text-blue-400 font-bold">{value}</span>
-      ),
-      className: 'text-center'
+      header: 'Tx Count',
+      render: (value: number) => value.toLocaleString(),
+      className: 'text-blue-400 font-mono'
     }
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Hero Stats - Bloomberg Style */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { 
-            label: 'PENDING TXS', 
-            value: summary.total_pending || 0, 
-            icon: '📥', 
-            color: 'from-blue-500/20 to-cyan-500/20',
-            textColor: 'text-cyan-400',
-            trend: gasPriceHistory.length > 0 ? gasPriceHistory : []
-          },
-          { 
-            label: 'QUEUED TXS', 
-            value: summary.total_queued || 0, 
-            icon: '⏳', 
-            color: 'from-orange-500/20 to-yellow-500/20',
-            textColor: 'text-yellow-400',
-            trend: []
-          },
-          { 
-            label: 'BASE FEE', 
-            value: baseFee, 
-            unit: 'GWEI',
-            icon: '⛽', 
-            color: 'from-purple-500/20 to-pink-500/20',
-            textColor: 'text-pink-400',
-            trend: gasPriceHistory
-          },
-          { 
-            label: 'INGRESS/SEC', 
-            value: summary.ingress_per_sec?.toFixed(1) || '0.0', 
-            icon: '⬆️', 
-            color: 'from-green-500/20 to-emerald-500/20',
-            textColor: 'text-emerald-400',
-            trend: ingressHistory.map(d => d.ingress)
-          }
-        ].map((stat, index) => (
-          <div key={index} className={`glass-card border border-slate-700/50 p-5 bg-gradient-to-br ${stat.color} relative overflow-hidden group hover:scale-105 transition-transform duration-200`}>
-            <div className="absolute top-0 right-0 text-6xl opacity-5 group-hover:opacity-10 transition-opacity">
-              {stat.icon}
-            </div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-lg">{stat.icon}</span>
-                <span className="text-xs text-slate-500 font-mono uppercase tracking-wider border border-slate-600/50 px-2 py-1 rounded bg-black/20">
-                  LIVE
-                </span>
-              </div>
-              <div className="text-xs text-slate-400 font-mono uppercase tracking-wider font-semibold mb-2">
-                {stat.label}
-              </div>
-              <div className={`text-3xl font-bold font-mono ${stat.textColor} mb-2`}>
-                {stat.value}
-                {stat.unit && <span className="text-sm ml-1 text-slate-500">{stat.unit}</span>}
-              </div>
-              {stat.trend && stat.trend.length > 5 && (
-                <SparklineChart data={stat.trend} color={stat.textColor.replace('text-', '#')} height={30} />
-              )}
-            </div>
+    <div className="space-y-3">
+      {/* Key Metrics Row */}
+      <div className="grid grid-cols-4 gap-1.5">
+        <div className="bg-gray-900 border border-gray-800 px-1.5 py-1">
+          <div className="text-gray-600 font-mono text-[6px] tracking-widest mb-0.5">PENDING</div>
+          <div className="text-emerald-400 font-mono text-[10px] font-bold">{summary.total_pending || 0}</div>
+        </div>
+        <div className="bg-gray-900 border border-gray-800 px-1.5 py-1">
+          <div className="text-gray-600 font-mono text-[6px] tracking-widest mb-0.5">BASE FEE</div>
+          <div className="text-amber-400 font-mono text-[10px] font-bold">{baseFee}G</div>
+        </div>
+        <div className="bg-gray-900 border border-gray-800 px-1.5 py-1">
+          <div className="text-gray-600 font-mono text-[6px] tracking-widest mb-0.5">CONGESTION</div>
+          <div className={`font-mono text-[10px] font-bold ${congestionColor}`}>{congestionLevel}</div>
+        </div>
+        <div className="bg-gray-900 border border-gray-800 px-1.5 py-1">
+          <div className="text-gray-600 font-mono text-[6px] tracking-widest mb-0.5">SUCCESS</div>
+          <div className="text-sky-400 font-mono text-[10px] font-bold">
+            {summary.success_rate ? (summary.success_rate * 100).toFixed(0) : '—'}%
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Gas Oracle & Mempool Health */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Gas Oracle */}
-        <Card title="⛽ GAS ORACLE" variant="terminal" className="border-2 border-cyan-500/30">
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: 'RAPID', value: priorityFees.rapid, time: '~15s', color: 'from-red-500/20 to-orange-500/20', badge: 'text-red-400' },
-                { label: 'FAST', value: priorityFees.fast, time: '~45s', color: 'from-yellow-500/20 to-orange-500/20', badge: 'text-yellow-400' },
-                { label: 'STANDARD', value: priorityFees.standard, time: '~75s', color: 'from-green-500/20 to-blue-500/20', badge: 'text-green-400' }
-              ].map((tier, idx) => (
-                <div key={idx} className={`glass-card border border-slate-700/50 p-4 bg-gradient-to-br ${tier.color}`}>
-                  <div className="text-xs text-slate-400 font-mono uppercase mb-2">{tier.label}</div>
-                  <div className={`text-2xl font-bold font-mono ${tier.badge} mb-1`}>{tier.value}</div>
-                  <div className="text-xs text-slate-500 font-mono">{tier.time}</div>
-                </div>
-              ))}
+        <div className="bg-gray-900 border border-gray-800">
+          <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-emerald-400 text-[8px]">⛽</span>
+              <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">
+                GAS ORACLE
+              </h2>
             </div>
-            
-            <div className="glass-card border border-slate-700/30 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-mono font-semibold text-slate-300">BASE FEE TREND (60s)</span>
-                <span className="text-xs text-cyan-400 font-mono">{baseFee} GWEI</span>
+          </div>
+          <div className="p-1.5">
+            <div className="grid grid-cols-3 gap-1.5">
+              <div className="bg-gray-900 border border-gray-800 px-1.5 py-1">
+                <div className="text-gray-600 font-mono text-[7px] tracking-widest mb-0.5">RAPID</div>
+                <div className="text-red-400 font-mono text-[9px] font-bold">{priorityFees.rapid}</div>
+                <div className="text-gray-700 font-mono text-[6px]">~15s</div>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 px-1.5 py-1">
+                <div className="text-gray-600 font-mono text-[7px] tracking-widest mb-0.5">FAST</div>
+                <div className="text-yellow-400 font-mono text-[9px] font-bold">{priorityFees.fast}</div>
+                <div className="text-gray-700 font-mono text-[6px]">~45s</div>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 px-1.5 py-1">
+                <div className="text-gray-600 font-mono text-[7px] tracking-widest mb-0.5">STANDARD</div>
+                <div className="text-green-400 font-mono text-[9px] font-bold">{priorityFees.standard}</div>
+                <div className="text-gray-700 font-mono text-[6px]">~75s</div>
+              </div>
+            </div>
+
+            <div className="mt-1.5 bg-gray-900 border border-gray-800 px-1.5 py-1">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-gray-400 font-mono text-[6px] tracking-widest">TREND (60s)</span>
+                <span className="text-cyan-400 font-mono text-[6px]">{baseFee}G</span>
               </div>
               {gasPriceHistory.length > 0 && (
-                <SparklineChart data={gasPriceHistory} color="#06b6d4" height={60} />
+                <SparklineChart data={gasPriceHistory} color="#06b6d4" height={30} />
               )}
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Mempool Health */}
-        <Card title="🏥 MEMPOOL HEALTH" variant="terminal" className="border-2 border-emerald-500/30">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="glass-card border border-slate-700/50 p-4">
-                <div className="text-xs text-slate-400 font-mono uppercase mb-2">CONGESTION</div>
-                <div className={`text-2xl font-bold font-mono ${congestionColor} mb-1`}>{congestionLevel}</div>
-                <div className="text-xs text-slate-500 font-mono">{summary.total_pending} pending</div>
+        <div className="bg-gray-900 border border-gray-800">
+          <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-emerald-400 text-[8px]">🏥</span>
+              <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">
+                MEMPOOL HEALTH
+              </h2>
+            </div>
+          </div>
+          <div className="p-1.5">
+            <div className="grid grid-cols-2 gap-1">
+              <div className="bg-gray-900 border border-gray-800 px-1 py-0.5">
+                <div className="text-gray-600 font-mono text-[6px] tracking-widest mb-0.5">CONGESTION</div>
+                <div className={`font-mono text-[8px] font-bold ${congestionColor}`}>{congestionLevel}</div>
+                <div className="text-gray-700 font-mono text-[5px]">{summary.total_pending} pending</div>
               </div>
-              <div className="glass-card border border-slate-700/50 p-4">
-                <div className="text-xs text-slate-400 font-mono uppercase mb-2">AVG WAIT</div>
-                <div className="text-2xl font-bold font-mono text-blue-400 mb-1">{avgWaitTime}s</div>
-                <div className="text-xs text-slate-500 font-mono">P50 latency</div>
+              <div className="bg-gray-900 border border-gray-800 px-1 py-0.5">
+                <div className="text-gray-600 font-mono text-[6px] tracking-widest mb-0.5">AVG WAIT</div>
+                <div className="text-blue-400 font-mono text-[8px] font-bold">{avgWaitTime}s</div>
+                <div className="text-gray-700 font-mono text-[5px]">P50 latency</div>
               </div>
-              <div className="glass-card border border-slate-700/50 p-4">
-                <div className="text-xs text-slate-400 font-mono uppercase mb-2">SUCCESS RATE</div>
-                <div className="text-2xl font-bold font-mono text-green-400 mb-1">
+              <div className="bg-gray-900 border border-gray-800 px-1 py-0.5">
+                <div className="text-gray-600 font-mono text-[6px] tracking-widest mb-0.5">SUCCESS</div>
+                <div className="text-green-400 font-mono text-[8px] font-bold">
                   {summary.success_rate ? (summary.success_rate * 100).toFixed(0) : '—'}%
                 </div>
-                <div className="text-xs text-slate-500 font-mono">Inclusion rate</div>
+                <div className="text-gray-700 font-mono text-[5px]">Inclusion</div>
               </div>
-              <div className="glass-card border border-slate-700/50 p-4">
-                <div className="text-xs text-slate-400 font-mono uppercase mb-2">RPC LATENCY</div>
-                <div className="text-2xl font-bold font-mono text-purple-400 mb-1">
-                  {status.rpc_latency_ms || '—'}ms
+              <div className="bg-gray-900 border border-gray-800 px-1 py-0.5">
+                <div className="text-gray-600 font-mono text-[6px] tracking-widest mb-0.5">RPC</div>
+                <div className="text-purple-400 font-mono text-[8px] font-bold">
+                  {status?.rpc_latency_ms || '—'}ms
                 </div>
-                <div className="text-xs text-slate-500 font-mono">Response time</div>
+                <div className="text-gray-700 font-mono text-[5px]">Response</div>
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Charts Row 1: Gas Distribution & Ingress/Egress */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="📊 GAS PRICE DISTRIBUTION" variant="terminal">
-          <BarChart data={gasDistribution} height={280} />
-        </Card>
-        
-        <Card title="📈 INGRESS/EGRESS RATES (5min)" variant="terminal">
-          {ingressHistory.length > 0 && (
-            <TimeSeriesChart
-              data={ingressHistory}
-              lines={[
-                { dataKey: 'ingress', color: '#10b981', name: 'Ingress' },
-                { dataKey: 'egress', color: '#ef4444', name: 'Egress' }
-              ]}
-              height={280}
-            />
-          )}
-        </Card>
-      </div>
-
-      {/* Charts Row 2: Transaction Types & Protocol Usage */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="🏷️ TX TYPE DISTRIBUTION" variant="terminal">
-          <BarChart data={txTypeDistribution} height={280} />
-        </Card>
-        
-        <Card title="🔮 PROTOCOL USAGE" variant="terminal">
-          {protocolData.length > 0 && (
-            <PieChart data={protocolData} height={280} innerRadius={50} />
-          )}
-        </Card>
-      </div>
-
-      {/* Charts Row 3: Transaction Value Distribution & State Flow */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="💰 TX VALUE DISTRIBUTION" variant="terminal">
-          <BarChart data={valueDist} height={280} />
-        </Card>
-        
-        <Card title="🌊 TRANSACTION STATE FLOW" variant="terminal">
-          {stateFlowData.length > 0 && (
-            <PieChart data={stateFlowData} height={280} />
-          )}
-        </Card>
-      </div>
-
-      {/* Gas Price Heatmap */}
-      {gasHeatmapData.length > 0 && (
-        <Card title="🔥 GAS PRICE HEATMAP (2h)" variant="terminal">
-          <div className="overflow-x-auto">
-            <HeatmapChart
-              data={gasHeatmapData}
-              width={800}
-              height={100}
-              colorScale={{ min: '#1e293b', max: '#06b6d4' }}
-            />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="bg-gray-900 border border-gray-800">
+          <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-emerald-400 text-[8px]">📊</span>
+              <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">
+                GAS PRICE DISTRIBUTION
+              </h2>
+            </div>
           </div>
-        </Card>
-      )}
+          <div className="p-2">
+            <div className="space-y-2">
+              {gasDistribution.map((item, index) => {
+                const maxValue = Math.max(...gasDistribution.map(d => d.value));
+                const barWidth = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
 
-      {/* Top Contracts & Top Senders */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="🏛️ TOP CONTRACTS (Interactions)" variant="terminal" badge={`${topContracts.length} ACTIVE`}>
-          <Table
-            data={topContracts.map(([address, count]) => ({ address, count }))}
-            columns={contractColumns}
-            emptyMessage="[NO CONTRACT ACTIVITY]"
-          />
-        </Card>
-        
-        <Card title="👤 TOP SENDERS (Activity)" variant="terminal" badge={`${topSenders.length} ACTIVE`}>
-          <Table
-            data={topSenders.map(([address, count]) => ({ address, count }))}
-            columns={senderColumns}
-            emptyMessage="[NO SENDER ACTIVITY]"
-          />
-        </Card>
-      </div>
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="text-gray-400 font-mono text-[6px] w-10 truncate">
+                      {item.name}
+                    </div>
+                    <div className="flex-1 bg-gray-800 rounded-sm h-3 relative">
+                      <div
+                        className="bg-gradient-to-r from-cyan-600 to-cyan-400 h-full rounded-sm transition-all duration-300"
+                        style={{ width: `${barWidth}%` }}
+                      />
+                    </div>
+                    <div className="text-cyan-400 font-mono text-[6px] w-10 text-right">
+                      {item.value.toLocaleString()}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {gasDistribution.length === 0 && (
+              <div className="text-gray-600 font-mono text-[7px] text-center py-4">
+                [NO GAS DATA]
+              </div>
+            )}
+          </div>
+        </div>
 
-      {/* Top Senders by Volume */}
-      <Card title="💎 TOP SENDERS BY VOLUME (Last Hour)" variant="terminal" badge={`${topSendersByVolume.length} HIGH VALUE`}>
-        <Table
-          data={topSendersByVolume}
-          columns={volumeColumns}
-          emptyMessage="[NO VOLUME DATA]"
-        />
-      </Card>
+        <div className="bg-gray-900 border border-gray-800">
+          <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-emerald-400 text-[8px]">📈</span>
+              <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">
+                INGRESS/EGRESS RATES
+              </h2>
+            </div>
+          </div>
+          <div className="p-2">
+            {ingressHistory.length > 0 ? (
+              <div className="space-y-2">
+                <div className="flex justify-center">
+                  <TimeSeriesChart
+                    data={ingressHistory.slice(-10)}
+                    lines={[
+                      { dataKey: 'ingress', color: '#10b981', name: 'Ingress' },
+                      { dataKey: 'egress', color: '#ef4444', name: 'Egress' }
+                    ]}
+                    height={100}
+                  />
+                </div>
 
-      {/* System Status */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { label: 'WEBSOCKET', value: 'CONNECTED', icon: '🔗', status: 'success' },
-          { label: 'SUBSCRIPTIONS', value: (status.subscriptions_active || []).length, icon: '📡', status: 'success' },
-          { label: 'ERRORS', value: (status.errors || []).length, icon: status.errors?.length ? '🚨' : '✅', status: status.errors?.length ? 'error' : 'success' }
-        ].map((item, idx) => (
-          <div key={idx} className={`glass-card border p-4 ${
-            item.status === 'success' ? 'border-green-500/30' : 'border-red-500/30'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{item.icon}</span>
-                <div>
-                  <div className="text-xs font-mono text-slate-400 uppercase">{item.label}</div>
-                  <div className={`text-lg font-mono font-bold ${
-                    item.status === 'success' ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    {item.value}
+                {/* Current Values */}
+                <div className="flex justify-between items-center text-[6px] font-mono">
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                    <span className="text-green-400">IN:</span>
+                    <span className="text-gray-300">{ingressHistory[ingressHistory.length - 1]?.ingress || 0}/s</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                    <span className="text-red-400">OUT:</span>
+                    <span className="text-gray-300">{ingressHistory[ingressHistory.length - 1]?.egress || 0}/s</span>
                   </div>
                 </div>
               </div>
+            ) : (
+              <div className="text-gray-600 font-mono text-[7px] text-center py-6">
+                [NO FLOW DATA]
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Row 2: Transaction Types & Protocol Usage */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="bg-gray-900 border border-gray-800">
+          <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-emerald-400 text-[8px]">🏷️</span>
+              <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">
+                TX TYPE DISTRIBUTION
+              </h2>
             </div>
           </div>
-        ))}
+          <div className="p-2">
+            {/* Custom TX Type Visualization - Vertical Bars (different from gas distribution) */}
+            <div className="flex flex-col items-center">
+              <div className="grid grid-cols-3 gap-1 w-full max-h-24 overflow-y-auto">
+                {protocolData.map((item, index) => {
+                  const percentage = protocolData.length > 0 ? (item.value / protocolData.reduce((sum, d) => sum + d.value, 0)) * 100 : 0;
+                  const barHeight = Math.max(percentage * 0.8, 4); // Minimum 4px height
+
+                  return (
+                    <div key={index} className="flex flex-col items-center gap-1">
+                      <div className="text-gray-400 font-mono text-[6px] text-center w-full truncate" title={item.name}>
+                        {item.name.length > 8 ? `${item.name.substring(0, 8)}...` : item.name}
+                      </div>
+                      <div className="bg-gray-800 rounded-sm w-4 h-12 relative flex items-end">
+                        <div
+                          className="bg-gradient-to-t from-sky-600 to-sky-400 w-full rounded-sm transition-all duration-300"
+                          style={{ height: `${barHeight}%` }}
+                        />
+                      </div>
+                      <div className="text-sky-400 font-mono text-[6px] text-center">
+                        {percentage.toFixed(0)}%
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {protocolData.length === 0 && (
+              <div className="text-gray-600 font-mono text-[7px] text-center py-4">
+                [NO TX TYPE DATA]
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-gray-900 border border-gray-800">
+          <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-emerald-400 text-[8px]">🔮</span>
+              <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">
+                PROTOCOL USAGE
+              </h2>
+            </div>
+          </div>
+          <div className="p-2">
+            {protocolData.length > 0 ? (
+              <div className="space-y-2">
+                {/* Mini Pie Chart */}
+                <div className="flex justify-center">
+                  <PieChart data={protocolData.slice(0, 5)} height={120} innerRadius={25} />
+                </div>
+
+                {/* Protocol Legend */}
+                <div className="grid grid-cols-1 gap-1 max-h-20 overflow-y-auto">
+                  {protocolData.slice(0, 6).map((item, index) => {
+                    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+                    return (
+                      <div key={index} className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: colors[index % colors.length] }}
+                        />
+                        <span className="text-gray-400 font-mono text-[6px] truncate flex-1">
+                          {item.name}
+                        </span>
+                        <span className="text-gray-500 font-mono text-[6px] w-8 text-right">
+                          {item.value}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="text-gray-600 font-mono text-[7px] text-center py-6">
+                [NO PROTOCOL DATA]
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Top Contracts & Top Senders by Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="bg-gray-900 border border-gray-800">
+          <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-emerald-400 text-[8px]">🏛️</span>
+              <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">
+                TOP CONTRACTS
+              </h2>
+              <div className="px-1 py-0.5 bg-emerald-900 text-emerald-300 text-[6px] font-mono border border-emerald-700">
+                {topContracts.length} ACTIVE
+              </div>
+            </div>
+          </div>
+          <div className="p-1.5">
+            <Table
+              data={topContracts.map(([address, count]) => ({ address, count }))}
+              columns={[
+                {
+                  key: 'rank',
+                  header: '#',
+                  render: (_: any, __: any, index: number) => (index + 1).toString(),
+                  className: 'text-cyan-400 font-mono font-bold'
+                },
+                {
+                  key: 'address',
+                  header: 'Address',
+                  render: (value: string) => `${value.slice(0, 6)}...${value.slice(-4)}`,
+                  className: 'font-mono text-cyan-400'
+                },
+                {
+                  key: 'count',
+                  header: 'Txs',
+                  render: (value: number) => value.toString(),
+                  className: 'text-cyan-400 font-mono'
+                }
+              ]}
+              emptyMessage="[NO CONTRACT ACTIVITY]"
+              density="compact"
+            />
+          </div>
+        </div>
+
+        <div className="bg-gray-900 border border-gray-800">
+          <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+            <div className="flex items-center gap-1">
+              <span className="text-emerald-400 text-[8px]">👤</span>
+              <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">
+                TOP SENDERS BY ACTIVITY
+              </h2>
+              <div className="px-1 py-0.5 bg-emerald-900 text-emerald-300 text-[6px] font-mono border border-emerald-700">
+                {topSenders.length} ACTIVE
+              </div>
+            </div>
+          </div>
+          <div className="p-1.5">
+            <Table
+              data={topSenders.map(([address, count]) => ({ address, count }))}
+              columns={[
+                {
+                  key: 'rank',
+                  header: '#',
+                  render: (_: any, __: any, index: number) => (index + 1).toString(),
+                  className: 'text-purple-400 font-mono font-bold'
+                },
+                {
+                  key: 'address',
+                  header: 'Address',
+                  render: (value: string) => `${value.slice(0, 6)}...${value.slice(-4)}`,
+                  className: 'font-mono text-purple-400'
+                },
+                {
+                  key: 'count',
+                  header: 'Txs',
+                  render: (value: number) => value.toString(),
+                  className: 'text-purple-400 font-mono'
+                }
+              ]}
+              emptyMessage="[NO SENDER ACTIVITY]"
+              density="compact"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Top Senders by Volume */}
+      <div className="bg-gray-900 border border-gray-800">
+        <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+          <div className="flex items-center gap-1">
+            <span className="text-emerald-400 text-[8px]">💎</span>
+            <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">
+              TOP SENDERS BY VOLUME
+            </h2>
+            <div className="px-1 py-0.5 bg-emerald-900 text-emerald-300 text-[6px] font-mono border border-emerald-700">
+              {topSendersByVolume.length} HIGH VALUE
+            </div>
+          </div>
+        </div>
+        <div className="p-1.5">
+          <Table
+            data={topSendersByVolume}
+            columns={volumeColumns}
+            emptyMessage="[NO VOLUME DATA...]"
+            density="compact"
+          />
+        </div>
+      </div>
+
+      {/* System Status */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div className="bg-gray-900 border border-gray-800 px-2 py-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-green-400 text-[8px]">🔗</span>
+            <span className="text-gray-400 font-mono text-[7px] tracking-widest">WEBSOCKET</span>
+          </div>
+          <div className="text-green-400 font-mono text-[8px] font-bold">CONNECTED</div>
+        </div>
+        <div className="bg-gray-900 border border-gray-800 px-2 py-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-blue-400 text-[8px]">📡</span>
+            <span className="text-gray-400 font-mono text-[7px] tracking-widest">SUBSCRIPTIONS</span>
+          </div>
+          <div className="text-blue-400 font-mono text-[8px] font-bold">{(status?.subscriptions_active || []).length}</div>
+        </div>
+        <div className="bg-gray-900 border border-gray-800 px-2 py-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`${(status?.errors || []).length ? 'text-red-400' : 'text-green-400'} text-[8px]`}>
+              {(status?.errors || []).length ? '🚨' : '✅'}
+            </span>
+            <span className="text-gray-400 font-mono text-[7px] tracking-widest">ERRORS</span>
+          </div>
+          <div className={`font-mono text-[8px] font-bold ${(status?.errors || []).length ? 'text-red-400' : 'text-green-400'}`}>
+            {(status?.errors || []).length}
+          </div>
+        </div>
       </div>
     </div>
   );

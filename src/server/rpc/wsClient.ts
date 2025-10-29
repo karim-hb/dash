@@ -48,8 +48,9 @@ export class WsJsonRpc extends EventEmitter {
       try {
         const fs = require('fs');
         this.jwtSecret = fs.readFileSync(jwtPath, 'utf8').trim();
-        if (this.jwtSecret.startsWith('0x')) {
-          this.jwtSecret = this.jwtSecret.slice(2);
+        const j = this.jwtSecret;
+        if (j && j.startsWith('0x')) {
+          this.jwtSecret = j.slice(2);
         }
       } catch (error) {
         console.warn('Failed to load JWT:', error);
@@ -165,6 +166,16 @@ export class WsJsonRpc extends EventEmitter {
     }
 
     const subscriptionId = await this.rpc('eth_subscribe', [event]);
+    this.subscriptions.set(subscriptionId, callback);
+    return subscriptionId;
+  }
+
+  // Subscribe to logs with filter
+  async subscribeLogs(filter: any, callback: (data: any) => void): Promise<string> {
+    if (!this.connected) {
+      await this.connect();
+    }
+    const subscriptionId = await this.rpc('eth_subscribe', ['logs', filter]);
     this.subscriptions.set(subscriptionId, callback);
     return subscriptionId;
   }

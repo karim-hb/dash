@@ -12,6 +12,20 @@ const configSchema = z.object({
   TOKEN_CONCURRENCY: z.string().transform(Number).default('4'),
   ETHERSCAN_API_KEY: z.string().optional(),
   ETHERSCAN_BASE_URL: z.string().default('https://api.etherscan.io'),
+  // Feature toggles
+  ENABLE_AMM_UNIV2: z.string().transform(v => v === 'true').default('true'),
+  ENABLE_AMM_UNIV3: z.string().transform(v => v === 'true').default('true'),
+  ENABLE_SUSHI: z.string().transform(v => v === 'true').default('true'),
+  ENABLE_CURVE: z.string().transform(v => v === 'true').default('false'),
+  ENABLE_BALANCER: z.string().transform(v => v === 'true').default('false'),
+  ENABLE_ORACLES: z.string().transform(v => v === 'true').default('true'),
+  ENABLE_CHAINLINK: z.string().transform(v => v === 'true').default('true'),
+  ENABLE_COINGECKO: z.string().transform(v => v === 'true').default('false'),
+  // Oracle settings
+  CG_RATE_LIMIT_QPM: z.string().transform(Number).default('60'),
+  BACKFILL_BLOCKS: z.string().transform(Number).default('5000'),
+  ETH_USD_FEED: z.string().default('0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419'),
+  ORACLE_HEARTBEAT_SLACK_SEC: z.string().transform(Number).default('3600'),
 });
 
 export type Config = z.infer<typeof configSchema>;

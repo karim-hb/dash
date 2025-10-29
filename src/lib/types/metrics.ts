@@ -108,6 +108,42 @@ export const UiSnapshotSchema = z.object({
     subscriptions_active: z.array(z.string()),
     errors: z.array(z.string()),
   }).optional(),
+  // New: market data
+  tokens: z.array(z.object({
+    address: z.string(),
+    symbol: z.string(),
+    decimals: z.number(),
+    price_usd: z.number().nullable(),
+    change_24h: z.number().nullable().optional(),
+    volume_24h_usd: z.number().nullable().optional(),
+    mcap_onchain_usd: z.number().nullable().optional(),
+    mcap_circ_usd: z.number().nullable().optional(),
+    holders_est: z.number().nullable().optional(),
+    liquidity_usd: z.number().nullable().optional(),
+    primary_pool: z.string().nullable().optional(),
+  })).optional(),
+  pools: z.array(z.object({
+    dex: z.string(),
+    version: z.string(),
+    address: z.string(),
+    token0: z.string(),
+    token1: z.string(),
+    fee_bps: z.number().nullable().optional(),
+    tvl_usd: z.number().nullable().optional(),
+    volume_24h_usd: z.number().nullable().optional(),
+    fees_24h_usd: z.number().nullable().optional(),
+    utilization: z.number().nullable().optional(),
+  })).optional(),
+  oracles: z.array(z.object({
+    provider: z.string(),
+    pair: z.string(),
+    feed_address: z.string().nullable().optional(),
+    price_usd: z.number().nullable(),
+    last_updated: z.number().nullable().optional(),
+    heartbeat_sec: z.number().nullable().optional(),
+    status: z.enum(['healthy','stale','error']).optional(),
+    deviation_vs_spot_pct: z.number().nullable().optional(),
+  })).optional(),
 });
 
 export type UiSnapshot = z.infer<typeof UiSnapshotSchema>;

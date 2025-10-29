@@ -26,21 +26,21 @@ export default function Card({
   variant = 'default'
 }: CardProps) {
   const baseClasses = {
-    default: "bloomberg-card border-2 border-slate-700/60",
-    terminal: "bloomberg-card border-2 border-slate-700/60",
-    metric: "bloomberg-card border-2 border-slate-700/60"
+    default: "bg-black border border-gray-800",
+    terminal: "bg-black border border-gray-800",
+    metric: "bg-black border border-gray-800"
   };
 
   const headerClasses = {
-    default: `px-8 py-5 border-b-2 border-slate-700/60 bg-slate-950/90 bloomberg-header ${headerClassName}`,
-    terminal: `px-8 py-4 border-b-2 border-slate-700/60 bg-slate-950/90 bloomberg-header font-mono ${headerClassName}`,
-    metric: `px-8 py-5 border-b-2 border-slate-700/60 bg-slate-950/90 bloomberg-header ${headerClassName}`
+    default: `px-2 py-1 border-b border-gray-800 bg-gray-900 ${headerClassName}`,
+    terminal: `px-2 py-0.5 border-b border-gray-800 bg-gray-900 font-mono ${headerClassName}`,
+    metric: `px-2 py-1 border-b border-gray-800 bg-gray-900 ${headerClassName}`
   };
 
   const contentClasses = {
-    default: `p-8 ${contentClassName}`,
-    terminal: `p-8 ${contentClassName}`,
-    metric: `p-8 ${contentClassName}`
+    default: `p-2 ${contentClassName}`,
+    terminal: `p-2 ${contentClassName}`,
+    metric: `p-2 ${contentClassName}`
   };
 
   return (
@@ -48,22 +48,20 @@ export default function Card({
       {(title || icon || badge || actions) && (
         <div className={headerClasses[variant]}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {icon && <div className="text-cyan-400 text-lg">{icon}</div>}
+            <div className="flex items-center gap-2">
+              {icon && <div className="text-green-400 text-[10px]">{icon}</div>}
               {title && (
-                <h2 className={`font-bold tracking-wider ${
-                  variant === 'terminal' ? 'text-slate-100 font-mono text-sm uppercase' : 'text-white text-xl'
-                }`}>
-                  {variant === 'terminal' ? `${title}` : title}
+                <h2 className={`font-mono text-[10px] uppercase tracking-widest text-gray-300`}>
+                  {title}
                 </h2>
               )}
               {badge && (
-                <div className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/40 rounded text-cyan-300 text-xs font-mono font-semibold">
+                <div className="px-1 py-0.5 bg-green-900 text-green-300 text-[9px] font-mono border border-green-700">
                   {badge}
                 </div>
               )}
             </div>
-            {actions && <div className="flex items-center gap-2">{actions}</div>}
+            {actions && <div className="flex items-center gap-1">{actions}</div>}
           </div>
         </div>
       )}

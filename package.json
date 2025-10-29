@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "PORT=3015 bash -c 'lsof -ti:3015 | xargs -r kill -9 2>/dev/null || true; sleep 1; next dev'",
+    "dev": "bash -c 'for P in 3015 3016 3017 3018 3019 3020 3021 3022 3023 3024 3025; do if ! lsof -ti:$P >/dev/null; then echo Using port $P; PORT=$P next dev -p $P; exit 0; fi; done; echo No free port in 3015-3025; exit 1'",
     "dev:kill": "lsof -ti:3015 | xargs -r kill -9 2>/dev/null || true",
     "build": "next build",
     "start": "next start",

@@ -35,6 +35,25 @@ function getProtocolDisplay(categoryKey: string): string {
 // Import shared amount decoding utilities
 import { extractAmountInfo, calculateAmount, calculateUnifiedEth } from '../utils/amountUtils';
 
+function summarizeEvents(row: any): string {
+  try {
+    const events = row?._decoded_events;
+    if (!Array.isArray(events) || events.length === 0) return '-';
+    const counts: Record<string, number> = {};
+    for (const e of events) {
+      const name = e?.event || 'Event';
+      counts[name] = (counts[name] || 0) + 1;
+    }
+    const parts = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name, c]) => (c > 1 ? `${name}×${c}` : name));
+    return parts.join(', ');
+  } catch {
+    return '-';
+  }
+}
+
 export default function Opportunities() {
   const { snapshot } = useWsSnapshot();
   const filters = useFilters();
@@ -63,7 +82,7 @@ export default function Opportunities() {
       key: 'hash',
       header: 'Hash',
       render: (value: string) => (
-        <span className="font-mono text-cyan-400 hover:text-cyan-300 cursor-pointer">
+        <span className="font-mono text-green-400 hover:text-green-300 cursor-pointer">
           {short(value, 12)}
         </span>
       ),
@@ -73,13 +92,13 @@ export default function Opportunities() {
       key: 'from',
       header: 'From',
       render: (value: string) => short(value || '', 10),
-      className: 'font-mono text-gray-400'
+      className: 'font-mono text-gray-500'
     },
     {
       key: 'to',
       header: 'To',
       render: (value: string) => short(value || '', 10),
-      className: 'font-mono text-gray-400'
+      className: 'font-mono text-gray-500'
     },
     {
       key: 'category_key',
@@ -95,7 +114,13 @@ export default function Opportunities() {
       key: '_decoded_fn',
       header: 'Function',
       render: (value: any) => value?.function || '-',
-      className: 'text-purple-400'
+      className: 'text-cyan-400'
+    },
+    {
+      key: '_decoded_events',
+      header: 'Events',
+      render: (_: any, row: any) => summarizeEvents(row),
+      className: 'text-blue-400'
     },
     {
       key: 'value',
@@ -113,29 +138,44 @@ export default function Opportunities() {
       key: 'maxFeePerGas',
       header: 'Gas',
       render: (value: string, row: any) => `${fmtGwei(value || row.gasPrice)}g`,
-      className: 'text-orange-400'
+      className: 'text-yellow-400'
     },
     {
       key: '_first_seen_ts',
       header: 'Age',
       render: (value: number) => fmtAge(value),
-      className: 'text-blue-400'
+      className: 'text-purple-400'
     }
   ];
 
   return (
-    <Card
-      title="OPPORTUNITIES"
-      icon={<span className="text-yellow-400">🏆</span>}
-      badge={rows.length > 0 ? `${rows.length} FOUND` : undefined}
-      variant="terminal"
-      className="h-full"
-    >
-      <Table
-        data={rows}
-        columns={columns}
-        emptyMessage="[NO OPPORTUNITIES DETECTED • TRANSACTIONS NEED HIGH VALUE OR GAS TO QUALIFY]"
-      />
-    </Card>
+    <div className="h-full">
+      {/* Opportunities Header */}
+      <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="text-amber-400 text-[9px]">🏆</span>
+            <h2 className="font-mono text-[9px] uppercase tracking-widest text-gray-300">
+              OPPORTUNITIES
+            </h2>
+            {rows.length > 0 && (
+              <div className="px-1 py-0.5 bg-amber-900 text-amber-300 text-[7px] font-mono border border-amber-700">
+                {rows.length} FOUND
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Table Content */}
+      <div className="p-1.5">
+        <Table
+          data={rows}
+          columns={columns}
+          emptyMessage="[NO OPPORTUNITIES DETECTED • TRANSACTIONS NEED HIGH VALUE OR GAS TO QUALIFY]"
+          density="compact"
+        />
+      </div>
+    </div>
   );
 }

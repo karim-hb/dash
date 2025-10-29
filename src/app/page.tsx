@@ -5,9 +5,12 @@ import Dashboard from './components/Dashboard';
 import Opportunities from './components/Opportunities';
 import Live from './components/Live';
 import Included from './components/Included';
+import Tokens from './components/Tokens';
+import Pools from './components/Pools';
+import Oracles from './components/Oracles';
 import FilterPanel from './components/FilterPanel';
 
-type TabType = 'dashboard' | 'opportunities' | 'live' | 'included';
+type TabType = 'dashboard' | 'opportunities' | 'live' | 'included' | 'tokens' | 'pools' | 'oracles';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
@@ -17,51 +20,39 @@ export default function Home() {
     { id: 'opportunities', label: '💎 OPPORTUNITIES', component: Opportunities },
     { id: 'live', label: '🔴 LIVE FEED', component: Live },
     { id: 'included', label: '✅ INCLUDED', component: Included },
+    { id: 'tokens', label: '💹 TOKENS', component: Tokens },
+    { id: 'pools', label: '🏦 POOLS', component: Pools },
+    { id: 'oracles', label: '🛰️ ORACLES', component: Oracles },
   ];
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || Dashboard;
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <div className="container mx-auto max-w-[1600px] xl:max-w-[1920px] 2xl:max-w-[2200px]">
+    <div className="min-h-screen bg-black">
+      <div className="max-w-full">
       {/* Bloomberg Terminal Header */}
-      <header className="bloomberg-card m-4 mb-0 bloomberg-header relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-cyan-500/5 to-blue-600/5 animate-pulse"></div>
-        <div className="relative z-10 flex items-center justify-between p-6">
-          <div className="flex items-center gap-6">
-            {/* Terminal-style logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full opacity-80 animate-pulse"></div>
-              <div className="w-3 h-3 bg-yellow-500 rounded-full opacity-80"></div>
-              <div className="w-3 h-3 bg-green-500 rounded-full opacity-80 shadow-lg shadow-green-500/50"></div>
+      <header className="bg-black border-b border-gray-800 px-2 py-0.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="text-emerald-400 font-mono text-[10px] font-bold tracking-wider">
+              Ξ ETHEREUM TERMINAL v3.0.0
             </div>
-
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-cyan-500/30 to-blue-600/30 border-2 border-cyan-500/50 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                <span className="text-cyan-400 font-bold text-2xl">Ξ</span>
-              </div>
-              <div>
-                <h1 className="terminal-title text-3xl bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent font-black tracking-tight">
-                  ETHEREUM ANALYTICS TERMINAL
-                </h1>
-                <div className="terminal-subtitle text-sm flex items-center gap-3 mt-1">
-                  <span className="text-cyan-400">[v3.0.0]</span>
-                  <span className="text-slate-600">•</span>
-                  <span className="text-blue-400">Bloomberg-Style Analytics</span>
-                  <span className="text-slate-600">•</span>
-                  <span className="text-purple-400">Real-time Intelligence</span>
-                </div>
-              </div>
+            <div className="text-gray-700 font-mono text-[8px] tracking-wide">
+              BLOOMBERG-STYLE ANALYTICS
             </div>
           </div>
 
           {/* Status Bar */}
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-lg">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
-              <span className="terminal-label text-green-400 font-bold">LIVE</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <div className="w-1 h-1 bg-emerald-600 rounded-full"></div>
+              <span className="text-emerald-400 font-mono text-[8px] tracking-wide">LIVE</span>
             </div>
-            <div className="terminal-label text-cyan-400 font-mono text-lg">
+            <div className="flex items-center gap-1">
+              <div className="w-1 h-1 bg-sky-600 rounded-full"></div>
+              <span className="text-sky-400 font-mono text-[8px] tracking-wide">SYNC</span>
+            </div>
+            <div className="text-gray-600 font-mono text-[8px] tracking-wide">
               {new Date().toLocaleTimeString('en-US', { hour12: false })}
             </div>
           </div>
@@ -69,59 +60,58 @@ export default function Home() {
       </header>
 
       {/* Navigation Bar */}
-      <nav className="mx-4 mt-4">
-        <div className="bloomberg-section p-3 bg-gradient-to-r from-slate-900/50 via-slate-800/50 to-slate-900/50">
-          <div className="flex overflow-x-auto gap-3">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
-                className={`px-6 py-3 terminal-label font-bold rounded-lg whitespace-nowrap border-2 transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 text-cyan-300 border-cyan-500/70 shadow-lg shadow-cyan-500/20 scale-105'
-                    : 'text-slate-400 border-slate-600/30 hover:text-white hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-600/50 hover:border-slate-500/50 hover:scale-102'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+      <nav className="bg-black border-b border-gray-800 px-2 py-0.5">
+        <div className="flex gap-3">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as TabType)}
+              className={`font-mono text-[9px] px-2 py-1 border-b transition-colors tracking-wider ${
+                activeTab === tab.id
+                  ? 'text-emerald-400 border-emerald-500 bg-gray-900'
+                  : 'text-gray-600 border-transparent hover:text-gray-400 hover:border-gray-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </nav>
 
       {/* Filters Panel */}
-      <div className="mx-4 mt-4">
+      <div className="px-3 py-1 bg-black border-b border-gray-800">
         <FilterPanel />
       </div>
 
-      {/* Main Content Area - Bloomberg Terminal */}
-      <main className="flex-1 mx-4 mb-4 mt-4">
-        <div className="bloomberg-card overflow-hidden border-2 border-blue-500/20">
-          <div className="p-8 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 400px)', minHeight: '600px' }}>
+      {/* Main Content Area */}
+      <main className="flex-1 px-3 py-2">
+        <div className="bg-black border border-gray-800">
+          <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)', minHeight: '600px' }}>
             <ActiveComponent />
           </div>
         </div>
       </main>
 
-      {/* Bloomberg Footer */}
-      <footer className="mx-4 mb-4 bloomberg-card border-t-2 border-cyan-500/20">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-slate-900/30 via-blue-900/10 to-slate-900/30">
-          <div className="flex items-center gap-6 terminal-subtitle text-sm">
-            <span className="text-cyan-400 font-semibold">⚡ Powered by Next.js + WebSocket</span>
-            <span className="text-slate-600">•</span>
-            <span className="text-blue-400">Real-time Analytics Engine</span>
-            <span className="text-slate-600">•</span>
-            <span className="text-purple-400">Bloomberg-Style Terminal</span>
+      {/* Footer */}
+      <footer className="bg-black border-t border-gray-800 px-2 py-0.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <div className="w-1 h-1 bg-emerald-600 rounded-full"></div>
+              <span className="text-emerald-400 font-mono text-[8px] tracking-widest">WS SUB</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-1 h-1 bg-sky-600 rounded-full"></div>
+              <span className="text-sky-400 font-mono text-[8px] tracking-widest">SYNC</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-1 h-1 bg-gray-700 rounded-full"></div>
+              <span className="text-gray-600 font-mono text-[8px] tracking-widest">NO ERR</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3 px-3 py-1 bg-green-500/10 border border-green-500/30 rounded">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
-              <span className="terminal-label text-green-400 font-bold">CONNECTED</span>
-            </div>
-            <div className="terminal-label text-slate-500 font-mono">
-              [ESC] Help • [F1] Config • [F12] Debug
-            </div>
+          <div className="text-gray-700 font-mono text-[7px] tracking-widest">
+            BLOOMBERG TERMINAL v3.0.0
           </div>
         </div>
       </footer>

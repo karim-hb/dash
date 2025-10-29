@@ -18,6 +18,7 @@ interface TableProps<T> {
   onRowClick?: (row: T, index: number) => void;
   className?: string;
   variant?: 'default' | 'terminal';
+  density?: 'compact' | 'normal';
 }
 
 export default function Table<T extends Record<string, any>>({
@@ -27,10 +28,17 @@ export default function Table<T extends Record<string, any>>({
   emptyMessage = "[NO DATA AVAILABLE]",
   onRowClick,
   className = "",
-  variant = 'terminal'
+  variant = 'terminal',
+  density = 'compact'
 }: TableProps<T>) {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const isCompact = density === 'compact';
+  const headerPad = isCompact ? 'px-1 py-1' : 'px-2 py-1.5';
+  const cellPad = isCompact ? 'px-1 py-0.5' : 'px-2 py-1';
+  const rowText = isCompact ? 'text-[9px]' : 'text-[10px]';
+  const headText = isCompact ? 'text-[8px]' : 'text-[9px]';
 
   const handleSort = (columnKey: string) => {
     const column = columns.find(col => col.key === columnKey);
@@ -70,37 +78,33 @@ export default function Table<T extends Record<string, any>>({
 
   if (loading) {
     return (
-      <div className={`bloomberg-card p-8 ${className}`}>
-        <div className="flex items-center justify-center">
-          <div className="text-slate-400 font-mono text-sm">[LOADING...]</div>
-        </div>
+      <div className={`p-8 text-center ${className}`}>
+        <div className="text-slate-400 font-mono text-sm">[LOADING...]</div>
       </div>
     );
   }
 
   return (
-    <div className={`terminal-table ${className}`}>
+    <div className={className}>
       <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-slate-950/90 border-b-2 border-slate-700/70">
+        <table className={`min-w-full ${rowText} border-collapse`}>
+          <thead className="bg-gray-900 border-b border-gray-700">
             <tr>
               {columns.map((column, index) => (
                 <th
                   key={String(column.key) + index}
-                  className={`text-left font-mono text-xs font-bold text-slate-200 uppercase tracking-wider border-r border-slate-700/50 last:border-r-0 ${
-                    column.sortable ? 'cursor-pointer hover:bg-slate-900/60 select-none' : ''
+                  className={`text-left font-mono ${headText} text-gray-400 uppercase tracking-widest ${headerPad} border-r border-gray-800 last:border-r-0 ${
+                    column.sortable ? 'cursor-pointer hover:bg-gray-800 select-none' : ''
                   } ${column.className || ''}`}
                   onClick={() => column.sortable && handleSort(String(column.key))}
                 >
-                  <div className="flex items-center justify-center gap-2 px-6 py-4 min-h-[3rem]">
-                    <div className="text-center">
-                      <div className="text-cyan-300 font-semibold mb-1">{column.header}</div>
-                      {column.sortable && sortColumn === column.key && (
-                        <span className={`terminal-table-sort-indicator ${sortDirection === 'desc' ? 'text-red-400' : 'text-green-400'}`}>
-                          {sortDirection === 'desc' ? '▾' : '▴'}
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-1">
+                    <span>{column.header}</span>
+                    {column.sortable && sortColumn === column.key && (
+                      <span className={`${sortDirection === 'desc' ? 'text-red-400' : 'text-green-400'} text-[7px]`}>
+                        {sortDirection === 'desc' ? '▼' : '▲'}
+                      </span>
+                    )}
                   </div>
                 </th>
               ))}
@@ -109,22 +113,17 @@ export default function Table<T extends Record<string, any>>({
           <tbody>
             {sortedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-16 text-center text-slate-400 font-mono text-sm bg-slate-950/30 border-t border-slate-700/50">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="text-slate-500 text-lg">—</div>
-                    <div>{emptyMessage}</div>
-                  </div>
+                <td colSpan={columns.length} className={`px-4 py-6 text-center text-gray-600 font-mono ${rowText} bg-black`}>
+                  <div>{emptyMessage}</div>
                 </td>
               </tr>
             ) : (
               sortedData.map((row, index) => (
                 <tr
                   key={index}
-                  className={`font-mono text-sm border-b border-slate-700/50 ${
-                    index % 2 === 0
-                      ? 'bg-slate-900/40 hover:bg-slate-800/60'
-                      : 'bg-slate-950/60 hover:bg-slate-900/80'
-                  } ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`font-mono ${rowText} border-b border-gray-900 hover:bg-gray-900 ${
+                    onRowClick ? 'cursor-pointer' : ''
+                  }`}
                   onClick={() => onRowClick?.(row, index)}
                 >
                   {columns.map((column, colIndex) => {
@@ -136,11 +135,9 @@ export default function Table<T extends Record<string, any>>({
                     return (
                       <td
                         key={String(column.key) + colIndex}
-                        className={column.className || ''}
+                        className={`${cellPad} ${column.className || ''}`}
                       >
-                        <div className="table-data-point">
-                          {renderedValue}
-                        </div>
+                        {renderedValue}
                       </td>
                     );
                   })}
@@ -152,30 +149,22 @@ export default function Table<T extends Record<string, any>>({
       </div>
 
       {sortedData.length > 0 && (
-        <div className="px-8 py-5 bg-slate-950/95 border-t-2 border-slate-700/80 bloomberg-table-accent">
-          <div className="flex items-center justify-between text-sm text-slate-200 font-mono">
-            <div className="flex items-center gap-4">
-              <div className="px-4 py-2 bg-slate-800/80 rounded border border-slate-600/60 text-center min-w-[120px]">
-                <div className="text-cyan-300 font-semibold">{sortedData.length}</div>
-                <div className="text-xs text-slate-400 uppercase tracking-wider">
-                  {sortedData.length === 1 ? 'Entry' : 'Entries'}
-                </div>
-              </div>
+        <div className={`border-t border-gray-800 px-2 py-1 bg-gray-900`}>
+          <div className={`flex items-center justify-between text-gray-400 font-mono ${rowText}`}>
+            <div className="flex items-center gap-3">
+              <span className="text-gray-500">{sortedData.length} entries</span>
+              {sortColumn && (
+                <span className="text-green-400">
+                  sorted by {columns.find(col => col.key === sortColumn)?.header}
+                  <button
+                    onClick={() => setSortColumn(null)}
+                    className="ml-1 text-gray-600 hover:text-gray-400 text-[8px]"
+                  >
+                    [clear]
+                  </button>
+                </span>
+              )}
             </div>
-            {sortColumn && (
-              <div className="flex items-center gap-4">
-                <div className="px-4 py-2 bg-slate-800/80 rounded border border-slate-600/60">
-                  <div className="text-slate-300 text-xs uppercase tracking-wider">Sorted By</div>
-                  <div className="text-cyan-300 font-semibold">{columns.find(col => col.key === sortColumn)?.header}</div>
-                </div>
-                <button
-                  onClick={() => setSortColumn(null)}
-                  className="px-4 py-2 bg-slate-700/90 hover:bg-slate-600/90 border border-slate-600/60 rounded text-slate-200 hover:text-white font-mono uppercase tracking-wider text-xs"
-                >
-                  Clear Sort
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}

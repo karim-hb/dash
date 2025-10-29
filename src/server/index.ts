@@ -13,6 +13,16 @@ import { UiSnapshot } from '@/lib/types';
 import { startPendingIngestion } from './ingest/pending';
 import { startHeadsIngestion } from './ingest/heads';
 import { startTxpoolMonitoring } from './ingest/txpool';
+import * as fs from 'fs';
+import * as path from 'path';
+import { getTokens, getPools, getOracleFeeds } from './market/registry';
+import { startOracleUpdates } from './oracles/registry';
+import { startUniswapV2Indexer } from './indexers/amm/uniswapV2';
+import { startUniswapV3Indexer } from './indexers/amm/uniswapV3';
+import { startSushiV2Indexer } from './indexers/amm/sushiswapV2';
+import { startHoldersBackfillAndPolling } from './holders/erc20HLL';
+import { startBalancerV2Indexer } from './indexers/amm/balancerV2';
+import { startCurveIndexer } from './indexers/amm/curve';
 
 // Server startup script
 async function main() {
@@ -37,12 +47,30 @@ async function main() {
     await startTxpoolMonitoring();
     console.log('✅ Ingestion pipelines started');
 
+    // Start oracles
+    startOracleUpdates();
+
+    // Start AMM indexers
+    await startUniswapV2Indexer();
+    await startUniswapV3Indexer();
+    await startSushiV2Indexer();
+    await startBalancerV2Indexer();
+    await startCurveIndexer();
+
+    // Start holders estimator (approximate)
+    startHoldersBackfillAndPolling();
+
     // Start embedded WebSocket broadcast server (shares in-memory state)
-    const wsPort = parseInt(process.env.UI_WS_PORT || '3006', 10);
+    let wsPort = parseInt(process.env.UI_WS_PORT || '3006', 10);
+    wsPort = await findFreeWsPort(wsPort, 10);
     await startWsBroadcast(wsPort);
 
     console.log('🎯 Server ready! WebSocket ingestion active.');
     console.log(`💻 Start Next.js UI with: npm run dev (WS at ws://localhost:${wsPort})`);
+    try {
+      const runtimePath = path.join(process.cwd(), '.runtime-ports.json');
+      fs.writeFileSync(runtimePath, JSON.stringify({ ws_port: wsPort }, null, 2));
+    } catch {}
 
     // Keep server running
     process.on('SIGINT', async () => {
@@ -100,6 +128,29 @@ async function startWsBroadcast(port: number): Promise<void> {
   });
 }
 
+async function findFreeWsPort(start: number, maxTries: number): Promise<number> {
+  let port = start;
+  for (let i = 0; i < maxTries; i++) {
+    try {
+      // Try to start and immediately close a temporary server to probe the port
+      // @ts-ignore
+      const probe = new WebSocket.Server({ port, perMessageDeflate: false });
+      await new Promise(res => setTimeout(res, 10));
+      // @ts-ignore
+      probe.close();
+      return port;
+    } catch (e: any) {
+      if (e && (e.code === 'EADDRINUSE' || e.message?.includes('EADDRINUSE'))) {
+        port += 1;
+        continue;
+      }
+      // Unknown error, break and use start
+      break;
+    }
+  }
+  return port;
+}
+
 function startBroadcastLoop(): void {
   const aggregator = getMetricsAggregator();
   broadcastInterval = setInterval(async () => {
@@ -153,7 +204,7 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
   for (const tx of snap.txs) {
     const addr = (tx.from || '').toLowerCase();
     if (!addr) continue;
-    const s = senderStats.get(addr) || { address: addr, tx_count: 0, included: 0, dropped: 0, total_value: 0n };
+    const s = senderStats.get(addr) || { address: addr, tx_count: 0, included: 0, dropped: 0, total_value: BigInt(0) };
     s.tx_count += 1;
     if (tx._state === 'INCLUDED' || tx._state === 'CONFIRMED' || tx._state === 'FINALIZED') s.included += 1;
     if (tx._state === 'DROPPED' || tx._state === 'REPLACED') s.dropped += 1;
@@ -195,6 +246,9 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
     included,
     senders,
     gas,
+    tokens: getTokens(),
+    pools: getPools(),
+    oracles: getOracleFeeds(),
     status: {
       ws_connected: true,
       rpc_latency_ms: rpcLatency,

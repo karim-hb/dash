@@ -2,6 +2,7 @@
 
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
 import { useFilters } from '../hooks/useFilters';
+import Table from './Table';
 
 function short(s: string, n = 10) { return s && s.length > n ? `${s.slice(0, n)}…` : (s || ''); }
 function fmtGwei(hex?: string) { try { return hex ? (parseInt(hex, 16) / 1e9).toFixed(1) : '-'; } catch { return '-'; } }
@@ -27,6 +28,25 @@ function fmtStatus(rcpt?: any) {
 function fmtDelay(fs?: number, it?: number) {
   if (!fs || !it) return '-';
   return `${(it - fs).toFixed(1)}s`;
+}
+
+function summarizeEvents(row: any): string {
+  try {
+    const events = row?._decoded_events;
+    if (!Array.isArray(events) || events.length === 0) return '-';
+    const counts: Record<string, number> = {};
+    for (const e of events) {
+      const name = e?.event || 'Event';
+      counts[name] = (counts[name] || 0) + 1;
+    }
+    const parts = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name, c]) => (c > 1 ? `${name}×${c}` : name));
+    return parts.join(', ');
+  } catch {
+    return '-';
+  }
 }
 
 function hexToNum(val?: any): number | '-' {
@@ -72,68 +92,136 @@ export default function Included() {
   const filters = useFilters();
   const rows = filters.applyFilters(snapshot?.included || []);
 
+  const columns = [
+    {
+      key: '_inclusion_ts',
+      header: 'Time',
+      render: (value: number) => value ? new Date(value * 1000).toLocaleTimeString() : '--:--:--',
+      className: 'text-gray-500'
+    },
+    {
+      key: 'hash',
+      header: 'Hash',
+      render: (value: string) => short(value, 16),
+      className: 'font-mono text-green-400'
+    },
+    {
+      key: 'from',
+      header: 'From',
+      render: (value: string) => short(value || '', 14),
+      className: 'font-mono text-gray-500'
+    },
+    {
+      key: 'to',
+      header: 'To',
+      render: (value: string) => short(value || '', 14),
+      className: 'font-mono text-gray-500'
+    },
+    {
+      key: 'value',
+      header: 'Amount',
+      render: (_: any, row: any) => calculateAmount(row),
+      className: 'text-green-400 font-medium'
+    },
+    {
+      key: 'category_key',
+      header: 'Protocol',
+      render: (value: string) => getProtocolDisplay(value)
+    },
+    {
+      key: '_decoded_fn',
+      header: 'Function',
+      render: (value: any) => value?.function || '-',
+      className: 'text-cyan-400'
+    },
+    {
+      key: '_decoded_events',
+      header: 'Events',
+      render: (_: any, row: any) => summarizeEvents(row),
+      className: 'text-blue-400'
+    },
+    {
+      key: 'blockNumber',
+      header: 'Block',
+      render: (_: any, row: any) => hexToNum(row.blockNumber) || hexToNum(row._receipt?.blockNumber) || hexToNum(row._inclusion_block) || '-'
+    },
+    {
+      key: 'transactionIndex',
+      header: 'TxIdx',
+      render: (_: any, row: any) => hexToNum(row.transactionIndex) || hexToNum(row._receipt?.transactionIndex) || '-'
+    },
+    {
+      key: 'nonce',
+      header: 'Nonce',
+      render: (value: any) => hexToNum(value) || '-'
+    },
+    {
+      key: '_receipt',
+      header: 'Status',
+      render: (value: any) => fmtStatus(value)
+    },
+    {
+      key: '_first_seen_ts',
+      header: 'Delay',
+      render: (_: any, row: any) => fmtDelay(row._first_seen_ts, row._inclusion_ts)
+    },
+    {
+      key: '_confirmation_depth',
+      header: 'Conf',
+      render: (value: number) => value ?? 0
+    },
+    {
+      key: '_receipt',
+      header: 'GasUsed',
+      render: (value: any) => hexToNum(value?.gasUsed) || '-'
+    },
+    {
+      key: 'gas',
+      header: 'GasLimit',
+      render: (value: any) => hexToNum(value) || '-'
+    },
+    {
+      key: 'gasPrice',
+      header: 'GasPrice',
+      render: (value: string) => fmtHexGwei(value)
+    },
+    {
+      key: 'maxFeePerGas',
+      header: 'MaxFee',
+      render: (value: string) => fmtHexGwei(value)
+    },
+    {
+      key: '_receipt',
+      header: 'Fee(ETH)',
+      render: (value: any) => fmtFeeEth(value)
+    }
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4 text-green-400">INCLUDED TRANSACTIONS</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-xs md:text-sm whitespace-nowrap">
-            <thead className="text-gray-300">
-              <tr className="border-b border-gray-700">
-                <th className="py-2 pr-4 text-left">Time</th>
-                <th className="py-2 pr-4 text-left">Hash</th>
-                <th className="py-2 pr-4 text-left">From</th>
-                <th className="py-2 pr-4 text-left">To</th>
-                <th className="py-2 pr-4 text-left">Amount</th>
-                <th className="py-2 pr-4 text-left">Protocol</th>
-                <th className="py-2 pr-4 text-left">Function</th>
-                <th className="py-2 pr-4 text-left">Block</th>
-                <th className="py-2 pr-4 text-left">TxIdx</th>
-                <th className="py-2 pr-4 text-left">Nonce</th>
-                <th className="py-2 pr-4 text-left">Status</th>
-                <th className="py-2 pr-4 text-left">Delay</th>
-                <th className="py-2 pr-4 text-left">Conf</th>
-                <th className="py-2 pr-4 text-left">GasUsed</th>
-                <th className="py-2 pr-4 text-left">GasLimit</th>
-                <th className="py-2 pr-4 text-left">GasPrice(g)</th>
-                <th className="py-2 pr-4 text-left">MaxPrio(g)</th>
-                <th className="py-2 pr-4 text-left">MaxFee(g)</th>
-                <th className="py-2 pr-4 text-left">Fee(ETH)</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-200">
-              {rows.length === 0 && (
-                <tr><td colSpan={19} className="py-8 text-center text-gray-400">No included transactions yet</td></tr>
-              )}
-              {rows.map((tx: any) => {
-                const includeTime = tx._inclusion_ts ? new Date(tx._inclusion_ts * 1000).toLocaleTimeString() : '--:--:--';
-                return (
-                  <tr key={tx.hash} className="border-b border-gray-800 hover:bg-gray-700/30">
-                    <td className="py-1.5 md:py-2 pr-4">{includeTime}</td>
-                    <td className="py-1.5 md:py-2 pr-4 font-mono">{short(tx.hash, 16)}</td>
-                    <td className="py-1.5 md:py-2 pr-4 font-mono">{short(tx.from || '', 14)}</td>
-                    <td className="py-1.5 md:py-2 pr-4 font-mono">{short(tx.to || '', 14)}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{calculateAmount(tx)}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{getProtocolDisplay(tx.category_key)}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{tx._decoded_fn?.function || '-'}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{hexToNum(tx.blockNumber) || hexToNum(tx._receipt?.blockNumber) || hexToNum(tx._inclusion_block) || '-'}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{hexToNum(tx.transactionIndex) || hexToNum(tx._receipt?.transactionIndex) || '-'}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{hexToNum(tx.nonce) || '-'}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{fmtStatus(tx._receipt)}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{fmtDelay(tx._first_seen_ts, tx._inclusion_ts)}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{tx._confirmation_depth ?? 0}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{hexToNum(tx._receipt?.gasUsed) || '-'}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{hexToNum(tx.gas) || '-'}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{fmtHexGwei(tx.gasPrice)}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{fmtHexGwei(tx.maxPriorityFeePerGas)}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{fmtHexGwei(tx.maxFeePerGas)}</td>
-                    <td className="py-1.5 md:py-2 pr-4">{fmtFeeEth(tx._receipt)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+    <div className="h-full">
+      {/* Included Transactions Header */}
+      <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sky-400 text-[9px]">✅</span>
+            <h2 className="font-mono text-[9px] uppercase tracking-widest text-gray-300">
+              INCLUDED TRANSACTIONS
+            </h2>
+            <div className="px-1 py-0.5 bg-sky-900 text-sky-300 text-[7px] font-mono border border-sky-700">
+              {rows.length} COMPLETED
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* Table Content */}
+      <div className="p-1.5">
+        <Table
+          data={rows}
+          columns={columns}
+          emptyMessage="[NO INCLUDED TRANSACTIONS...]"
+          density="compact"
+        />
       </div>
     </div>
   );

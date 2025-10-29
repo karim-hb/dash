@@ -34,22 +34,45 @@ function getProtocolDisplay(categoryKey: string): string {
 // Import shared amount decoding utilities
 import { calculateAmount } from '../utils/amountUtils';
 
+function summarizeEvents(row: any): string {
+  try {
+    const events = row?._decoded_events;
+    if (!Array.isArray(events) || events.length === 0) return '-';
+    const counts: Record<string, number> = {};
+    for (const e of events) {
+      const name = e?.event || 'Event';
+      counts[name] = (counts[name] || 0) + 1;
+    }
+    const parts = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name, c]) => (c > 1 ? `${name}×${c}` : name));
+    return parts.join(', ');
+  } catch {
+    return '-';
+  }
+}
+
 export default function Live() {
   const { snapshot } = useWsSnapshot();
   const filters = useFilters();
   const rows = filters.applyFilters(snapshot?.live || []);
+
+  // Calculate pending transactions (not yet included)
+  const pendingCount = rows.length;
+  const gasGaugedCount = rows.filter(tx => tx._decoded_fn?.confidence > 0).length;
   const columns = [
     {
       key: '_first_seen_ts',
       header: 'Time',
       render: (value: number) => value ? new Date(value * 1000).toLocaleTimeString() : '--:--:--',
-      className: 'text-gray-400'
+      className: 'text-gray-500'
     },
     {
       key: 'hash',
       header: 'Hash',
       render: (value: string) => (
-        <span className="font-mono text-cyan-400 hover:text-cyan-300 cursor-pointer">
+        <span className="font-mono text-green-400 hover:text-green-300 cursor-pointer">
           {short(value, 12)}
         </span>
       ),
@@ -59,13 +82,13 @@ export default function Live() {
       key: 'from',
       header: 'From',
       render: (value: string) => short(value || '', 10),
-      className: 'font-mono text-gray-400'
+      className: 'font-mono text-gray-500'
     },
     {
       key: 'to',
       header: 'To',
       render: (value: string) => short(value || '', 10),
-      className: 'font-mono text-gray-400'
+      className: 'font-mono text-gray-500'
     },
     {
       key: 'category_key',
@@ -81,7 +104,13 @@ export default function Live() {
       key: '_decoded_fn',
       header: 'Function',
       render: (value: any) => value?.function || '-',
-      className: 'text-purple-400'
+      className: 'text-cyan-400'
+    },
+    {
+      key: '_decoded_events',
+      header: 'Events',
+      render: (_: any, row: any) => summarizeEvents(row),
+      className: 'text-blue-400'
     },
     {
       key: 'value',
@@ -93,29 +122,50 @@ export default function Live() {
       key: 'maxFeePerGas',
       header: 'Gas',
       render: (value: string, row: any) => `${fmtGwei(value || row.gasPrice)}g`,
-      className: 'text-orange-400'
+      className: 'text-yellow-400'
     },
     {
       key: '_first_seen_ts',
       header: 'Age',
       render: (value: number) => fmtAge(value),
-      className: 'text-blue-400'
+      className: 'text-purple-400'
     }
   ];
 
   return (
-    <Card
-      title="LIVE TRANSACTIONS"
-      icon={<span className="text-blue-400">⚡</span>}
-      badge={rows.length > 0 ? `${rows.length} ACTIVE` : undefined}
-      variant="terminal"
-      className="h-full"
-    >
-      <Table
-        data={rows}
-        columns={columns}
-        emptyMessage="[WAITING FOR LIVE TRANSACTION DATA...]"
-      />
-    </Card>
+    <div className="h-full">
+      {/* Live Transactions Header */}
+      <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="text-emerald-400 text-[9px]">⚡</span>
+            <h2 className="font-mono text-[9px] uppercase tracking-widest text-gray-300">
+              LIVE TRANSACTIONS
+            </h2>
+            <div className="px-1 py-0.5 bg-emerald-900 text-emerald-300 text-[7px] font-mono border border-emerald-700">
+              {pendingCount} PENDING
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
+              <div className={`w-0.5 h-0.5 rounded-full ${gasGaugedCount > 0 ? 'bg-sky-500' : 'bg-gray-700'}`}></div>
+              <span className={`font-mono text-[7px] tracking-widest ${gasGaugedCount > 0 ? 'text-sky-400' : 'text-gray-600'}`}>
+                {gasGaugedCount}/{pendingCount} GASSED
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Table Content */}
+      <div className="p-1.5">
+        <Table
+          data={rows}
+          columns={columns}
+          emptyMessage="[WAITING FOR LIVE TRANSACTION DATA...]"
+          density="compact"
+        />
+      </div>
+    </div>
   );
 }

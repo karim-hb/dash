@@ -1,6 +1,12 @@
 import { Transaction, DecodedCall, SwapDetails } from '@/lib/types';
 import { selector, wordAt, hexToNumber, decodeAddressArray } from '@/lib/util/hex';
 import { getAbiRegistry } from './abiRegistry';
+import { Interface, FunctionFragment, Result } from 'ethers';
+import { getDexDecoderRegistry } from './dexDecoders';
+import { getNftDecoderRegistry } from './nftDecoders';
+import { getDefiDecoderRegistry } from './defiDecoders';
+import { getBridgeDecoderRegistry } from './bridgeDecoders';
+import { getAbiCache } from './abiCache';
 
 // Decoded call result
 export interface DecodeResult {
@@ -12,6 +18,11 @@ export interface DecodeResult {
 // Core decoder with heuristics and ABI support
 export class CoreDecoder {
   private registry = getAbiRegistry();
+  private dexDecoders = getDexDecoderRegistry();
+  private nftDecoders = getNftDecoderRegistry();
+  private defiDecoders = getDefiDecoderRegistry();
+  private bridgeDecoders = getBridgeDecoderRegistry();
+  private abiCache = getAbiCache();
 
   // Main decode function
   async decodeTransaction(tx: Transaction): Promise<DecodeResult> {
@@ -21,8 +32,22 @@ export class CoreDecoder {
         return { decoded: false };
       }
 
-      // Try ABI-based decoding first
-      const abiResult = await this.decodeWithAbi(input);
+      // Try protocol-specific decoders first (highest accuracy)
+      const protocolResult = await this.decodeWithProtocolDecoders(input, tx.to || undefined);
+      if (protocolResult) {
+        return { decoded: true, function: protocolResult };
+      }
+
+      // Try Etherscan ABI cache
+      if (tx.to) {
+        const etherscanResult = await this.decodeWithEtherscanAbi(input, tx.to);
+        if (etherscanResult) {
+          return { decoded: true, function: etherscanResult };
+        }
+      }
+
+      // Try ABI-based decoding from registry
+      const abiResult = await this.decodeWithAbi(input, tx.to || undefined);
       if (abiResult) {
         return { decoded: true, function: abiResult };
       }
@@ -45,8 +70,67 @@ export class CoreDecoder {
     }
   }
 
-  // Decode using ABI registry
-  private async decodeWithAbi(input: string): Promise<DecodedCall | null> {
+  // Decode using protocol-specific decoders
+  private async decodeWithProtocolDecoders(input: string, toAddress?: string): Promise<DecodedCall | null> {
+    // Try DEX decoders
+    const dexResult = this.dexDecoders.decode(input, toAddress);
+    if (dexResult) return dexResult;
+
+    // Try NFT marketplace decoders
+    const nftResult = this.nftDecoders.decode(input, toAddress);
+    if (nftResult) return nftResult;
+
+    // Try DeFi protocol decoders
+    const defiResult = this.defiDecoders.decode(input, toAddress);
+    if (defiResult) return defiResult;
+
+    // Try bridge decoders
+    const bridgeResult = this.bridgeDecoders.decode(input, toAddress);
+    if (bridgeResult) return bridgeResult;
+
+    return null;
+  }
+
+  // Decode using Etherscan ABI cache
+  private async decodeWithEtherscanAbi(input: string, toAddress: string): Promise<DecodedCall | null> {
+    try {
+      const result = await this.abiCache.decodeFunctionCall(toAddress, input);
+      if (!result) return null;
+
+      // Convert to our DecodedCall format
+      const args = result.args.map((value, index) => {
+        let convertedValue = value;
+        
+        if (typeof value === 'bigint') {
+          convertedValue = value.toString();
+        } else if (Array.isArray(value)) {
+          convertedValue = value.map(v => typeof v === 'bigint' ? v.toString() : v);
+        } else if (value && typeof value === 'object') {
+          convertedValue = JSON.stringify(value, (key, val) => 
+            typeof val === 'bigint' ? val.toString() : val
+          );
+        }
+
+        return {
+          name: `arg${index}`,
+          type: 'unknown',
+          value: convertedValue
+        };
+      });
+
+      return {
+        function: result.name,
+        args,
+        confidence: 0.92,
+        decoded: true
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  // Decode using ABI registry with ethers.Interface
+  private async decodeWithAbi(input: string, toAddress?: string): Promise<DecodedCall | null> {
     const sel = selector(input);
     if (!sel) return null;
 
@@ -54,56 +138,62 @@ export class CoreDecoder {
     if (!signature) return null;
 
     try {
-      // Parse signature to extract function name and parameter types
-      const sigMatch = signature.match(/^([^(]+)\(([^)]*)\)$/);
-      if (!sigMatch) return null;
+      // Create a minimal ABI fragment for this function
+      const abiFragment = `function ${signature}`;
+      const iface = new Interface([abiFragment]);
+      
+      // Parse the transaction data
+      const fragment = iface.getFunction(signature);
+      if (!fragment) return null;
 
-      const functionName = sigMatch[1];
-      const paramTypes = sigMatch[2].split(',').filter(p => p.trim());
-
-      // Decode parameters (simplified - would need full ABI decoder for complex types)
-      const args: any[] = [];
-      const data = input.startsWith('0x') ? input.slice(2) : input;
-
-      for (let i = 0; i < paramTypes.length; i++) {
-        const paramType = paramTypes[i].trim();
-
-        if (paramType === 'address') {
-          const word = wordAt(`0x${data}`, i + 1);
-          if (word.length >= 40) {
-            args.push(`0x${word.slice(-40).toLowerCase()}`);
-          } else {
-            args.push('0x0000000000000000000000000000000000000000');
-          }
-        } else if (paramType.startsWith('uint') || paramType.startsWith('int')) {
-          const word = wordAt(`0x${data}`, i + 1);
-          const num = hexToNumber(word);
-          args.push(num);
-        } else if (paramType === 'bool') {
-          const word = wordAt(`0x${data}`, i + 1);
-          const num = hexToNumber(word);
-          args.push(num !== 0);
-        } else {
-          // Unknown type - include raw data
-          const word = wordAt(`0x${data}`, i + 1);
-          args.push(word || '0x0');
-        }
-      }
+      // Decode the function data
+      const decoded = iface.decodeFunctionData(fragment, input);
+      
+      // Convert Result to our DecodedCall format
+      const args = this.convertDecodedArgs(decoded, fragment);
 
       return {
-        function: functionName,
-        args: args.map((value, index) => ({
-          name: `arg${index}`,
-          type: paramTypes[index] || 'unknown',
-          value
-        })),
-        confidence: 0.9
+        function: fragment.name,
+        args,
+        confidence: 0.9,
+        decoded: true
       };
 
     } catch (error) {
-      console.error('ABI decode error:', error);
+      // If ethers fails, signature might be wrong or complex types not supported
+      // Fall back to heuristics
       return null;
     }
+  }
+
+  // Convert ethers decoded result to our format
+  private convertDecodedArgs(result: Result, fragment: FunctionFragment): Array<{name: string, type: string, value: any}> {
+    const args: Array<{name: string, type: string, value: any}> = [];
+
+    for (let i = 0; i < fragment.inputs.length; i++) {
+      const input = fragment.inputs[i];
+      const value = result[i];
+      
+      // Convert BigInt to string for JSON serialization
+      let convertedValue = value;
+      if (typeof value === 'bigint') {
+        convertedValue = value.toString();
+      } else if (Array.isArray(value)) {
+        // Handle arrays recursively
+        convertedValue = value.map(v => typeof v === 'bigint' ? v.toString() : v);
+      } else if (value && typeof value === 'object' && value._isBigNumber) {
+        // Handle ethers BigNumber
+        convertedValue = value.toString();
+      }
+
+      args.push({
+        name: input.name || `arg${i}`,
+        type: input.type,
+        value: convertedValue
+      });
+    }
+
+    return args;
   }
 
   // Decode using heuristics

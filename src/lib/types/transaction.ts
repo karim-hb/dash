@@ -3,11 +3,30 @@ import { z } from 'zod';
 // Transaction states enum
 export enum TxState {
   PENDING = 'PENDING',
+  REPLACED = 'REPLACED',
+  RESUBMITTED = 'RESUBMITTED',
   INCLUDED = 'INCLUDED',
   CONFIRMED = 'CONFIRMED',
   FINALIZED = 'FINALIZED',
   DROPPED = 'DROPPED',
 }
+
+// State transition tracking
+export interface StateTransition {
+  from_state: TxState;
+  to_state: TxState;
+  timestamp: number;
+  reason?: string;
+  block_number?: string;
+}
+
+export const StateTransitionSchema = z.object({
+  from_state: z.nativeEnum(TxState),
+  to_state: z.nativeEnum(TxState),
+  timestamp: z.number(),
+  reason: z.string().optional(),
+  block_number: z.string().optional(),
+});
 
 // Transaction category schema
 export const CategoryKeySchema = z.string(); // e.g., "erc20:transfer", "dex:swap"
@@ -72,6 +91,16 @@ export const TransactionSchema = z.object({
   _inclusion_block: z.string().nullable(),
   _inclusion_ts: z.number().nullable(),
   _receipt: z.any().optional(), // Receipt data
+  
+  // State transition tracking
+  _state_history: z.array(StateTransitionSchema).optional(),
+  
+  // Replacement tracking
+  _replacement_tx: z.string().nullable().optional(), // hash of replacement transaction
+  _replaced_by: z.string().nullable().optional(), // hash of transaction that replaced this one
+  
+  // Drop reason tracking
+  _drop_reason: z.string().nullable().optional(), // reason for drop (low gas, nonce gap, etc.)
 });
 
 export type Transaction = z.infer<typeof TransactionSchema>;

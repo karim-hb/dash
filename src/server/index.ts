@@ -146,6 +146,28 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
     _score: scoreTx(tx, nowTs),
   }));
 
+  // Build sender stats (best-effort)
+  const senderStats = new Map<string, { address: string; tx_count: number; included: number; dropped: number; total_value: bigint }>();
+  for (const tx of snap.txs) {
+    const addr = (tx.from || '').toLowerCase();
+    if (!addr) continue;
+    const s = senderStats.get(addr) || { address: addr, tx_count: 0, included: 0, dropped: 0, total_value: 0n };
+    s.tx_count += 1;
+    if (tx._state === 'INCLUDED' || tx._state === 'CONFIRMED' || tx._state === 'FINALIZED') s.included += 1;
+    if (tx._state === 'DROPPED' || tx._state === 'REPLACED') s.dropped += 1;
+    try { s.total_value += BigInt(tx.value || '0x0'); } catch {}
+    senderStats.set(addr, s);
+  }
+  const senders = Array.from(senderStats.values())
+    .map(s => ({
+      address: s.address,
+      tx_count: s.tx_count,
+      success_rate: (s.included + s.dropped) > 0 ? s.included / (s.included + s.dropped) : 0,
+      total_value: `0x${s.total_value.toString(16)}`
+    }))
+    .sort((a, b) => b.tx_count - a.tx_count)
+    .slice(0, 50);
+
   return {
     timestamp: Date.now(),
     summary: {
@@ -169,6 +191,7 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
       })),
     live: scoredTxs.slice(0, 200), // Show more in live view
     included,
+    senders,
     gas,
     status: {
       ws_connected: true,

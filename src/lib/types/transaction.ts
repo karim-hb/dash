@@ -3,10 +3,12 @@ import { z } from 'zod';
 // Transaction states enum
 export enum TxState {
   PENDING = 'PENDING',
+  REPLACED = 'REPLACED',
   INCLUDED = 'INCLUDED',
   CONFIRMED = 'CONFIRMED',
   FINALIZED = 'FINALIZED',
   DROPPED = 'DROPPED',
+  RESUBMITTED = 'RESUBMITTED',
 }
 
 // Transaction category schema
@@ -25,6 +27,15 @@ export const DecodedCallSchema = z.object({
 });
 
 export type DecodedCall = z.infer<typeof DecodedCallSchema>;
+
+// State transition schema (state change log)
+export const StateTransitionSchema = z.object({
+  state: z.nativeEnum(TxState),
+  timestamp: z.number(),
+  reason: z.string().optional(),
+});
+
+export type StateTransition = z.infer<typeof StateTransitionSchema>;
 
 // Swap details schema
 export const SwapDetailsSchema = z.object({
@@ -71,6 +82,14 @@ export const TransactionSchema = z.object({
   _confirmation_depth: z.number(),
   _inclusion_block: z.string().nullable(),
   _inclusion_ts: z.number().nullable(),
+  // Extended lifecycle tracking
+  state_history: z.array(StateTransitionSchema).optional(),
+  replacement_tx: z.string().nullable().optional(),
+  replaced_by: z.string().nullable().optional(),
+  drop_reason: z.string().nullable().optional(),
+  // Optional duplicate fields for convenience (numeric block/confirmation)
+  inclusion_block: z.number().nullable().optional(),
+  confirmation_depth: z.number().optional(),
   _receipt: z.any().optional(), // Receipt data
 });
 

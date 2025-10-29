@@ -9,6 +9,7 @@ import Gas from './components/Gas';
 import Contracts from './components/Contracts';
 import Senders from './components/Senders';
 import Status from './components/Status';
+import FilterPanel from './components/FilterPanel';
 
 type TabType = 'summary' | 'opportunities' | 'live' | 'included' | 'gas' | 'contracts' | 'senders' | 'status';
 
@@ -60,6 +61,9 @@ export default function Home() {
           ))}
         </div>
       </nav>
+
+      {/* Filters */}
+      <FilterPanel />
 
       {/* Content */}
       <main className="p-6">

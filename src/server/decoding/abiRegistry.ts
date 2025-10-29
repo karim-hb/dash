@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getSignaturesCacheCollection } from '@/lib/db/mongo';
+import { getConfig } from '@/lib/config';
 
 // ABI Registry for managing function signatures and caching
 export class AbiRegistry {
@@ -46,6 +47,31 @@ export class AbiRegistry {
   resolveSignature(selector: string): string | null {
     const sel = selector.toLowerCase();
     return this.signatures.get(sel) || null;
+  }
+
+  // Resolve via 4byte.directory if enabled and not present
+  async resolveSignatureRemote(selector: string): Promise<string | null> {
+    try {
+      const { ENABLE_4BYTE } = getConfig();
+      if (!ENABLE_4BYTE) return null;
+      const sel = selector.toLowerCase().startsWith('0x') ? selector.toLowerCase() : `0x${selector.toLowerCase()}`;
+      const url = `https://www.4byte.directory/api/v1/signatures/?hex_signature=${sel}`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const results = data?.results || [];
+      if (Array.isArray(results) && results.length > 0) {
+        // Use the most common signature (first returned is fine)
+        const signature = results[0]?.text_signature as string;
+        if (signature) {
+          await this.cacheDiscoveredSignature(sel.replace('0x', ''), signature);
+          return signature;
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   // Get selector from signature

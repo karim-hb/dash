@@ -1,10 +1,12 @@
 'use client';
 
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
+import { useFilters } from '../hooks/useFilters';
 
 export default function Senders() {
   const { snapshot } = useWsSnapshot();
-  const txs = snapshot?.live || [];
+  const filters = useFilters();
+  const txs = filters.applyFilters(snapshot?.live || []);
   const counts = new Map<string, number>();
   for (const tx of txs) {
     const key = (tx.from || '').toLowerCase();

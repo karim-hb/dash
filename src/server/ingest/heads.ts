@@ -1,6 +1,7 @@
 import { TxState } from '@/lib/types';
 import { getWsClient } from '../rpc/wsClient';
 import { getTrackerState } from '../state/state';
+import { getBlockMonitor } from '../state/blockMonitor';
 
 let subscriptionId: string | null = null;
 let isRunning = false;
@@ -80,7 +81,9 @@ async function processBlock(blockHash: string, blockNumber: string): Promise<voi
 
     const transactions = block.transactions;
     console.log(`📦 Block ${blockNumber} has ${transactions.length} transactions`);
-
+    // Notify block monitor for replacement/drop inference
+    try { await getBlockMonitor().onBlock(block); } catch {}
+    
     // Process each transaction in the block
     for (const tx of transactions) {
       if (tx && tx.hash) {

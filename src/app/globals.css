@@ -1,22 +1,29 @@
 @import "tailwindcss";
 
-/* Bloomberg-Style Dark Terminal Theme */
+/* Bloomberg-Style Dark Terminal Theme - Enhanced */
 :root {
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #0f0f0f;
-  --bg-tertiary: #1a1a1a;
-  --bg-glass: rgba(255, 255, 255, 0.03);
-  --bg-glass-hover: rgba(255, 255, 255, 0.05);
-  --border-primary: rgba(255, 255, 255, 0.08);
-  --border-accent: rgba(59, 130, 246, 0.2);
-  --text-primary: #ffffff;
-  --text-secondary: #9ca3af;
-  --text-accent: #3b82f6;
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0f;
+  --bg-tertiary: #0f1419;
+  --bg-glass: rgba(6, 182, 212, 0.04);
+  --bg-glass-hover: rgba(6, 182, 212, 0.08);
+  --border-primary: rgba(6, 182, 212, 0.15);
+  --border-accent: rgba(6, 182, 212, 0.4);
+  --text-primary: #e0f2fe;
+  --text-secondary: #94a3b8;
+  --text-accent: #06b6d4;
   --text-success: #10b981;
   --text-warning: #f59e0b;
   --text-error: #ef4444;
-  --shadow-glass: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 12px rgba(59, 130, 246, 0.08);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.15);
+  --shadow-glow-strong: 0 0 40px rgba(6, 182, 212, 0.3);
+  
+  /* Bloomberg Blue Theme */
+  --bloomberg-blue: #0ea5e9;
+  --bloomberg-cyan: #06b6d4;
+  --bloomberg-dark: #020617;
+  --bloomberg-darker: #000000;
 }
 
 /* Global Styles */
@@ -25,15 +32,16 @@
 }
 
 body {
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  background: radial-gradient(ellipse at top, #0c1220 0%, #000000 50%, #000814 100%);
   color: var(--text-primary);
   font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  background-attachment: fixed;
 }
 
 /* Terminal-style scrollbar */
@@ -55,14 +63,26 @@ body {
   background: var(--border-accent);
 }
 
-/* Glassmorphism Components */
+/* Glassmorphism Components - Enhanced */
 .glass-card {
-  background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(30, 41, 59, 0.5) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  box-shadow: var(--shadow-glass);
+  border-radius: 14px;
+  box-shadow: 
+    var(--shadow-glass),
+    inset 0 1px 0 rgba(6, 182, 212, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  border-color: var(--border-accent);
+  box-shadow: 
+    var(--shadow-glass),
+    var(--shadow-glow),
+    inset 0 1px 0 rgba(6, 182, 212, 0.2);
+  transform: translateY(-2px);
 }
 
 .metric-card {
@@ -307,22 +327,25 @@ body {
   border-radius: 4px;
 }
 
-/* Grid Layouts */
+/* Grid Layouts - Enhanced Spacing */
 .terminal-grid {
   display: grid;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .terminal-grid-4 {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.75rem;
 }
 
 .terminal-grid-2 {
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 2rem;
 }
 
 .terminal-grid-1 {
   grid-template-columns: 1fr;
+  gap: 2rem;
 }
 
 /* Sparklines */
@@ -365,15 +388,34 @@ body {
 
 /* Bloomberg Terminal Enhancements */
 .bloomberg-card {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(71, 85, 105, 0.3);
-  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(2, 6, 23, 0.95) 0%, rgba(15, 23, 42, 0.9) 50%, rgba(30, 41, 59, 0.85) 100%);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 2px solid rgba(6, 182, 212, 0.2);
+  border-radius: 20px;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    0 12px 48px rgba(0, 0, 0, 0.7),
+    0 0 20px rgba(6, 182, 212, 0.1),
+    inset 0 1px 0 rgba(6, 182, 212, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.bloomberg-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.05), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
 .bloomberg-header {
@@ -470,15 +512,121 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Responsive Container */
+/* Responsive Container - Better Spacing */
 .terminal-container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 1.5rem;
 }
 
 @media (min-width: 768px) {
   .terminal-container {
-    padding: 0 2rem;
+    padding: 2rem;
   }
+}
+
+@media (min-width: 1024px) {
+  .terminal-container {
+    padding: 2.5rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .terminal-container {
+    max-width: 1920px;
+    padding: 3rem;
+  }
+}
+
+/* Smooth Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Glow Effects for Active Elements */
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+}
+
+/* Enhanced Status Indicators */
+.status-indicator.live {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.9);
+  }
+}
+
+/* Better Spacing Utilities */
+.space-y-lg > * + * {
+  margin-top: 2rem;
+}
+
+.space-y-xl > * + * {
+  margin-top: 3rem;
+}
+
+.p-terminal {
+  padding: 1.5rem;
+}
+
+.p-terminal-lg {
+  padding: 2.5rem;
+}
+
+/* Bloomberg Data Point Styling */
+.data-point {
+  position: relative;
+  padding: 1.25rem;
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.data-point:hover {
+  border-left-color: var(--bloomberg-cyan);
+  background: rgba(6, 182, 212, 0.05);
+  transform: translateX(4px);
+}
+
+.data-point-value {
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--bloomberg-cyan);
+  line-height: 1.2;
+}
+
+.data-point-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
 }

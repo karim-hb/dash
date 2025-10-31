@@ -79,23 +79,26 @@ async function main() {
 
     // Populate included transactions from recent blocks (one-time warm-up)
     try {
-      await initializeIncludedFromBlocks();
-      console.log('✅ Initialized included transactions from recent blocks');
+      // Skip for now due to Nethermind eth_call issues
+      // await initializeIncludedFromBlocks();
+      console.log('⏭️ Skipped initializing included transactions from recent blocks (Nethermind issues)');
     } catch (e) {
       console.warn('⚠️ Failed to initialize included transactions from recent blocks:', e);
     }
 
     // Start oracles
     console.log('Starting oracle updates...');
-    startOracleUpdates();
-    console.log('Oracle updates started');
+    // Temporarily disable oracles due to hanging
+    // startOracleUpdates();
+    console.log('Oracle updates skipped (temporarily disabled)');
 
     // Start AMM indexers
-    await startUniswapV2Indexer();
-    await startUniswapV3Indexer();
-    await startSushiV2Indexer();
-    await startBalancerV2Indexer();
-    await startCurveIndexer();
+    // Temporarily disable AMM indexers due to hanging
+    // await startUniswapV2Indexer();
+    // await startUniswapV3Indexer();
+    // await startSushiV2Indexer();
+    // await startBalancerV2Indexer();
+    // await startCurveIndexer();
 
     // Start holders estimator (approximate)
     console.log('Starting holders backfill...');
@@ -181,15 +184,19 @@ async function startWsBroadcast(port: number): Promise<void> {
       });
 
       // @ts-ignore
-      wss.on('error', (err: any) => {
-        console.error('WS server error:', err);
+      wss.on('listening', () => {
+        console.log(`✅ WebSocket broadcaster listening on ws://localhost:${port}`);
+        // Start broadcast loop immediately
+        console.log('📡 Starting WebSocket broadcast loop...');
+        startBroadcastLoop();
+        resolve();
       });
 
-      console.log(`✅ WebSocket broadcaster listening on ws://localhost:${port}`);
-      // Start broadcast loop immediately
-      console.log('📡 Starting WebSocket broadcast loop...');
-      startBroadcastLoop();
-      resolve();
+      // @ts-ignore
+      wss.on('error', (err: any) => {
+        console.error('WS server error:', err);
+        reject(err);
+      });
     } catch (e) {
       reject(e);
     }

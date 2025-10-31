@@ -1,9 +1,12 @@
-import { formatUnits } from 'ethers';
+// Note: avoid ethers.formatUnits with 96 decimals; use integer scaling instead
 
 export const Q96 = 2n ** 96n;
 export const Q192 = Q96 * Q96;
 export const MIN_TICK = -887272;
 export const MAX_TICK = 887272;
+
+const SQRT_SCALE = 1_000_000_000_000n; // 1e12 precision for sqrt price conversion
+const SQRT_SCALE_NUMBER = Number(SQRT_SCALE);
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -141,7 +144,9 @@ export function derivePriceRatio(
   decimalsToken1: number
 ): number {
   if (sqrtPriceX96 === 0n) return 0;
-  const sqrt = Number(formatUnits(sqrtPriceX96, 96));
+  // Convert Q64.96 to float with fixed precision to avoid 96-decimal formatter limits
+  const scaledSqrt = (sqrtPriceX96 * SQRT_SCALE + (Q96 / 2n)) / Q96; // rounding
+  const sqrt = Number(scaledSqrt) / SQRT_SCALE_NUMBER;
   if (!isFinite(sqrt) || sqrt === 0) return 0;
   const ratio = sqrt * sqrt;
   const decimalAdjust = Math.pow(10, decimalsToken0 - decimalsToken1);

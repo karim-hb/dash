@@ -199,9 +199,9 @@ export async function getUsdPriceForToken(address: string, opts: GetPriceOptions
     token: key,
     price: null,
     source: 'unknown',
-    provider: 'none',
+    provider: 'metrics',
     updatedAt: now,
-    heartbeat: 'error',
+    heartbeat: 'stale',
     liquidityUsd: null,
   });
   return null;

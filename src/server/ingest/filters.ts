@@ -62,6 +62,10 @@ export type FilterResult = { keep: boolean; usdValue?: number };
 
 // Main mempool filter pipeline
 export async function shouldKeepMempoolTx(tx: Transaction): Promise<FilterResult> {
+  // Temporary bypass for debugging: set BYPASS_FILTERS=true to allow all txs through
+  if ((process.env.BYPASS_FILTERS || '').toLowerCase() === 'true') {
+    return { keep: true };
+  }
   try {
     const to = (tx.to || '').toLowerCase();
     const sel = selector(tx.input || '') || '';
@@ -76,6 +80,14 @@ export async function shouldKeepMempoolTx(tx: Transaction): Promise<FilterResult
     // Stage 2: Function allowlist (if router)
     if (isRouter && !ALLOWED_SELECTORS.has(sel)) {
       return { keep: false };
+    }
+
+    // Relaxed fallback: keep router txs with allowed selectors even if we cannot price them
+    if (isRouter && ALLOWED_SELECTORS.has(sel)) {
+      // If strict mode requested, skip this and continue pricing path
+      if ((process.env.FILTER_STRICT_PRICING || '').toLowerCase() !== 'true') {
+        return { keep: true };
+      }
     }
 
     // Stage 3: Token whitelist + minUSD
@@ -95,6 +107,10 @@ export async function shouldKeepMempoolTx(tx: Transaction): Promise<FilterResult
             usd = qty * price;
           }
           if (usd != null && usd >= info.minUSD) return { keep: true, usdValue: usd };
+          // Relaxed fallback: if pricing unavailable, keep whitelisted token transfers
+          if ((process.env.FILTER_STRICT_PRICING || '').toLowerCase() !== 'true') {
+            return { keep: true };
+          }
           return { keep: false };
         }
       } catch {}
@@ -137,7 +153,10 @@ export async function shouldKeepMempoolTx(tx: Transaction): Promise<FilterResult
       return { keep: false };
     }
 
-    // Unknown amount/price: drop
+    // Unknown amount/price: in relaxed mode, keep; in strict mode, drop
+    if ((process.env.FILTER_STRICT_PRICING || '').toLowerCase() !== 'true') {
+      return { keep: true };
+    }
     return { keep: false };
   } catch {
     return { keep: false };

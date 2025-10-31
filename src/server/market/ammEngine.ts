@@ -308,6 +308,8 @@ function updateTokenEntry(address: string, meta: TokenMetaLite, explicitPrice?: 
 function buildHeartbeat(address: string, entry: PriceCacheEntry | null): { status: 'healthy' | 'stale' | 'error'; last_update: number | null; provider: string } | undefined {
   const cacheEntry = entry ?? getCachedPrice(address);
   if (!cacheEntry) return undefined;
+  // Suppress noisy 'none/error' heartbeat in early startup; defer until a real source is available
+  if ((cacheEntry.provider || '').toLowerCase() === 'none') return undefined;
   return {
     status: cacheEntry.heartbeat,
     last_update: cacheEntry.updatedAt,

@@ -11,7 +11,7 @@ import { getMetricsAggregator, getFeeHistoryAnalytics, feeHistoryToSuggestions }
 import { getTxpoolStatus } from './ingest/txpool';
 import { UiSnapshot, Transaction } from '@/lib/types';
 import { startPendingIngestion } from './ingest/pending';
-import { startHeadsIngestion } from './ingest/heads';
+import { startHeadsIngestion, initializeIncludedFromBlocks } from './ingest/heads';
 import { startTxpoolMonitoring } from './ingest/txpool';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -77,6 +77,14 @@ async function main() {
     startGasOracle();
     console.log('✅ Ingestion pipelines started');
 
+    // Populate included transactions from recent blocks (one-time warm-up)
+    try {
+      await initializeIncludedFromBlocks();
+      console.log('✅ Initialized included transactions from recent blocks');
+    } catch (e) {
+      console.warn('⚠️ Failed to initialize included transactions from recent blocks:', e);
+    }
+
     // Start oracles
     console.log('Starting oracle updates...');
     startOracleUpdates();
@@ -112,8 +120,8 @@ async function main() {
     startTokenStatsRefresh();
 
     // Start embedded WebSocket broadcast server (shares in-memory state)
-    let wsPort = parseInt(process.env.UI_WS_PORT || '3006', 10);
-    wsPort = await findFreeWsPort(wsPort, 10);
+    // Bind to the exact requested port to avoid UI/WS mismatches
+    const wsPort = parseInt(process.env.UI_WS_PORT || '3006', 10);
     await startWsBroadcast(wsPort);
 
     // Start lightweight HTTP API for paginated data access (CORS-enabled)
@@ -122,7 +130,7 @@ async function main() {
     await startHttpApi(httpPort);
 
     console.log('🎯 Server ready! WebSocket ingestion active.');
-    console.log(`💻 Start Next.js UI with: npm run dev (WS at ws://localhost:${wsPort})`);
+    console.log(`💻 Start Next.js UI with: NEXT_PUBLIC_UI_WS_URL=ws://localhost:${wsPort} npm run dev`);
     try {
       const runtimePath = path.join(process.cwd(), '.runtime-ports.json');
       fs.writeFileSync(runtimePath, JSON.stringify({ ws_port: wsPort, http_port: httpPort }, null, 2));
@@ -588,10 +596,7 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
     live: scoredTxs.slice(0, 200), // Show more in live view
     included,
     senders,
-    gas: {
-      suggestions: gasSuggestions,
-      oracle: gasOracleSnapshot,
-    },
+    gas: ({ suggestions: gasSuggestions, oracle: gasOracleSnapshot } as any),
     tokens,
     pools,
     oracles,

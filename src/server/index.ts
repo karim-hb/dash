@@ -25,9 +25,13 @@ import { startTokenDiscovery } from './market/tokenDiscovery';
 import { startBalancerV2Indexer } from './indexers/amm/balancerV2';
 import { startCurveIndexer } from './indexers/amm/curve';
 import { initializeMarketRegistries } from './market/registry';
+import { startAmmEngine } from './market/ammEngine';
 import { startTokenStatsRefresh } from './market/tokenStats';
 import * as http from 'http';
 import { URL } from 'url';
+
+const MIN_TOKEN_USD = Number(process.env.UI_TOKEN_MIN_USD || '1000');
+const MIN_POOL_USD = Number(process.env.UI_POOL_MIN_USD || '1000');
 
 // Server startup script
 async function main() {
@@ -61,6 +65,7 @@ async function main() {
 
     // Initialize market registries (pre-populate tokens from catalog)
     initializeMarketRegistries();
+    startAmmEngine();
     console.log('✅ Market registries initialized');
 
     // Start ingestion pipelines
@@ -500,8 +505,21 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
     .sort((a, b) => b.tx_count - a.tx_count)
     .slice(0, 50);
 
-  const tokens = getTokens().map(t => ({ ...t, heartbeat: t.heartbeat ?? undefined }));
-  const pools = getPools();
+  const rawTokens = getTokens().map(t => ({ ...t, heartbeat: t.heartbeat ?? undefined }));
+  const tokens = rawTokens.filter(t => {
+    const liquidity = typeof t.liquidity_usd === 'number' ? t.liquidity_usd : null;
+    if (liquidity != null && liquidity >= MIN_TOKEN_USD) return true;
+    const fallback = typeof t.mcap_onchain_usd === 'number' ? t.mcap_onchain_usd : null;
+    return fallback != null && fallback >= MIN_TOKEN_USD;
+  });
+
+  const rawPools = getPools();
+  const pools = rawPools.filter(p => {
+    const tvl = typeof p.tvl_usd === 'number' ? p.tvl_usd : null;
+    if (tvl != null && tvl >= MIN_POOL_USD) return true;
+    const partial = (typeof p.pool0_usd === 'number' ? p.pool0_usd : 0) + (typeof p.pool1_usd === 'number' ? p.pool1_usd : 0);
+    return partial >= MIN_POOL_USD;
+  });
   const oracles = getOracleFeeds();
 
   console.log(`📡 Broadcasting: ${tokens.length} tokens, ${pools.length} pools, ${oracles.length} oracles`);

@@ -1,6 +1,6 @@
 import tokensCatalog from '../catalog/tokens.json';
 import { getOracleFeeds, getTokens, getPools } from './registry';
-import { getV2Reserves, getV2PoolsForPair } from './reserves';
+import { getV2Reserves, getV2PoolsForPair, setV2Reserves } from './reserves';
 import { ethers } from 'ethers';
 
 // Global provider instance (avoid circular imports)
@@ -19,6 +19,46 @@ function getProvider(): ethers.Provider {
   }
 
   return provider;
+}
+
+const PRICE_TTL_MS = Number(process.env.PRICE_CACHE_TTL_MS || '20000');
+const PRICE_STALE_MS = Number(process.env.PRICE_CACHE_STALE_MS || '90000');
+const RESERVE_PROBE_TTL_MS = Number(process.env.RESERVE_PROBE_TTL_MS || '15000');
+
+type PriceSource = 'stable' | 'eth' | 'chainlink' | 'pool' | 'probe' | 'unknown';
+
+export type PriceCacheEntry = {
+  token: string;
+  price: number | null;
+  source: PriceSource;
+  provider: string;
+  updatedAt: number;
+  heartbeat: 'healthy' | 'stale' | 'error';
+  liquidityUsd?: number | null;
+  metadata?: Record<string, any>;
+};
+
+const priceCache: Map<string, PriceCacheEntry> = new Map();
+const lastReserveProbeMs: Map<string, number> = new Map();
+
+function nowMs(): number { return Date.now(); }
+
+function resolveHeartbeat(updatedAt: number, hasPrice: boolean): 'healthy' | 'stale' | 'error' {
+  if (!hasPrice) return 'error';
+  const age = nowMs() - updatedAt;
+  if (age <= PRICE_TTL_MS) return 'healthy';
+  if (age <= PRICE_STALE_MS) return 'stale';
+  return 'error';
+}
+
+function cachePrice(address: string, entry: PriceCacheEntry): PriceCacheEntry {
+  const key = normalize(address);
+  priceCache.set(key, entry);
+  return entry;
+}
+
+export function getCachedPrice(address: string): PriceCacheEntry | undefined {
+  return priceCache.get(normalize(address));
 }
 
 type TokenInfo = { symbol: string; decimals: number; name: string };
@@ -65,46 +105,287 @@ function lookupToken(address: string): TokenInfo | null {
 
 function normalize(a: string) { return a ? a.toLowerCase() : a; }
 
-export async function getUsdPriceForToken(address: string): Promise<number | null> {
+type GetPriceOptions = {
+  forceRefresh?: boolean;
+  ttlMs?: number;
+  minLiquidityUsd?: number;
+};
+
+export async function getUsdPriceForToken(address: string, opts: GetPriceOptions = {}): Promise<number | null> {
+  const key = normalize(address);
+  const ttl = opts.ttlMs ?? PRICE_TTL_MS;
+  const cached = priceCache.get(key);
+  if (!opts.forceRefresh && cached && (nowMs() - cached.updatedAt) <= ttl) {
+    return cached.price;
+  }
+
   const info = lookupToken(address);
-  if (!info) return null;
-
-  // Handle known symbols
-  if (STABLES.has(info.symbol)) return 1.0;
-  if (info.symbol === 'WETH') return getEthUsdPrice();
-  if (info.symbol === 'ETH') return getEthUsdPrice();
-
-  // ONLY Nethermind DEX prices (no external API fallbacks)
-  try {
-    const dexPrice = await getNethermindDexPrice(address);
-    if (dexPrice && dexPrice > 0) {
-      console.log(`🔗 Nethermind DEX price for ${info.symbol}: $${dexPrice.toFixed(4)}`);
-      return dexPrice;
-    }
-  } catch (e: any) {
-    console.log(`⚠️ Nethermind DEX price failed for ${address}: ${e?.message || e}`);
+  const now = nowMs();
+  if (!info) {
+    cachePrice(address, {
+      token: key,
+      price: null,
+      source: 'unknown',
+      provider: 'metadata',
+      updatedAt: now,
+      heartbeat: 'error',
+    });
+    return null;
   }
 
-  // ONLY Chainlink oracles (no external APIs)
-  const chainlinkPrice = getChainlinkPriceForToken(address);
-  if (chainlinkPrice) {
-    console.log(`🟡 Chainlink price for ${info.symbol}: $${chainlinkPrice.toFixed(4)}`);
-    return chainlinkPrice;
+  const symbolUpper = (info.symbol || '').toUpperCase();
+
+  // Stablecoins without oracle dependency
+  if (STABLES.has(symbolUpper)) {
+    const entry = cachePrice(address, {
+      token: key,
+      price: 1,
+      source: 'stable',
+      provider: 'stable',
+      updatedAt: now,
+      heartbeat: 'healthy',
+    });
+    return entry.price;
   }
 
-  // NO external API fallbacks - return null if no on-chain data available
+  // Native ETH / WETH price
+  if (symbolUpper === 'ETH' || key === WETH_ADDR) {
+    const ethEntry = computeEthUsdEntry();
+    cachePrice(address, ethEntry);
+    return ethEntry.price;
+  }
+
+  // Chainlink price if available
+  const chainlink = getChainlinkPriceEntry(symbolUpper);
+  if (chainlink) {
+    const entry = cachePrice(address, {
+      token: key,
+      price: chainlink.price,
+      source: 'chainlink',
+      provider: 'Chainlink',
+      updatedAt: chainlink.updatedAt,
+      heartbeat: resolveHeartbeat(chainlink.updatedAt, chainlink.price != null),
+      metadata: { pair: chainlink.pair },
+    });
+    return entry.price;
+  }
+
+  // Probe via WETH liquidity pools
+  const probe = await probePriceViaWethPools(key, info.decimals || 18, opts.minLiquidityUsd);
+  if (probe && probe.price != null) {
+    const entry = cachePrice(address, {
+      token: key,
+      price: probe.price,
+      source: 'pool',
+      provider: probe.provider,
+      updatedAt: probe.updatedAt,
+      heartbeat: resolveHeartbeat(probe.updatedAt, probe.price != null),
+      liquidityUsd: probe.liquidityUsd,
+      metadata: { pool: probe.pool },
+    });
+    return entry.price;
+  }
+
+  // Final fallback - keep previous value if available but mark stale/error
+  if (cached) {
+    cachePrice(address, {
+      ...cached,
+      heartbeat: resolveHeartbeat(cached.updatedAt, cached.price != null),
+    });
+    return cached.price ?? null;
+  }
+
+  cachePrice(address, {
+    token: key,
+    price: null,
+    source: 'unknown',
+    provider: 'none',
+    updatedAt: now,
+    heartbeat: 'error',
+    liquidityUsd: null,
+  });
   return null;
 }
 
-export function getEthUsdPrice(): number | null {
+type ChainlinkPriceHit = { price: number | null; updatedAt: number; pair: string } | null;
+
+function computeEthUsdEntry(): PriceCacheEntry {
   const feeds = getOracleFeeds();
-  // Prefer Chainlink ETH/USD
-  const cl = feeds.find(f => f.provider === 'Chainlink' && (f.pair?.toUpperCase() === 'ETH/USD'));
-  if (cl && typeof cl.price_usd === 'number') return cl.price_usd;
-  // Fallback CoinGecko
-  const cg = feeds.find(f => f.provider === 'CoinGecko' && (f.pair?.toUpperCase() === 'ETH/USD'));
-  if (cg && typeof cg.price_usd === 'number') return cg.price_usd;
-  return null;
+  const now = nowMs();
+  let price: number | null = null;
+  let updatedAt = now;
+  let provider: PriceSource = 'unknown';
+  const chainlinkFeeds = feeds
+    .filter(f => f.provider === 'Chainlink' && (f.pair?.toUpperCase() === 'ETH/USD'))
+    .sort((a, b) => (b.last_updated || 0) - (a.last_updated || 0));
+
+  if (chainlinkFeeds.length > 0) {
+    const feed = chainlinkFeeds[0];
+    price = typeof feed.price_usd === 'number' ? feed.price_usd : null;
+    updatedAt = feed.last_updated || now;
+    provider = 'chainlink';
+  } else {
+    const cgFeeds = feeds
+      .filter(f => f.provider === 'CoinGecko' && (f.pair?.toUpperCase() === 'ETH/USD'))
+      .sort((a, b) => (b.last_updated || 0) - (a.last_updated || 0));
+    if (cgFeeds.length > 0) {
+      const feed = cgFeeds[0];
+      price = typeof feed.price_usd === 'number' ? feed.price_usd : null;
+      updatedAt = feed.last_updated || now;
+      provider = 'probe';
+    }
+  }
+
+  if (price == null) {
+    const cached = priceCache.get(WETH_ADDR);
+    if (cached && cached.price != null) {
+      return {
+        token: WETH_ADDR,
+        price: cached.price,
+        source: cached.source,
+        provider: cached.provider,
+        updatedAt: cached.updatedAt,
+        heartbeat: resolveHeartbeat(cached.updatedAt, true),
+        liquidityUsd: cached.liquidityUsd,
+        metadata: cached.metadata,
+      };
+    }
+  }
+
+  return {
+    token: WETH_ADDR,
+    price,
+    source: provider,
+    provider: provider === 'chainlink' ? 'Chainlink' : provider === 'probe' ? 'CoinGecko' : 'none',
+    updatedAt,
+    heartbeat: resolveHeartbeat(updatedAt, price != null),
+  };
+}
+
+function getChainlinkPriceEntry(symbolUpper: string): ChainlinkPriceHit {
+  if (!symbolUpper) return null;
+  const feeds = getOracleFeeds();
+  const now = nowMs();
+  let best: ChainlinkPriceHit = null;
+
+  for (const feed of feeds) {
+    if (feed.provider !== 'Chainlink' || !feed.pair) continue;
+    const pair = feed.pair.toUpperCase();
+    const [base, quote] = pair.split('/');
+    let price: number | null = null;
+    if (base === symbolUpper && quote === 'USD') {
+      price = typeof feed.price_usd === 'number' ? feed.price_usd : null;
+    } else if (base === 'USD' && quote === symbolUpper) {
+      if (typeof feed.price_usd === 'number' && feed.price_usd > 0) {
+        price = 1 / feed.price_usd;
+      }
+    }
+    if (price == null) continue;
+    const updatedAt = feed.last_updated || now;
+    if (!best || updatedAt > best.updatedAt) {
+      best = { price, updatedAt, pair: feed.pair };
+    }
+  }
+
+  return best;
+}
+
+type PoolProbe = {
+  price: number | null;
+  liquidityUsd: number;
+  provider: string;
+  pool: string;
+  updatedAt: number;
+};
+
+async function probePriceViaWethPools(token: string, decimals: number, minLiquidityUsd = 0): Promise<PoolProbe | null> {
+  const ethPrice = getEthUsdPrice();
+  if (ethPrice == null) return null;
+
+  const pools = getV2PoolsForPair(token, WETH_ADDR);
+  if (!pools.length) return null;
+
+  const allPools = getPools();
+  const now = nowMs();
+  let best: PoolProbe | null = null;
+
+  for (const poolAddr of pools) {
+    const poolMeta = allPools.find(p => p.address.toLowerCase() === poolAddr.toLowerCase());
+    if (!poolMeta) continue;
+
+    let reserves = getV2Reserves(poolAddr);
+    const needsProbe = !reserves || (now - reserves.updatedAt) > RESERVE_PROBE_TTL_MS;
+    if (needsProbe) {
+      const lastProbe = lastReserveProbeMs.get(poolAddr) || 0;
+      if ((now - lastProbe) > RESERVE_PROBE_TTL_MS) {
+        try {
+          lastReserveProbeMs.set(poolAddr, now);
+          const data = await getProvider().call({ to: poolAddr, data: '0x0902f1ac' });
+          if (data && data.length >= 130) {
+            const reserve0 = BigInt('0x' + data.slice(2, 66));
+            const reserve1 = BigInt('0x' + data.slice(66, 130));
+            setV2Reserves(poolAddr, poolMeta.token0, poolMeta.token1, reserve0, reserve1);
+            reserves = getV2Reserves(poolAddr);
+          }
+        } catch (err) {
+          // ignore probe errors for individual pools
+        }
+      }
+    }
+
+    if (!reserves) continue;
+
+    const t0 = lookupToken(reserves.token0);
+    const t1 = lookupToken(reserves.token1);
+    if (!t0 || !t1) continue;
+
+    const tokenIs0 = reserves.token0 === token;
+    const tokenDecimals = tokenIs0 ? t0.decimals : t1.decimals;
+    const wethDecimals = tokenIs0 ? t1.decimals : t0.decimals;
+    const tokenReserve = tokenIs0 ? reserves.reserve0 : reserves.reserve1;
+    const wethReserve = tokenIs0 ? reserves.reserve1 : reserves.reserve0;
+
+    if (tokenReserve === 0n || wethReserve === 0n) continue;
+
+    const tokenFloat = Number(tokenReserve) / 10 ** tokenDecimals;
+    const wethFloat = Number(wethReserve) / 10 ** wethDecimals;
+
+    if (!isFinite(tokenFloat) || !isFinite(wethFloat) || tokenFloat <= 0 || wethFloat <= 0) continue;
+
+    const priceEth = wethFloat / tokenFloat;
+    const priceUsd = priceEth * ethPrice;
+    if (!isFinite(priceUsd) || priceUsd <= 0) continue;
+
+    const wethUsd = wethFloat * ethPrice;
+    const tokenUsd = tokenFloat * priceUsd;
+    const liquidityUsd = tokenUsd + wethUsd;
+
+    if (liquidityUsd < minLiquidityUsd) continue;
+
+    const updatedAt = reserves.updatedAt;
+    if (!best || liquidityUsd > best.liquidityUsd) {
+      best = {
+        price: priceUsd,
+        liquidityUsd,
+        provider: `${poolMeta.dex} V2`,
+        pool: poolAddr,
+        updatedAt,
+      };
+    }
+  }
+
+  return best;
+}
+
+export function getEthUsdPrice(opts?: { forceRefresh?: boolean }): number | null {
+  const ttl = PRICE_TTL_MS;
+  const cached = priceCache.get(WETH_ADDR);
+  if (!opts?.forceRefresh && cached && (nowMs() - cached.updatedAt) <= ttl) {
+    return cached.price;
+  }
+  const entry = computeEthUsdEntry();
+  cachePrice(WETH_ADDR, entry);
+  return entry.price;
 }
 
 export async function computeV2TvlUsd(token0: string, token1: string, reserve0: bigint, reserve1: bigint): Promise<number | null> {
@@ -121,34 +402,42 @@ export async function computeV2TvlUsd(token0: string, token1: string, reserve0: 
 }
 
 export function getUsdPriceViaWeth(token: string): number | null {
-  const t = token.toLowerCase();
-  if (t === WETH_ADDR) return getEthUsdPrice();
+  const normalized = token.toLowerCase();
+  if (normalized === WETH_ADDR) return getEthUsdPrice();
   const ethUsd = getEthUsdPrice();
   if (ethUsd == null) return null;
-  const pools = getV2PoolsForPair(t, WETH_ADDR);
+  const pools = getV2PoolsForPair(normalized, WETH_ADDR);
   let bestUsd: number | null = null;
   for (const pool of pools) {
-    const res = getV2Reserves(pool);
-    if (!res) continue;
-    // find which side is token
-    const i0 = lookupToken(res.token0);
-    const i1 = lookupToken(res.token1);
-    if (!i0 || !i1) continue;
-    let priceWeth = 0;
-    if (res.token0 === t && res.token1 === WETH_ADDR) {
-      const q0 = Number(res.reserve0) / 10 ** i0.decimals;
-      const q1 = Number(res.reserve1) / 10 ** i1.decimals;
-      if (q0 > 0) priceWeth = q1 / q0;
-    } else if (res.token1 === t && res.token0 === WETH_ADDR) {
-      const q0 = Number(res.reserve0) / 10 ** i0.decimals;
-      const q1 = Number(res.reserve1) / 10 ** i1.decimals;
-      if (q1 > 0) priceWeth = q0 / q1;
-    } else { continue; }
-    if (!isFinite(priceWeth) || priceWeth <= 0) continue;
-    const usd = priceWeth * ethUsd;
+    const reserves = getV2Reserves(pool);
+    if (!reserves) continue;
+    const tokenIs0 = reserves.token0 === normalized;
+    const wethIs0 = reserves.token0 === WETH_ADDR;
+    const wethIs1 = reserves.token1 === WETH_ADDR;
+    if (!wethIs0 && !wethIs1) continue;
+
+    const tokenAddress = tokenIs0 ? reserves.token0 : reserves.token1;
+    const wethAddress = tokenIs0 ? reserves.token1 : reserves.token0;
+    if (wethAddress !== WETH_ADDR) continue;
+
+    const tokenInfo = lookupToken(tokenAddress);
+    const wethInfo = lookupToken(wethAddress);
+    if (!tokenInfo || !wethInfo) continue;
+
+    const tokenReserve = tokenIs0 ? reserves.reserve0 : reserves.reserve1;
+    const wethReserve = tokenIs0 ? reserves.reserve1 : reserves.reserve0;
+    if (tokenReserve === 0n || wethReserve === 0n) continue;
+
+    const tokenFloat = Number(tokenReserve) / 10 ** (tokenInfo.decimals || 18);
+    const wethFloat = Number(wethReserve) / 10 ** (wethInfo.decimals || 18);
+    if (!isFinite(tokenFloat) || !isFinite(wethFloat) || tokenFloat <= 0 || wethFloat <= 0) continue;
+
+    const priceEth = wethFloat / tokenFloat;
+    if (!isFinite(priceEth) || priceEth <= 0) continue;
+    const usd = priceEth * ethUsd;
     if (isFinite(usd) && usd > 0) {
       if (bestUsd == null) bestUsd = usd;
-      else bestUsd = (bestUsd + usd) / 2; // rough blend if multiple pools
+      else bestUsd = Math.max(bestUsd, usd);
     }
   }
   return bestUsd;
@@ -298,7 +587,7 @@ async function getNethermindDexPrice(tokenAddress: string): Promise<number | nul
 
     return null;
   } catch (e: any) {
-    console.log(`❌ Nethermind DEX price fetch failed for ${tokenAddress}: ${e?.message || e}`);
+    console.log(`? Nethermind DEX price fetch failed for ${tokenAddress}: ${e?.message || e}`);
     return null;
   }
 }
@@ -330,7 +619,8 @@ export function getTokenMarketData(address: string) {
   const info = lookupToken(address);
   if (!info) return null;
 
-  const price = getUsdPriceForToken(address);
+  const cached = getCachedPrice(address);
+  const price = cached?.price ?? null;
   const token = getTokens().find(t => normalize(t.address) === normalize(address));
 
   return {

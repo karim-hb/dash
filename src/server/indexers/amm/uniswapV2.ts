@@ -1,14 +1,14 @@
 import { config } from '@/lib/config';
 import amm from '../../catalog/amm.json';
-import { upsertPool, upsertToken, getPools } from '../../market/registry';
-import tokensCatalog from '../../catalog/tokens.json';
+import { getPools } from '../../market/registry';
 import { getUsdPriceViaWeth } from '../../market/priceEngine';
 import { recordSwapUsd } from '../../market/poolStats';
 import { ethers } from 'ethers';
-import { setV2Reserves } from '../../market/reserves';
 import { getProvider } from '../../modules/provider';
-import { getTokenMetadata } from '../../modules/tokens';
 import { recordSwapBucket } from '../../market/bucket';
+import { registerPool, updateV2PoolReserves } from '../../market/ammEngine';
+import tokensCatalog from '../../catalog/tokens.json';
+import { getTokens } from '../../market/registry';
 
 const V2_FACTORY_ABI = [
   'event PairCreated(address indexed token0, address indexed token1, address pair, uint256)'
@@ -25,6 +25,15 @@ const SWAP_TOPIC = IPair.getEvent('Swap')!.topicHash;
 
 const discoveredPairs = new Set<string>();
 
+function getTokenDecimalsCached(address: string): number {
+  const lower = address.toLowerCase();
+  const existing = getTokens().find(t => (t.address || '').toLowerCase() === lower);
+  if (existing && typeof existing.decimals === 'number') return existing.decimals;
+  const catalogEntry: any = (tokensCatalog as any)[lower] || (tokensCatalog as any)[address];
+  if (catalogEntry && typeof catalogEntry.decimals === 'number') return catalogEntry.decimals;
+  return 18;
+}
+
 async function handlePairCreated(log: any, dexName: string) {
   try {
     const parsed = IFactory.parseLog({ topics: log.topics, data: log.data });
@@ -38,37 +47,7 @@ async function handlePairCreated(log: any, dexName: string) {
 
     console.log(`🏦 ${dexName} V2: discovered pair ${pair} (${token0.slice(0,6)}…/${token1.slice(0,6)}…)`);
 
-    upsertPool({
-      dex: dexName,
-      version: 'V2',
-      address: pair,
-      token0,
-      token1,
-      fee_bps: 30, // default typical for V2 (approx)
-      tvl_usd: null,
-      volume_24h_usd: null,
-      fees_24h_usd: null,
-      utilization: null,
-    });
-
-    const t0Meta: any = (tokensCatalog as any)[token0] || null;
-    const t1Meta: any = (tokensCatalog as any)[token1] || null;
-    if (t0Meta) {
-      upsertToken({ address: token0, symbol: t0Meta.symbol, decimals: t0Meta.decimals, price_usd: null });
-    } else {
-      try {
-        const meta = await getTokenMetadata(token0);
-        upsertToken({ address: token0, symbol: meta.symbol, decimals: meta.decimals, price_usd: null });
-      } catch {}
-    }
-    if (t1Meta) {
-      upsertToken({ address: token1, symbol: t1Meta.symbol, decimals: t1Meta.decimals, price_usd: null });
-    } else {
-      try {
-        const meta = await getTokenMetadata(token1);
-        upsertToken({ address: token1, symbol: meta.symbol, decimals: meta.decimals, price_usd: null });
-      } catch {}
-    }
+    await registerPool({ dex: dexName, version: 'V2', address: pair, token0, token1, feeBps: 30 });
 
     // Seed reserves immediately to enable pricing before first Sync
     try {
@@ -77,9 +56,11 @@ async function handlePairCreated(log: any, dexName: string) {
       if (reservesData && reservesData.length >= 130) {
         const r0 = BigInt('0x' + reservesData.slice(2, 66));
         const r1 = BigInt('0x' + reservesData.slice(66, 130));
-        setV2Reserves(pair, token0, token1, r0, r1);
+        await updateV2PoolReserves({ dex: dexName, version: 'V2', address: pair, token0, token1, feeBps: 30 }, r0, r1);
       }
-    } catch {}
+    } catch (err) {
+      console.warn(`🏦 Failed to seed initial reserves for ${pair}:`, err);
+    }
   } catch (e) {
     console.error('🏦 PairCreated error:', e);
   }
@@ -94,50 +75,17 @@ async function handleSync(log: any) {
     const r1 = BigInt(parsed.args[1]);
     const pool = getPools().find((p: any) => p.address.toLowerCase() === pair);
     if (!pool) return;
-    setV2Reserves(pair, pool.token0, pool.token1, r0, r1);
-    const p0 = getUsdPriceViaWeth(pool.token0);
-    const p1 = getUsdPriceViaWeth(pool.token1);
-    let tvl: number | null = null;
-    let pool0Usd: number | null = null;
-    let pool1Usd: number | null = null;
-    let pool0Pct: number | null = null;
-    let pool1Pct: number | null = null;
-    let reserveRatio: number | null = null;
-    const meta0: any = (tokensCatalog as any)[pool.token0] || { decimals: 18, symbol: 'UNK' };
-    const meta1: any = (tokensCatalog as any)[pool.token1] || { decimals: 18, symbol: 'UNK' };
-    if (p0 != null && p1 != null) {
-      const q0 = Number(r0) / 10 ** (meta0.decimals || 18);
-      const q1 = Number(r1) / 10 ** (meta1.decimals || 18);
-      pool0Usd = q0 * p0;
-      pool1Usd = q1 * p1;
-      const sum = pool0Usd + pool1Usd;
-      tvl = isFinite(sum) ? sum : null;
-      if (tvl && tvl > 0) {
-        pool0Pct = (pool0Usd / tvl) * 100;
-        pool1Pct = (pool1Usd / tvl) * 100;
-        reserveRatio = pool1Usd > 0 ? (pool0Usd / pool1Usd) : null;
-      }
-    }
-    upsertPool({
+    await updateV2PoolReserves({
       dex: pool.dex,
       version: pool.version,
       address: pool.address,
       token0: pool.token0,
       token1: pool.token1,
-      token0_symbol: meta0.symbol || 'UNK',
-      token1_symbol: meta1.symbol || 'UNK',
-      fee_bps: pool.fee_bps,
-      tvl_usd: tvl,
-      volume_24h_usd: pool.volume_24h_usd,
-      fees_24h_usd: pool.fees_24h_usd,
-      utilization: pool.utilization,
-      pool0_usd: pool0Usd,
-      pool1_usd: pool1Usd,
-      pool0_pct: pool0Pct,
-      pool1_pct: pool1Pct,
-      reserve_ratio: reserveRatio,
-    });
-  } catch {}
+      feeBps: pool.fee_bps ?? 30,
+    }, r0, r1);
+  } catch (err) {
+    console.warn('🏦 Sync handler error:', err);
+  }
 }
 
 export async function startUniswapV2Indexer(): Promise<void> {
@@ -193,9 +141,9 @@ export async function startUniswapV2Indexer(): Promise<void> {
             else if (a0out > zero) { amount = a0out; token = pool.token0; }
             else if (a1out > zero) { amount = a1out; token = pool.token1; }
             const price = getUsdPriceViaWeth(token);
-            const meta: any = (tokensCatalog as any)[token] || { decimals: 18 };
+            const decimals = getTokenDecimalsCached(token);
             if (price == null) continue;
-            const qty = Number(amount) / 10 ** (meta.decimals || 18);
+            const qty = Number(amount) / 10 ** decimals;
             const usd = qty * (price || 0);
             if (isFinite(usd) && usd > 0) {
               recordSwapBucket(pair, price || 0, usd, log.blockNumber).catch(() => {});
@@ -208,11 +156,13 @@ export async function startUniswapV2Indexer(): Promise<void> {
 
   // Live subscriptions
   provider.on({ address: factory, topics: [PAIR_CREATED_TOPIC] }, (res: any) => {
-    handlePairCreated(res, 'Uniswap');
+    handlePairCreated(res, 'Uniswap').catch(err => console.error('🏦 PairCreated handler error:', err));
   });
 
   // Subscribe to Sync for discovered pairs (broad filter over topic, no address list)
-  provider.on({ topics: [SYNC_TOPIC] }, (res: any) => handleSync(res));
+  provider.on({ topics: [SYNC_TOPIC] }, (res: any) => {
+    handleSync(res).catch(err => console.error('🏦 Sync handler error:', err));
+  });
 
   // Subscribe to Swap events (compute 24h volume/fees)
   provider.on({ topics: [SWAP_TOPIC] }, (log: any) => {
@@ -234,9 +184,9 @@ export async function startUniswapV2Indexer(): Promise<void> {
       else if (a0out > zero) { amount = a0out; token = pool.token0; }
       else if (a1out > zero) { amount = a1out; token = pool.token1; }
       const price = getUsdPriceViaWeth(token);
-      const meta: any = (tokensCatalog as any)[token] || { decimals: 18 };
+      const decimals = getTokenDecimalsCached(token);
       if (price == null) return;
-      const qty = Number(amount) / 10 ** (meta.decimals || 18);
+      const qty = Number(amount) / 10 ** decimals;
       const usd = qty * (price || 0);
       const feeBps = pool.fee_bps || 30;
       const feeUsd = usd * (feeBps / 10000);

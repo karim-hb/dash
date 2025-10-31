@@ -1,13 +1,13 @@
 import { config } from '@/lib/config';
 import amm from '../../catalog/amm.json';
-import { upsertPool, upsertToken, getPools } from '../../market/registry';
+import { getPools, getTokens } from '../../market/registry';
 import { getUsdPriceViaWeth } from '../../market/priceEngine';
 import { recordSwapUsd } from '../../market/poolStats';
 import { ethers } from 'ethers';
 import tokensCatalog from '../../catalog/tokens.json';
 import { getProvider } from '../../modules/provider';
-import { getTokenMetadata } from '../../modules/tokens';
 import { recordSwapBucket } from '../../market/bucket';
+import { registerPool, updateV3PoolBalances } from '../../market/ammEngine';
 
 const V3_FACTORY_ABI = [
   'event PoolCreated(address indexed token0, address indexed token1, uint24 fee, int24 tickSpacing, address pool)'
@@ -22,6 +22,15 @@ const SWAP_TOPIC_V3 = IPool.getEvent('Swap')!.topicHash;
 
 function hexToAddress(topic: string): string { return '0x' + topic.slice(26); }
 
+function getTokenDecimalsCached(address: string): number {
+  const lower = address.toLowerCase();
+  const existing = getTokens().find(t => (t.address || '').toLowerCase() === lower);
+  if (existing && typeof existing.decimals === 'number') return existing.decimals;
+  const catalogEntry: any = (tokensCatalog as any)[lower] || (tokensCatalog as any)[address];
+  if (catalogEntry && typeof catalogEntry.decimals === 'number') return catalogEntry.decimals;
+  return 18;
+}
+
 async function handlePoolCreated(log: any) {
   try {
     const parsed = IFactory.parseLog({ topics: log.topics, data: log.data });
@@ -34,31 +43,10 @@ async function handlePoolCreated(log: any) {
 
     console.log(`🏦 V3 discovered pool ${pool} (${token0.slice(0,6)}…/${token1.slice(0,6)}… fee:${feeBps}bps)`);
 
-    upsertPool({
-      dex: 'Uniswap',
-      version: 'V3',
-      address: pool,
-      token0,
-      token1,
-      fee_bps: feeBps,
-      tvl_usd: null,
-      volume_24h_usd: null,
-      fees_24h_usd: null,
-      utilization: null,
-    });
+    await registerPool({ dex: 'Uniswap', version: 'V3', address: pool, token0, token1, feeBps });
 
-    const t0Meta: any = (tokensCatalog as any)[token0] || null;
-    const t1Meta: any = (tokensCatalog as any)[token1] || null;
-    if (t0Meta) {
-      upsertToken({ address: token0, symbol: t0Meta.symbol, decimals: t0Meta.decimals, price_usd: null });
-    } else {
-      try { const meta = await getTokenMetadata(token0); upsertToken({ address: token0, symbol: meta.symbol, decimals: meta.decimals, price_usd: null }); } catch {}
-    }
-    if (t1Meta) {
-      upsertToken({ address: token1, symbol: t1Meta.symbol, decimals: t1Meta.decimals, price_usd: null });
-    } else {
-      try { const meta = await getTokenMetadata(token1); upsertToken({ address: token1, symbol: meta.symbol, decimals: meta.decimals, price_usd: null }); } catch {}
-    }
+    // Seed balances once to initialize metrics
+    await updateV3TvlOnce(pool, token0, token1);
   } catch {}
 }
 
@@ -74,54 +62,19 @@ async function updateV3TvlOnce(poolAddr: string, token0: string, token1: string)
       c0.balanceOf(poolAddr).catch(() => BigInt(0)),
       c1.balanceOf(poolAddr).catch(() => BigInt(0)),
     ]);
-    const meta0: any = (tokensCatalog as any)[token0] || { decimals: 18, symbol: 'UNK' };
-    const meta1: any = (tokensCatalog as any)[token1] || { decimals: 18, symbol: 'UNK' };
-    const p0 = getUsdPriceViaWeth(token0);
-    const p1 = getUsdPriceViaWeth(token1);
-    let tvl = 0;
-    let pool0Usd: number | null = null;
-    let pool1Usd: number | null = null;
-    let pool0Pct: number | null = null;
-    let pool1Pct: number | null = null;
-    let reserveRatio: number | null = null;
-    if (p0 != null) {
-      pool0Usd = Number(bal0) / 10 ** (meta0.decimals || 18) * (p0 || 0);
-      tvl += pool0Usd;
-    }
-    if (p1 != null) {
-      pool1Usd = Number(bal1) / 10 ** (meta1.decimals || 18) * (p1 || 0);
-      tvl += pool1Usd;
-    }
-    if (isFinite(tvl) && tvl > 0) {
-      if (pool0Usd != null && pool1Usd != null) {
-        pool0Pct = (pool0Usd / tvl) * 100;
-        pool1Pct = (pool1Usd / tvl) * 100;
-        reserveRatio = pool1Usd > 0 ? (pool0Usd / pool1Usd) : null;
-      }
-      const existing = getPools().find((p: any) => p.address.toLowerCase() === poolAddr.toLowerCase());
-      if (existing) {
-        upsertPool({
-          dex: existing.dex,
-          version: existing.version,
-          address: existing.address,
-          token0: existing.token0,
-          token1: existing.token1,
-          token0_symbol: meta0.symbol || 'UNK',
-          token1_symbol: meta1.symbol || 'UNK',
-          fee_bps: existing.fee_bps,
-          tvl_usd: tvl,
-          volume_24h_usd: existing.volume_24h_usd,
-          fees_24h_usd: existing.fees_24h_usd,
-          utilization: existing.utilization,
-          pool0_usd: pool0Usd,
-          pool1_usd: pool1Usd,
-          pool0_pct: pool0Pct,
-          pool1_pct: pool1Pct,
-          reserve_ratio: reserveRatio,
-        });
-      }
-    }
-  } catch {}
+    const existing = getPools().find((p: any) => p.address.toLowerCase() === poolAddr.toLowerCase());
+    if (!existing) return;
+    await updateV3PoolBalances({
+      dex: existing.dex,
+      version: existing.version,
+      address: existing.address,
+      token0: existing.token0,
+      token1: existing.token1,
+      feeBps: existing.fee_bps ?? null,
+    }, bal0, bal1);
+  } catch (err) {
+    console.warn('🏦 Failed to update V3 TVL', err);
+  }
 }
 
 export async function startUniswapV3Indexer(): Promise<void> {
@@ -180,13 +133,13 @@ export async function startUniswapV3Indexer(): Promise<void> {
             if (!parsed) continue;
             const a0 = BigInt(parsed.args[2]);
             const a1 = BigInt(parsed.args[3]);
-            const meta0: any = (tokensCatalog as any)[pool.token0] || { decimals: 18 };
-            const meta1: any = (tokensCatalog as any)[pool.token1] || { decimals: 18 };
+      const decimals0 = getTokenDecimalsCached(pool.token0);
+      const decimals1 = getTokenDecimalsCached(pool.token1);
             const p0 = getUsdPriceViaWeth(pool.token0);
             const p1 = getUsdPriceViaWeth(pool.token1);
             let usd = 0;
-            if (p0 != null) usd = Math.abs(Number(a0)) / 10 ** (meta0.decimals || 18) * (p0 || 0);
-            else if (p1 != null) usd = Math.abs(Number(a1)) / 10 ** (meta1.decimals || 18) * (p1 || 0);
+      if (p0 != null) usd = Math.abs(Number(a0)) / 10 ** decimals0 * (p0 || 0);
+      else if (p1 != null) usd = Math.abs(Number(a1)) / 10 ** decimals1 * (p1 || 0);
             if (isFinite(usd) && usd > 0) {
               const price = (p0 != null ? p0 : (p1 != null ? p1 : 0));
               if (price && isFinite(price)) {
@@ -199,7 +152,9 @@ export async function startUniswapV3Indexer(): Promise<void> {
     }
   } catch {}
 
-  provider.on({ address: factory, topics: [POOL_CREATED_TOPIC] }, (res: any) => handlePoolCreated(res));
+  provider.on({ address: factory, topics: [POOL_CREATED_TOPIC] }, (res: any) => {
+    handlePoolCreated(res).catch(err => console.error('🏦 V3 PoolCreated handler error:', err));
+  });
 
   // Subscribe to V3 Swap events across pools
   provider.on({ topics: [SWAP_TOPIC_V3] }, (log: any) => {
@@ -213,13 +168,13 @@ export async function startUniswapV3Indexer(): Promise<void> {
       const a1 = BigInt(parsed.args[3]);
       // Signed amounts already handled by BigInt via two's complement parsing in ethers
       // Choose leg with known price
-      const meta0: any = (tokensCatalog as any)[pool.token0];
-      const meta1: any = (tokensCatalog as any)[pool.token1];
+      const decimals0 = getTokenDecimalsCached(pool.token0);
+      const decimals1 = getTokenDecimalsCached(pool.token1);
       const p0 = getUsdPriceViaWeth(pool.token0);
       const p1 = getUsdPriceViaWeth(pool.token1);
       let usd = 0;
-      if (p0 != null && meta0) usd = Math.abs(Number(a0)) / 10 ** (meta0.decimals || 18) * (p0 || 0);
-      else if (p1 != null && meta1) usd = Math.abs(Number(a1)) / 10 ** (meta1.decimals || 18) * (p1 || 0);
+      if (p0 != null) usd = Math.abs(Number(a0)) / 10 ** decimals0 * (p0 || 0);
+      else if (p1 != null) usd = Math.abs(Number(a1)) / 10 ** decimals1 * (p1 || 0);
       if (!isFinite(usd) || usd <= 0) return;
       const feeBps = pool.fee_bps || 30;
       const feeUsd = usd * (feeBps / 10000);

@@ -14,6 +14,7 @@ export type FiltersState = {
   maxGasGwei?: number;
   protocols: string[]; // e.g., ['DEX','NFT','DeFi','Bridge','ERC-20','ETH']
   tokenQuery?: string; // token address or symbol substring
+  searchText?: string; // generic search across hash/from/to
   whitelist: string[]; // addresses
   blacklist: string[]; // addresses
   timeRangeMin?: number; // minutes
@@ -25,6 +26,7 @@ const defaultState: FiltersState = {
   whitelist: [],
   blacklist: [],
   decodedOnly: false,
+  searchText: '',
 };
 
 export type FiltersStore = FiltersState & {
@@ -120,6 +122,18 @@ export const useFilters = create<FiltersStore>((set, get) => ({
       if (f.protocols && f.protocols.length > 0) {
         const label = protocolLabelFromCategory(tx.category_key);
         if (!f.protocols.includes(label)) return false;
+      }
+
+      if (f.searchText && f.searchText.trim()) {
+        const q = f.searchText.trim().toLowerCase();
+        const matches =
+          (tx.hash || '').toLowerCase().includes(q) ||
+          (tx.from || '').toLowerCase().includes(q) ||
+          (tx.to || '').toLowerCase().includes(q) ||
+          (tx.category_key || '').toLowerCase().includes(q) ||
+          (tx._decoded_fn?.function || '').toLowerCase().includes(q) ||
+          (tx._decoded_events || []).some((evt: any) => (evt.event || '').toLowerCase().includes(q));
+        if (!matches) return false;
       }
 
       // token query in input or decoded args

@@ -112,6 +112,21 @@ export const TransactionSchema = z.object({
   inclusion_block: z.number().nullable().optional(),
   confirmation_depth: z.number().optional(),
   _receipt: z.any().optional(), // Receipt data
+  // Nonce analytics
+  sender_pending_nonce: z.number().nullable().optional(),
+  sender_confirmed_nonce: z.number().nullable().optional(),
+  nonce_gap: z.number().nullable().optional(),
+  nonce_warning: z.string().nullable().optional(),
+  replacement_chain: z.array(z.string()).optional(),
+  // Scoring components
+  value_score: z.number().nullable().optional(),
+  gas_score: z.number().nullable().optional(),
+  mev_score: z.number().nullable().optional(),
+  smart_money_score: z.number().nullable().optional(),
+  urgency_score: z.number().nullable().optional(),
+  composite_score: z.number().nullable().optional(),
+  score_breakdown: z.record(z.string(), z.number()).optional(),
+  smart_money_flag: z.boolean().optional(),
 });
 
 export type Transaction = z.infer<typeof TransactionSchema>;

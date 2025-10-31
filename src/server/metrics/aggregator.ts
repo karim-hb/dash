@@ -5,23 +5,6 @@ import { getWsClient } from '../rpc/wsClient';
 import { hexToBigInt } from '@/lib/util/hex';
 import { formatUnits } from 'ethers';
 
-// Score transaction based on amount, gas, and age (similar to ranking.py)
-function scoreTx(tx: Transaction, nowTs: number = Date.now() / 1000): number {
-  const amountWei = hexToBigInt(tx.value || '0x0');
-  const amountEth = Number(formatUnits(amountWei, 18));
-  const maxFee = tx.maxFeePerGas || tx.gasPrice || '0x0';
-  const gasWei = hexToBigInt(maxFee);
-  const gasGwei = Number(formatUnits(gasWei, 9));
-  const age = tx._first_seen_ts ? Math.max(0, nowTs - tx._first_seen_ts) : 0;
-
-  // Base weights (same as ranking.py)
-  const wAmount = 2.0;
-  const wGas = 1.0;
-  const wAge = 0.2;
-
-  return wAmount * (amountEth <= 0 ? 0 : (1.0 + amountEth) ** 0.3) + wGas * gasGwei - wAge * age;
-}
-
 // Metrics aggregator for real-time statistics
 export class MetricsAggregator {
   private ingressHistory: number[] = [];

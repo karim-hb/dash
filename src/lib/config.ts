@@ -26,6 +26,13 @@ const configSchema = z.object({
   BACKFILL_BLOCKS: z.string().transform(Number).default('50000'),
   ETH_USD_FEED: z.string().default('0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419'),
   ORACLE_HEARTBEAT_SLACK_SEC: z.string().transform(Number).default('3600'),
+  // Opportunity scoring weights
+  OPP_VALUE_WEIGHT: z.string().transform(Number).default('0.35'),
+  OPP_GAS_WEIGHT: z.string().transform(Number).default('0.15'),
+  OPP_MEV_WEIGHT: z.string().transform(Number).default('0.2'),
+  OPP_SMART_MONEY_WEIGHT: z.string().transform(Number).default('0.15'),
+  OPP_URGENCY_WEIGHT: z.string().transform(Number).default('0.15'),
+  SMART_MONEY_ADDRESSES: z.string().default(''),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -47,3 +54,18 @@ export function getConfig(): Config {
 
 // Export individual config values
 export const config = getConfig();
+
+export const opportunityWeights = {
+  value: config.OPP_VALUE_WEIGHT,
+  gas: config.OPP_GAS_WEIGHT,
+  mev: config.OPP_MEV_WEIGHT,
+  smartMoney: config.OPP_SMART_MONEY_WEIGHT,
+  urgency: config.OPP_URGENCY_WEIGHT,
+};
+
+export const smartMoneyAddresses = new Set(
+  config.SMART_MONEY_ADDRESSES
+    .split(',')
+    .map(addr => addr.trim().toLowerCase())
+    .filter(Boolean),
+);

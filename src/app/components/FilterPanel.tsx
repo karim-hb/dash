@@ -16,7 +16,7 @@ export default function FilterPanel() {
   }, []);
 
   const hasActiveFilters = f.minEth || f.maxEth || f.minGasGwei || f.maxGasGwei ||
-                          f.protocols.length > 0 || f.tokenQuery || f.whitelist.length > 0 ||
+                          f.protocols.length > 0 || f.tokenQuery || f.searchText || f.whitelist.length > 0 ||
                           f.blacklist.length > 0 || f.timeRangeMin || f.decodedOnly;
 
   return (
@@ -190,6 +190,20 @@ export default function FilterPanel() {
                   className="terminal-input w-full"
                   value={f.tokenQuery ?? ''}
                   onChange={e => f.set({ tokenQuery: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-mono font-semibold text-lime-300 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-lime-500 rounded-full animate-pulse"></span>
+                  [ADDRESS / HASH SEARCH]
+                </h4>
+                <input
+                  type="text"
+                  placeholder="Search hash, from, to, function"
+                  className="terminal-input w-full"
+                  value={f.searchText ?? ''}
+                  onChange={e => f.set({ searchText: e.target.value })}
                 />
               </div>
 

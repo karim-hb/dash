@@ -2,12 +2,15 @@ import { Transaction, Receipt, TxState } from '@/lib/types';
 import { getTransactionsCollection, getReceiptsCollection } from '@/lib/db/mongo';
 import { classifyTx } from '../classify';
 import { decodeFunctionAndArgs, decodeTransactionEvents } from '../decoding/decoders';
+import { applyOpportunityScoring } from '../market/opportunityScoring';
 
 // In-memory state management with MongoDB persistence
 export class TrackerState {
   private txs = new Map<string, Transaction>();
   private maxSize = 10000; // Limit in-memory size
   private persistenceEnabled = process.env.PERSIST_TO_MONGO === 'true';
+  private pendingByAddress = new Map<string, Map<number, string>>();
+  private confirmedNonceByAddress = new Map<string, number>();
 
   constructor() {
     // Optional: load recent transactions from MongoDB on startup
@@ -18,89 +21,87 @@ export class TrackerState {
 
   // Upsert transaction (add or update)
   async upsert(tx: Transaction): Promise<void> {
-    const hash = tx.hash.toLowerCase();
+    const hash = (tx.hash || '').toLowerCase();
+    if (!hash) return;
+
+    const prev = this.txs.get(hash);
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    // Merge with previous to retain derived fields not present on incoming payload
+    const next: Transaction = {
+      ...(prev ?? {}),
+      ...tx,
+    } as Transaction;
+
+    next.hash = hash;
+    next._first_seen_ts = next._first_seen_ts ?? prev?._first_seen_ts ?? nowSec;
+    next._last_seen_ts = Math.max(next._last_seen_ts ?? 0, nowSec);
 
     // Classify if not already classified
-    if (!tx.category_key) {
-      const classification = classifyTx(tx);
-      tx.category_key = `${classification.category}:${classification.protocol.toLowerCase()}`;
+    if (!next.category_key || next.category_key === '') {
+      try {
+        const classification = classifyTx(next);
+        next.category_key = `${classification.category}:${classification.protocol.toLowerCase()}`;
+      } catch (error) {
+        console.error(`Failed to classify tx ${hash}:`, error);
+      }
     }
 
     // Decode function if not already decoded and has input
-    if (!tx._decoded_fn && tx.input && tx.input !== '0x') {
+    if (!next._decoded_fn && next.input && next.input !== '0x') {
       try {
-        const decoded = await decodeFunctionAndArgs(tx);
+        const decoded = await decodeFunctionAndArgs(next);
         if (decoded) {
-          tx._decoded_fn = decoded;
+          next._decoded_fn = decoded;
         }
       } catch (error) {
         console.error(`Failed to decode function for tx ${hash}:`, error);
       }
     }
 
-    // Decode events if not already decoded and transaction has receipt
-    if (!tx._decoded_events && tx._receipt && tx._state === 'INCLUDED') {
+    // Decode events if we have a receipt and have not decoded yet
+    const isFinalized = next._state === TxState.INCLUDED || next._state === TxState.CONFIRMED || next._state === TxState.FINALIZED;
+    if (!next._decoded_events && next._receipt && isFinalized) {
       try {
-        const decodedEvents = await decodeTransactionEvents(tx);
+        const decodedEvents = await decodeTransactionEvents(next);
         if (decodedEvents.length > 0) {
-          tx._decoded_events = decodedEvents;
+          next._decoded_events = decodedEvents;
         }
       } catch (error) {
         console.error(`Failed to decode events for tx ${hash}:`, error);
       }
     }
 
-    // Update state transition history and normalized fields
-    const prev = this.txs.get(hash);
-    const next: Transaction = { ...tx } as Transaction;
+    // Maintain numeric aliases for inclusion/confirmation if present
+    if (next._inclusion_block) {
+      const num = parseInt(next._inclusion_block, 16);
+      if (!isNaN(num)) next.inclusion_block = num;
+    }
+    if (typeof next._confirmation_depth === 'number') {
+      next.confirmation_depth = next._confirmation_depth;
+    }
 
-    try {
-      // Maintain numeric aliases for inclusion/confirmation if present
-      if (next._inclusion_block) {
-        const num = parseInt(next._inclusion_block, 16);
-        if (!isNaN(num)) next.inclusion_block = num;
-      }
-      if (typeof next._confirmation_depth === 'number') {
-        next.confirmation_depth = next._confirmation_depth;
-      }
+    // Normalise lifecycle history
+    if (!Array.isArray(next.state_history)) {
+      next.state_history = prev?.state_history ? [...prev.state_history] : [];
+    }
 
-      // Initialize state history if missing
-      if (!next.state_history) next.state_history = [];
+    // Preserve replacement chain
+    if (!Array.isArray(next.replacement_chain) && Array.isArray(prev?.replacement_chain)) {
+      next.replacement_chain = [...(prev!.replacement_chain!)];
+    }
 
-      // Append state transition if changed
-      const prevState = prev?._state;
-      if (!prevState || prevState !== next._state) {
-        next.state_history.push({ state: next._state, timestamp: Math.floor(Date.now() / 1000) });
-      }
-    } catch {}
+    this.pushStateTransition(next, next._state ?? TxState.PENDING, prev?._state);
 
-    // Update in-memory state
+    // Update nonce analytics & replacement linkage
+    await this.updateNonceAnalytics(next, prev);
+    applyOpportunityScoring(next, nowSec);
+
+    // Store in-memory and persist
     this.txs.set(hash, next);
+    await this.persist(next);
 
-    // Persist to MongoDB
-    if (this.persistenceEnabled) {
-      try {
-        const collection = getTransactionsCollection();
-        await collection.updateOne(
-          { hash },
-          { $set: tx },
-          { upsert: true }
-        );
-      } catch (error) {
-        console.error('Failed to persist transaction:', error);
-      }
-    }
-
-    // Maintain size limit
-    if (this.txs.size > this.maxSize) {
-      // Remove oldest entries (simple FIFO)
-      const entries = Array.from(this.txs.entries());
-      entries.sort((a, b) => (a[1]._first_seen_ts || 0) - (b[1]._first_seen_ts || 0));
-      const toRemove = entries.slice(0, Math.floor(this.maxSize * 0.1)); // Remove 10%
-      for (const [hash] of toRemove) {
-        this.txs.delete(hash);
-      }
-    }
+    this.enforceSizeLimit();
   }
 
   // Get transaction by hash
@@ -108,22 +109,208 @@ export class TrackerState {
     return this.txs.get(hash.toLowerCase()) || null;
   }
 
+  private pushStateTransition(
+    tx: Transaction,
+    state: TxState,
+    prevState?: TxState,
+    reason?: string,
+    timestamp?: number,
+    force = false,
+  ): void {
+    if (!Array.isArray(tx.state_history)) {
+      tx.state_history = [];
+    }
+    const history = tx.state_history;
+    const last = history[history.length - 1];
+    const ts = timestamp ?? Math.floor(Date.now() / 1000);
+
+    if (!force) {
+      if (prevState && prevState === state && last && last.state === state) {
+        return;
+      }
+      if (!prevState && last && last.state === state) {
+        return;
+      }
+    }
+
+    history.push({ state, timestamp: ts, reason });
+  }
+
+  private parseNonce(raw: string | number | null | undefined): number | null {
+    if (raw === null || raw === undefined) return null;
+    if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
+    if (typeof raw === 'string' && raw.length > 0) {
+      const trimmed = raw.trim();
+      const base = trimmed.startsWith('0x') ? 16 : 10;
+      const parsed = Number.parseInt(trimmed, base);
+      return Number.isNaN(parsed) ? null : parsed;
+    }
+    return null;
+  }
+
+  private async updateNonceAnalytics(next: Transaction, prev?: Transaction): Promise<void> {
+    const from = (next.from || '').toLowerCase();
+    if (!from) return;
+
+    const nonceNum = this.parseNonce(next.nonce);
+    if (nonceNum === null) return;
+
+    const hash = next.hash.toLowerCase();
+    const pendingMap = this.pendingByAddress.get(from) ?? new Map<number, string>();
+    const mappedHash = pendingMap.get(nonceNum);
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    const isPending = next._state === TxState.PENDING;
+
+    // Handle transitions away from pending
+    if (!isPending) {
+      if (mappedHash === hash) {
+        pendingMap.delete(nonceNum);
+        if (pendingMap.size === 0) {
+          this.pendingByAddress.delete(from);
+        } else {
+          this.pendingByAddress.set(from, pendingMap);
+        }
+      }
+      await this.recomputeAddressNonceAnalytics(from);
+      return;
+    }
+
+    // Replacement detection
+    if (mappedHash && mappedHash !== hash) {
+      const existing = this.txs.get(mappedHash);
+      if (existing) {
+        const prevState = existing._state;
+        existing._state = TxState.REPLACED;
+        existing.replaced_by = hash;
+        existing.drop_reason = 'nonce_replacement';
+        existing._last_seen_ts = Math.max(existing._last_seen_ts ?? nowSec, nowSec);
+        existing.replacement_chain = Array.isArray(existing.replacement_chain)
+          ? [...existing.replacement_chain, hash]
+          : [hash];
+        this.pushStateTransition(existing, TxState.REPLACED, prevState, 'nonce_replacement', nowSec, true);
+        this.txs.set(mappedHash, existing);
+        await this.persist(existing);
+      }
+
+      next.replacement_tx = mappedHash;
+      if (!Array.isArray(next.replacement_chain)) {
+        next.replacement_chain = [];
+      }
+      if (!next.replacement_chain.includes(mappedHash)) {
+        next.replacement_chain.unshift(mappedHash);
+      }
+      this.pushStateTransition(next, TxState.RESUBMITTED, prev?._state, 'nonce_replacement', nowSec, true);
+      pendingMap.delete(nonceNum);
+    }
+
+    pendingMap.set(nonceNum, hash);
+    this.pendingByAddress.set(from, pendingMap);
+
+    const analytics = await this.recomputeAddressNonceAnalytics(from);
+    const nextUpdate = analytics.get(hash);
+    if (nextUpdate) {
+      Object.assign(next, nextUpdate);
+    }
+  }
+
+  private async recomputeAddressNonceAnalytics(address: string): Promise<Map<string, Partial<Transaction>>> {
+    const key = address.toLowerCase();
+    const pendingMap = this.pendingByAddress.get(key);
+    const updates = new Map<string, Partial<Transaction>>();
+    if (!pendingMap || pendingMap.size === 0) {
+      return updates;
+    }
+
+    const confirmedNonce = this.confirmedNonceByAddress.get(key) ?? null;
+    const pendingEntries = Array.from(pendingMap.entries()).sort((a, b) => a[0] - b[0]);
+    const highestPending = pendingEntries[pendingEntries.length - 1]?.[0] ?? null;
+
+    for (const [nonceNum, hash] of pendingEntries) {
+      const gap = confirmedNonce !== null ? Math.max(0, nonceNum - (confirmedNonce + 1)) : null;
+      const warning = gap && gap > 0 ? 'gap' : null;
+      updates.set(hash, {
+        sender_confirmed_nonce: confirmedNonce,
+        sender_pending_nonce: highestPending ?? nonceNum,
+        nonce_gap: gap,
+        nonce_warning: warning,
+      });
+    }
+
+    const persistPromises: Promise<void>[] = [];
+    for (const [hash, update] of updates.entries()) {
+      const tx = this.txs.get(hash);
+      if (!tx) continue;
+      Object.assign(tx, update);
+      this.txs.set(hash, tx);
+      persistPromises.push(this.persist(tx));
+    }
+    if (persistPromises.length) {
+      await Promise.allSettled(persistPromises);
+    }
+
+    return updates;
+  }
+
+  async recordConfirmedNonce(address: string, nonce: number): Promise<void> {
+    const key = address.toLowerCase();
+    const current = this.confirmedNonceByAddress.get(key);
+    if (current === undefined || nonce > current) {
+      this.confirmedNonceByAddress.set(key, nonce);
+      await this.recomputeAddressNonceAnalytics(key);
+    }
+  }
+
+  private async persist(tx: Transaction): Promise<void> {
+    if (!this.persistenceEnabled) return;
+    try {
+      const collection = getTransactionsCollection();
+      await collection.updateOne(
+        { hash: tx.hash },
+        { $set: tx },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('Failed to persist transaction:', error);
+    }
+  }
+
+  private enforceSizeLimit(): void {
+    if (this.txs.size <= this.maxSize) return;
+    const entries = Array.from(this.txs.entries());
+    entries.sort((a, b) => (a[1]._first_seen_ts || 0) - (b[1]._first_seen_ts || 0));
+    const toRemove = entries.slice(0, Math.floor(this.maxSize * 0.1));
+    for (const [hash, tx] of toRemove) {
+      this.txs.delete(hash);
+      const from = (tx.from || '').toLowerCase();
+      const nonceNum = this.parseNonce(tx.nonce);
+      if (!from || nonceNum === null) continue;
+      const map = this.pendingByAddress.get(from);
+      if (map && map.get(nonceNum) === hash) {
+        map.delete(nonceNum);
+        if (map.size === 0) this.pendingByAddress.delete(from);
+      }
+    }
+  }
+
   // Mark transaction as included
   async markIncluded(hash: string, blockNumber: string): Promise<void> {
     const tx = this.getTx(hash);
     if (!tx) return;
 
-    tx._state = TxState.INCLUDED;
-    tx._inclusion_block = blockNumber;
-    tx._inclusion_ts = Date.now() / 1000;
-    try {
-      const num = parseInt(blockNumber, 16);
-      if (!isNaN(num)) tx.inclusion_block = num;
-      if (!tx.state_history) tx.state_history = [];
-      tx.state_history.push({ state: TxState.INCLUDED, timestamp: Math.floor(Date.now() / 1000) });
-    } catch {}
+    const inclusionTs = Date.now() / 1000;
+    const updated: Transaction = {
+      ...tx,
+      _state: TxState.INCLUDED,
+      _inclusion_block: blockNumber,
+      _inclusion_ts: inclusionTs,
+      inclusion_block: (() => {
+        const num = parseInt(blockNumber, 16);
+        return Number.isNaN(num) ? tx.inclusion_block ?? null : num;
+      })(),
+    };
 
-    await this.upsert(tx);
+    await this.upsert(updated);
   }
 
   // Set receipt for transaction
@@ -131,7 +318,7 @@ export class TrackerState {
     const tx = this.getTx(hash);
     if (!tx) return;
 
-    tx._receipt = receipt;
+    const updated: Transaction = { ...tx, _receipt: receipt };
 
     // Persist receipt
     if (this.persistenceEnabled) {
@@ -147,7 +334,7 @@ export class TrackerState {
       }
     }
 
-    await this.upsert(tx);
+    await this.upsert(updated);
   }
 
   // Get state snapshot
@@ -178,22 +365,19 @@ export class TrackerState {
         const inclusionBlock = parseInt(tx._inclusion_block);
         if (!isNaN(inclusionBlock)) {
           const depth = currentBlock - inclusionBlock;
-          tx._confirmation_depth = Math.max(0, depth);
-          tx.confirmation_depth = tx._confirmation_depth;
+          const updated: Transaction = {
+            ...tx,
+            _confirmation_depth: Math.max(0, depth),
+            confirmation_depth: Math.max(0, depth),
+          };
 
-          // Update state based on confirmations
-          const prevState = tx._state;
-          if (depth >= 12) {
-            tx._state = TxState.FINALIZED;
-          } else if (depth >= 1) {
-            tx._state = TxState.CONFIRMED;
-          }
-          if (prevState !== tx._state) {
-            if (!tx.state_history) tx.state_history = [];
-            tx.state_history.push({ state: tx._state, timestamp: Math.floor(Date.now() / 1000) });
+          if (depth >= 12 && tx._state !== TxState.FINALIZED) {
+            updated._state = TxState.FINALIZED;
+          } else if (depth >= 1 && tx._state === TxState.INCLUDED) {
+            updated._state = TxState.CONFIRMED;
           }
 
-          updates.push(this.upsert(tx));
+          updates.push(this.upsert(updated));
         }
       }
     }
@@ -244,11 +428,46 @@ export class TrackerState {
         .limit(1000)
         .toArray();
 
+      const addressesNeedingRecompute = new Set<string>();
+
       for (const doc of recent) {
-        this.txs.set(doc.hash.toLowerCase(), doc as Transaction);
+        const hash = doc.hash.toLowerCase();
+        const tx = doc as Transaction;
+        if (typeof tx.composite_score !== 'number' || Number.isNaN(tx.composite_score)) {
+          applyOpportunityScoring(tx);
+        }
+        this.txs.set(hash, tx);
+
+        if (tx._state === TxState.PENDING) {
+          const from = (tx.from || '').toLowerCase();
+          const nonceNum = this.parseNonce(tx.nonce);
+          if (from && nonceNum !== null) {
+            const map = this.pendingByAddress.get(from) ?? new Map<number, string>();
+            map.set(nonceNum, hash);
+            this.pendingByAddress.set(from, map);
+            addressesNeedingRecompute.add(from);
+          }
+        }
+
+        if (typeof tx.sender_confirmed_nonce === 'number') {
+          const from = (tx.from || '').toLowerCase();
+          if (from) {
+            const current = this.confirmedNonceByAddress.get(from) ?? -1;
+            if (tx.sender_confirmed_nonce > current) {
+              this.confirmedNonceByAddress.set(from, tx.sender_confirmed_nonce);
+              addressesNeedingRecompute.add(from);
+            }
+          }
+        }
       }
 
-      console.log(`✅ Loaded ${recent.length} transactions from MongoDB`);
+      if (addressesNeedingRecompute.size) {
+        await Promise.allSettled(
+          Array.from(addressesNeedingRecompute).map(addr => this.recomputeAddressNonceAnalytics(addr))
+        );
+      }
+
+      console.log(`? Loaded ${recent.length} transactions from MongoDB`);
     } catch (error) {
       console.error('Failed to load recent state:', error);
     }
@@ -257,6 +476,8 @@ export class TrackerState {
   // Clear state (for testing)
   clear(): void {
     this.txs.clear();
+    this.pendingByAddress.clear();
+    this.confirmedNonceByAddress.clear();
   }
 }
 

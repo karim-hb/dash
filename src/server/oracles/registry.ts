@@ -1,8 +1,8 @@
 import { getConfig } from '@/lib/config';
-import { fetchChainlinkPrice } from './chainlink';
 import { fetchCoinGeckoSimplePrice } from './coingecko';
 import { getTokens, upsertToken } from '../market/registry';
 import { getUsdPriceForToken } from '../market/priceEngine';
+import { startOracleAggregator } from './oracleAggregator';
 
 // Kick off periodic oracle updates
 let started = false;
@@ -13,27 +13,7 @@ export function startOracleUpdates() {
   console.log(`🛰️ Config loaded: ENABLE_ORACLES=${cfg.ENABLE_ORACLES}, ENABLE_CHAINLINK=${cfg.ENABLE_CHAINLINK}`);
   if (cfg.ENABLE_ORACLES) {
     console.log('🛰️ Oracles enabled');
-    // Chainlink feeds (multiple)
-    if (cfg.ENABLE_CHAINLINK) {
-      console.log('🟡 Chainlink enabled, loading feeds...');
-      try {
-        const feeds = require('./feeds.json');
-        const entries = Object.entries(feeds) as [string, string][];
-        console.log(`🟡 Loaded ${entries.length} Chainlink feeds: ${entries.slice(0, 3).map(([p]) => p).join(', ')}...`);
-
-        const poll = async () => {
-          console.log('🟡 Polling Chainlink feeds...');
-          await Promise.all(entries.map(([pair, addr]) => fetchChainlinkPrice(addr, pair)));
-        };
-        poll();
-        setInterval(poll, 30_000);
-      } catch (e) {
-        console.log(`❌ Failed to load Chainlink feeds: ${e.message}`);
-      }
-    } else {
-      console.log('🟡 Chainlink disabled');
-    }
-    // DISABLED: No external API fallbacks - only on-chain data
+    startOracleAggregator();
 
     // Nethermind on-chain price discovery (DEX-based)
     console.log('🔗 Starting Nethermind DEX price discovery...');

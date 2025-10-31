@@ -9,7 +9,7 @@ import * as WebSocket from 'ws';
 import { getTrackerState } from './state/state';
 import { getMetricsAggregator, getFeeHistoryAnalytics, feeHistoryToSuggestions } from './metrics/aggregator';
 import { getTxpoolStatus } from './ingest/txpool';
-import { UiSnapshot } from '@/lib/types';
+import { UiSnapshot, Transaction } from '@/lib/types';
 import { startPendingIngestion } from './ingest/pending';
 import { startHeadsIngestion } from './ingest/heads';
 import { startTxpoolMonitoring } from './ingest/txpool';
@@ -29,6 +29,8 @@ import { startAmmEngine } from './market/ammEngine';
 import { startTokenStatsRefresh } from './market/tokenStats';
 import * as http from 'http';
 import { URL } from 'url';
+import { applyOpportunityScoring } from './market/opportunityScoring';
+import { startGasOracle, getGasOracle } from './gas/gasOracle';
 
 const MIN_TOKEN_USD = Number(process.env.UI_TOKEN_MIN_USD || '1000');
 const MIN_POOL_USD = Number(process.env.UI_POOL_MIN_USD || '1000');
@@ -72,6 +74,7 @@ async function main() {
     await startPendingIngestion();
     await startHeadsIngestion();
     await startTxpoolMonitoring();
+    startGasOracle();
     console.log('✅ Ingestion pipelines started');
 
     // Start oracles
@@ -426,6 +429,12 @@ async function startHttpApi(port: number): Promise<void> {
         return;
       }
 
+      if (req.method === 'GET' && pathname === '/api/gas') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(getGasOracle().getSnapshot()));
+        return;
+      }
+
       if (req.method === 'GET' && pathname === '/api/pools') {
         const token = (fullUrl.searchParams.get('token') || '').toLowerCase();
         const allPools = getPools();
@@ -472,16 +481,21 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
   const t0 = Date.now();
   const feeHistory = await getFeeHistoryAnalytics(20);
   const rpcLatency = Date.now() - t0;
-  const gas = feeHistoryToSuggestions(feeHistory);
+  const gasSuggestions = feeHistoryToSuggestions(feeHistory);
+  const gasOracleSnapshot = getGasOracle().getSnapshot();
 
   const included = await state.snapshotIncluded(200);
 
   // Calculate scores for all transactions
   const nowTs = Date.now() / 1000;
-  const scoredTxs = snap.txs.map(tx => ({
-    ...tx,
-    _score: scoreTx(tx, nowTs),
-  }));
+  const scoredTxs = snap.txs.map(tx => {
+    if (typeof tx.composite_score !== 'number' || Number.isNaN(tx.composite_score)) {
+      const clone = { ...tx } as Transaction;
+      applyOpportunityScoring(clone, nowTs);
+      return clone;
+    }
+    return tx;
+  });
 
   // Build sender stats (best-effort)
   const senderStats = new Map<string, { address: string; tx_count: number; included: number; dropped: number; total_value: bigint }>();
@@ -545,20 +559,39 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
       flow_spark: flowSparklines,
     },
     opportunities: scoredTxs
-      .filter(tx => (tx._score || 0) > 0) // Lower threshold since we want opportunities
-      .sort((a, b) => (b._score || 0) - (a._score || 0))
+      .filter(tx => (tx.composite_score ?? tx._score ?? 0) > 0) // Lower threshold since we want opportunities
+      .sort((a, b) => (b.composite_score ?? b._score ?? 0) - (a.composite_score ?? a._score ?? 0))
       .slice(0, 50) // More opportunities
       .map((tx, index) => ({
         hash: tx.hash,
         rank: index + 1,
-        score: tx._score || 0,
+        score: tx.composite_score ?? tx._score ?? 0,
         category_key: tx.category_key,
         decoded_fn: tx._decoded_fn,
+        value_score: tx.value_score ?? null,
+        gas_score: tx.gas_score ?? null,
+        mev_score: tx.mev_score ?? null,
+        smart_money_score: tx.smart_money_score ?? null,
+        urgency_score: tx.urgency_score ?? null,
+        composite_score: tx.composite_score ?? tx._score ?? 0,
+        score_breakdown: tx.score_breakdown ?? null,
+        smart_money_flag: tx.smart_money_flag ?? false,
+        state_history: tx.state_history ?? [],
+        replacement_tx: tx.replacement_tx ?? null,
+        replaced_by: tx.replaced_by ?? null,
+        drop_reason: tx.drop_reason ?? null,
+        sender_pending_nonce: tx.sender_pending_nonce ?? null,
+        sender_confirmed_nonce: tx.sender_confirmed_nonce ?? null,
+        nonce_gap: tx.nonce_gap ?? null,
+        nonce_warning: tx.nonce_warning ?? null,
       })),
     live: scoredTxs.slice(0, 200), // Show more in live view
     included,
     senders,
-    gas,
+    gas: {
+      suggestions: gasSuggestions,
+      oracle: gasOracleSnapshot,
+    },
     tokens,
     pools,
     oracles,
@@ -569,18 +602,4 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
       errors: [],
     },
   };
-}
-
-// Score transaction based on amount, gas, and age (same as ranking.py)
-function scoreTx(tx: any, nowTs: number = Date.now() / 1000): number {
-  const amountEth = parseInt(tx.value || '0x0', 16) / 1e18;
-  const gasGwei = (parseInt(tx.maxFeePerGas || tx.gasPrice || '0x0', 16) / 1e9);
-  const age = tx._first_seen_ts ? Math.max(0, nowTs - tx._first_seen_ts) : 0;
-
-  // Base weights (same as ranking.py)
-  const wAmount = 2.0;
-  const wGas = 1.0;
-  const wAge = 0.2;
-
-  return wAmount * (amountEth <= 0 ? 0 : (1.0 + amountEth) ** 0.3) + wGas * gasGwei - wAge * age;
 }

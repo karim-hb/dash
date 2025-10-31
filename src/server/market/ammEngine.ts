@@ -4,7 +4,7 @@ import { setV2Reserves } from './reserves';
 import { getTokenMetadata } from '../modules/tokens';
 import { ethers } from 'ethers';
 
-type PoolMeta = {
+export type PoolMeta = {
   address: string;
   dex: string;
   version: string;

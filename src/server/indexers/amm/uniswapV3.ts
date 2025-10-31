@@ -1,13 +1,15 @@
 import { config } from '@/lib/config';
 import amm from '../../catalog/amm.json';
 import { getPools, getTokens } from '../../market/registry';
-import { getUsdPriceViaWeth } from '../../market/priceEngine';
+import { getUsdPriceForToken } from '../../market/priceEngine';
 import { recordSwapUsd } from '../../market/poolStats';
 import { ethers } from 'ethers';
 import tokensCatalog from '../../catalog/tokens.json';
 import { getProvider } from '../../modules/provider';
 import { recordSwapBucket } from '../../market/bucket';
-import { registerPool, updateV3PoolBalances } from '../../market/ammEngine';
+import { registerPool } from '../../market/ammEngine';
+import { initUniswapV3PositionIndexer, registerV3PoolMeta, schedulePoolRecompute } from './uniswapV3Positions';
+import { derivePriceRatio } from './uniswapV3Math';
 
 const V3_FACTORY_ABI = [
   'event PoolCreated(address indexed token0, address indexed token1, uint24 fee, int24 tickSpacing, address pool)'
@@ -20,8 +22,6 @@ const IPool = new ethers.Interface(V3_POOL_ABI);
 const POOL_CREATED_TOPIC = IFactory.getEvent('PoolCreated')!.topicHash;
 const SWAP_TOPIC_V3 = IPool.getEvent('Swap')!.topicHash;
 
-function hexToAddress(topic: string): string { return '0x' + topic.slice(26); }
-
 function getTokenDecimalsCached(address: string): number {
   const lower = address.toLowerCase();
   const existing = getTokens().find(t => (t.address || '').toLowerCase() === lower);
@@ -29,6 +29,10 @@ function getTokenDecimalsCached(address: string): number {
   const catalogEntry: any = (tokensCatalog as any)[lower] || (tokensCatalog as any)[address];
   if (catalogEntry && typeof catalogEntry.decimals === 'number') return catalogEntry.decimals;
   return 18;
+}
+
+function absBigInt(value: bigint): bigint {
+  return value < 0n ? -value : value;
 }
 
 async function handlePoolCreated(log: any) {
@@ -44,37 +48,8 @@ async function handlePoolCreated(log: any) {
     console.log(`🏦 V3 discovered pool ${pool} (${token0.slice(0,6)}…/${token1.slice(0,6)}… fee:${feeBps}bps)`);
 
     await registerPool({ dex: 'Uniswap', version: 'V3', address: pool, token0, token1, feeBps });
-
-    // Seed balances once to initialize metrics
-    await updateV3TvlOnce(pool, token0, token1);
+    registerV3PoolMeta({ dex: 'Uniswap', version: 'V3', address: pool, token0, token1, feeBps, fee });
   } catch {}
-}
-
-function pad32(addr: string): string { return addr.toLowerCase().replace(/^0x/, '').padStart(64, '0'); }
-
-async function updateV3TvlOnce(poolAddr: string, token0: string, token1: string) {
-  try {
-    const provider = getProvider();
-    const erc20Abi = ['function balanceOf(address) view returns (uint256)'];
-    const c0 = new ethers.Contract(token0, erc20Abi, provider);
-    const c1 = new ethers.Contract(token1, erc20Abi, provider);
-    const [bal0, bal1] = await Promise.all([
-      c0.balanceOf(poolAddr).catch(() => BigInt(0)),
-      c1.balanceOf(poolAddr).catch(() => BigInt(0)),
-    ]);
-    const existing = getPools().find((p: any) => p.address.toLowerCase() === poolAddr.toLowerCase());
-    if (!existing) return;
-    await updateV3PoolBalances({
-      dex: existing.dex,
-      version: existing.version,
-      address: existing.address,
-      token0: existing.token0,
-      token1: existing.token1,
-      feeBps: existing.fee_bps ?? null,
-    }, bal0, bal1);
-  } catch (err) {
-    console.warn('🏦 Failed to update V3 TVL', err);
-  }
 }
 
 export async function startUniswapV3Indexer(): Promise<void> {
@@ -92,15 +67,31 @@ export async function startUniswapV3Indexer(): Promise<void> {
   }
   const provider = getProvider();
 
+  await initUniswapV3PositionIndexer();
+
+  // Seed position aggregator with any pools already in registry
+  for (const pool of getPools().filter((p: any) => p.version === 'V3')) {
+    const feeBps = typeof pool.fee_bps === 'number' ? pool.fee_bps : 30;
+    const fee = Math.round(feeBps * 100);
+    registerV3PoolMeta({
+      dex: pool.dex || 'Uniswap',
+      version: pool.version || 'V3',
+      address: pool.address.toLowerCase(),
+      token0: pool.token0.toLowerCase(),
+      token1: pool.token1.toLowerCase(),
+      feeBps,
+      fee,
+    });
+  }
+
   // Backfill pool created (chunked)
   try {
     const latest = await provider.getBlockNumber();
-    // Try to go back far enough to include most V3 pools; chunk to avoid RPC limits
-    const targetStart = 12000000; // around V3 launch
-    const from = Math.max(0, Math.min(targetStart, latest));
-    const step = 100000; // 100k blocks per query
-    console.log(`🏦 V3 backfilling chunked from block ${from} to ${latest} in steps of ${step}`);
-    for (let start = Math.max(from, latest - Math.max(config.BACKFILL_BLOCKS, 200000)); start <= latest; start += step) {
+    const defaultStart = Number(process.env.UNIV3_FACTORY_DEPLOY_BLOCK || 12369621);
+    const startBlock = Math.max(0, Math.min(defaultStart, latest));
+    const step = Number(process.env.UNIV3_POOL_BACKFILL_STEP || 20000);
+    console.log(`🏦 V3 backfilling pools from block ${startBlock} to ${latest} in ${step} block steps`);
+    for (let start = startBlock; start <= latest; start += step) {
       const end = Math.min(latest, start + step - 1);
       try {
         const logs = await provider.getLogs({ address: factory, topics: [POOL_CREATED_TOPIC], fromBlock: start, toBlock: end });
@@ -125,28 +116,7 @@ export async function startUniswapV3Indexer(): Promise<void> {
       try {
         const logs = await provider.getLogs({ address: addrs, topics: [SWAP_TOPIC_V3], fromBlock: from, toBlock: latest });
         for (const log of logs || []) {
-          try {
-            const poolAddr = (log.address || '').toLowerCase();
-            const pool = getPools().find((p: any) => p.address.toLowerCase() === poolAddr);
-            if (!pool) continue;
-            const parsed = IPool.parseLog({ topics: log.topics, data: log.data });
-            if (!parsed) continue;
-            const a0 = BigInt(parsed.args[2]);
-            const a1 = BigInt(parsed.args[3]);
-      const decimals0 = getTokenDecimalsCached(pool.token0);
-      const decimals1 = getTokenDecimalsCached(pool.token1);
-            const p0 = getUsdPriceViaWeth(pool.token0);
-            const p1 = getUsdPriceViaWeth(pool.token1);
-            let usd = 0;
-      if (p0 != null) usd = Math.abs(Number(a0)) / 10 ** decimals0 * (p0 || 0);
-      else if (p1 != null) usd = Math.abs(Number(a1)) / 10 ** decimals1 * (p1 || 0);
-            if (isFinite(usd) && usd > 0) {
-              const price = (p0 != null ? p0 : (p1 != null ? p1 : 0));
-              if (price && isFinite(price)) {
-                recordSwapBucket(poolAddr, price, usd, log.blockNumber).catch(() => {});
-              }
-            }
-          } catch {}
+          await processSwapLog(log);
         }
       } catch {}
     }
@@ -158,42 +128,80 @@ export async function startUniswapV3Indexer(): Promise<void> {
 
   // Subscribe to V3 Swap events across pools
   provider.on({ topics: [SWAP_TOPIC_V3] }, (log: any) => {
-    try {
-      const poolAddr = (log.address || '').toLowerCase();
-      const pool = getPools().find((p: any) => p.address.toLowerCase() === poolAddr);
-      if (!pool) return;
-      const parsed = IPool.parseLog({ topics: log.topics, data: log.data });
-      if (!parsed) return;
-      const a0 = BigInt(parsed.args[2]);
-      const a1 = BigInt(parsed.args[3]);
-      // Signed amounts already handled by BigInt via two's complement parsing in ethers
-      // Choose leg with known price
-      const decimals0 = getTokenDecimalsCached(pool.token0);
-      const decimals1 = getTokenDecimalsCached(pool.token1);
-      const p0 = getUsdPriceViaWeth(pool.token0);
-      const p1 = getUsdPriceViaWeth(pool.token1);
-      let usd = 0;
-      if (p0 != null) usd = Math.abs(Number(a0)) / 10 ** decimals0 * (p0 || 0);
-      else if (p1 != null) usd = Math.abs(Number(a1)) / 10 ** decimals1 * (p1 || 0);
-      if (!isFinite(usd) || usd <= 0) return;
-      const feeBps = pool.fee_bps || 30;
-      const feeUsd = usd * (feeBps / 10000);
-      recordSwapUsd(poolAddr, usd, feeUsd);
-      const price = (p0 != null ? p0 : (p1 != null ? p1 : 0));
-      if (price && isFinite(price)) {
-        recordSwapBucket(poolAddr, price, usd, log.blockNumber).catch(() => {});
-      }
-    } catch {}
+    processSwapLog(log).catch(err => console.error('🏦 V3 swap processing failed', err));
   });
 
-  // Periodically update TVL for V3 pools via balanceOf
+  // Periodically refresh TVL for V3 pools via position recompute
   setInterval(() => {
     try {
       for (const p of getPools().filter((x: any) => x.version === 'V3')) {
-        updateV3TvlOnce(p.address, p.token0, p.token1);
+        schedulePoolRecompute(p.address).catch(() => {});
       }
     } catch {}
   }, 60_000);
+}
+
+
+async function processSwapLog(log: any): Promise<void> {
+  const poolAddr = (log.address || '').toLowerCase();
+  const pool = getPools().find((p: any) => p.address.toLowerCase() === poolAddr);
+  if (!pool) return;
+
+  const parsed = IPool.parseLog({ topics: log.topics, data: log.data });
+  if (!parsed) return;
+
+  const amount0 = BigInt(parsed.args[2]);
+  const amount1 = BigInt(parsed.args[3]);
+  const sqrtPriceX96 = BigInt(parsed.args[4]);
+
+  const decimals0 = getTokenDecimalsCached(pool.token0);
+  const decimals1 = getTokenDecimalsCached(pool.token1);
+
+  const ratio = derivePriceRatio(sqrtPriceX96, decimals0, decimals1);
+  const [price0Raw, price1Raw] = await Promise.all([
+    getUsdPriceForToken(pool.token0),
+    getUsdPriceForToken(pool.token1),
+  ]);
+
+  let price0 = price0Raw;
+  let price1 = price1Raw;
+
+  if (ratio > 0) {
+    if ((price0 == null || !isFinite(price0)) && price1 != null && isFinite(price1)) {
+      price0 = price1 / ratio;
+    }
+    if ((price1 == null || !isFinite(price1)) && price0 != null && isFinite(price0)) {
+      price1 = price0 * ratio;
+    }
+  }
+
+  const qty0 = Number(ethers.formatUnits(absBigInt(amount0), decimals0));
+  const qty1 = Number(ethers.formatUnits(absBigInt(amount1), decimals1));
+
+  const usdCandidates: number[] = [];
+  if (price0 != null && isFinite(price0) && qty0 > 0) usdCandidates.push(qty0 * price0);
+  if (price1 != null && isFinite(price1) && qty1 > 0) usdCandidates.push(qty1 * price1);
+
+  if (!usdCandidates.length) return;
+
+  const usd = Math.max(...usdCandidates);
+  if (!isFinite(usd) || usd <= 0) return;
+
+  const feeBps = typeof pool.fee_bps === 'number'
+    ? pool.fee_bps
+    : Math.round(Number(pool.fee ?? 3000) / 100);
+  const feeUsd = usd * (feeBps / 10000);
+  recordSwapUsd(poolAddr, usd, feeUsd);
+
+  const priceForBucket = price0 != null && isFinite(price0)
+    ? price0
+    : (price1 != null && isFinite(price1) && ratio > 0 ? price1 / ratio : null);
+
+  if (priceForBucket && isFinite(priceForBucket)) {
+    recordSwapBucket(poolAddr, priceForBucket, usd, log.blockNumber).catch(() => {});
+  }
+
+  schedulePoolRecompute(poolAddr).catch(() => {});
 }
 
 

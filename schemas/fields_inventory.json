@@ -1,0 +1,302 @@
+[
+  {
+    "field": "blockNumber",
+    "type": "int",
+    "example": "23590205"
+  },
+  {
+    "field": "gasPrice",
+    "type": "int",
+    "example": "216069105"
+  },
+  {
+    "field": "peerCount",
+    "type": "int",
+    "example": "12"
+  },
+  {
+    "field": "chainId",
+    "type": "int",
+    "example": "1"
+  },
+  {
+    "field": "txpoolStatus",
+    "type": "dict",
+    "example": "{'pending': 2048, 'queued': 0}"
+  },
+  {
+    "field": "txpoolStatus.pending",
+    "type": "int",
+    "example": "2048"
+  },
+  {
+    "field": "txpoolStatus.queued",
+    "type": "int",
+    "example": "0"
+  },
+  {
+    "field": "latestBlock",
+    "type": "dict",
+    "example": "{'difficulty': '0x0', 'extraData': '0xe29ca8205175"
+  },
+  {
+    "field": "latestBlock.difficulty",
+    "type": "str",
+    "example": "0x0"
+  },
+  {
+    "field": "latestBlock.extraData",
+    "type": "str",
+    "example": "0xe29ca82051756173617220287175617361722e77696e2920"
+  },
+  {
+    "field": "latestBlock.gasLimit",
+    "type": "str",
+    "example": "0x2adf998"
+  },
+  {
+    "field": "latestBlock.gasUsed",
+    "type": "str",
+    "example": "0x14efa79"
+  },
+  {
+    "field": "latestBlock.hash",
+    "type": "str",
+    "example": "0xbb03083b3e9feebabe6b4681366a8fcdcad5885345807dff"
+  },
+  {
+    "field": "latestBlock.logsBloom",
+    "type": "str",
+    "example": "0xd6bf5eb79d6dbaf9fb6f8fd6bfed9dbcdb5adee6d41f5dbf"
+  },
+  {
+    "field": "latestBlock.miner",
+    "type": "str",
+    "example": "0x396343362be2a4da1ce0c1c210945346fb82aa49"
+  },
+  {
+    "field": "latestBlock.mixHash",
+    "type": "str",
+    "example": "0x73f540a6dbf447d17597879ea8283c3d9aeb19879be8aa0a"
+  },
+  {
+    "field": "latestBlock.nonce",
+    "type": "str",
+    "example": "0x0000000000000000"
+  },
+  {
+    "field": "latestBlock.number",
+    "type": "str",
+    "example": "0x167f53d"
+  },
+  {
+    "field": "latestBlock.parentHash",
+    "type": "str",
+    "example": "0xf90d23c31b1e32a9110c442585203771f787d5cb33bf457f"
+  },
+  {
+    "field": "latestBlock.receiptsRoot",
+    "type": "str",
+    "example": "0x7e14bc3bd56c6ced8085a60dc9903f58686b4a282cad215f"
+  },
+  {
+    "field": "latestBlock.sha3Uncles",
+    "type": "str",
+    "example": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413"
+  },
+  {
+    "field": "latestBlock.size",
+    "type": "str",
+    "example": "0x1ee61"
+  },
+  {
+    "field": "latestBlock.stateRoot",
+    "type": "str",
+    "example": "0x22bbc0e02b09eb7723c102207db2a208b4ae3bb6e7e788ab"
+  },
+  {
+    "field": "latestBlock.timestamp",
+    "type": "str",
+    "example": "0x68f0e3f7"
+  },
+  {
+    "field": "latestBlock.baseFeePerGas",
+    "type": "str",
+    "example": "0xc0795e2"
+  },
+  {
+    "field": "latestBlock.transactions",
+    "type": "list",
+    "example": "[{'type': '0x2', 'maxPriorityFeePerGas': '0x1', 'm"
+  },
+  {
+    "field": "latestBlock.transactions[0].type",
+    "type": "str",
+    "example": "0x2"
+  },
+  {
+    "field": "latestBlock.transactions[0].maxPriorityFeePerGas",
+    "type": "str",
+    "example": "0x1"
+  },
+  {
+    "field": "latestBlock.transactions[0].maxFeePerGas",
+    "type": "str",
+    "example": "0xc0795e2"
+  },
+  {
+    "field": "latestBlock.transactions[0].accessList",
+    "type": "list",
+    "example": "[{'address': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c"
+  },
+  {
+    "field": "latestBlock.transactions[0].accessList[0].address",
+    "type": "str",
+    "example": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+  },
+  {
+    "field": "latestBlock.transactions[0].accessList[0].storageKeys",
+    "type": "list",
+    "example": "['0x8d70e599c181df1870cffb4e02a74da59706c05601a968"
+  },
+  {
+    "field": "latestBlock.transactions[0].yParity",
+    "type": "str",
+    "example": "0x0"
+  },
+  {
+    "field": "latestBlock.transactions[0].chainId",
+    "type": "str",
+    "example": "0x1"
+  },
+  {
+    "field": "latestBlock.transactions[0].nonce",
+    "type": "str",
+    "example": "0x3681"
+  },
+  {
+    "field": "latestBlock.transactions[0].to",
+    "type": "str",
+    "example": "0x420cafe478ebb83542a70089e5a65da67cc829ac"
+  },
+  {
+    "field": "latestBlock.transactions[0].from",
+    "type": "str",
+    "example": "0x619c5c0de6172015a3f657578f4c3305795f3fa0"
+  },
+  {
+    "field": "latestBlock.transactions[0].value",
+    "type": "str",
+    "example": "0x2b1ca515"
+  },
+  {
+    "field": "latestBlock.transactions[0].input",
+    "type": "str",
+    "example": "0x5dc202d222d84c4e633130a77c2dc9f481553c3a1d01954f"
+  },
+  {
+    "field": "latestBlock.transactions[0].gasPrice",
+    "type": "str",
+    "example": "0xc0795e2"
+  },
+  {
+    "field": "latestBlock.transactions[0].v",
+    "type": "str",
+    "example": "0x0"
+  },
+  {
+    "field": "latestBlock.transactions[0].r",
+    "type": "str",
+    "example": "0xff58d96036bbf9213ba76477fb8adb710d050f69c1e1fe3b"
+  },
+  {
+    "field": "latestBlock.transactions[0].s",
+    "type": "str",
+    "example": "0x5e44b7754e86d78762334c02611a5bccd47d1bf8b1c7742d"
+  },
+  {
+    "field": "latestBlock.transactions[0].hash",
+    "type": "str",
+    "example": "0xcd01e9589841771666b391ce6b27410be92e2f93f5a225d0"
+  },
+  {
+    "field": "latestBlock.transactions[0].transactionIndex",
+    "type": "str",
+    "example": "0x0"
+  },
+  {
+    "field": "latestBlock.transactions[0].blockHash",
+    "type": "str",
+    "example": "0xbb03083b3e9feebabe6b4681366a8fcdcad5885345807dff"
+  },
+  {
+    "field": "latestBlock.transactions[0].blockNumber",
+    "type": "str",
+    "example": "0x167f53d"
+  },
+  {
+    "field": "latestBlock.transactions[0].gas",
+    "type": "str",
+    "example": "0x34e2c"
+  },
+  {
+    "field": "latestBlock.transactionsRoot",
+    "type": "str",
+    "example": "0x29dab91e9675a2ec3915dac4074cccb650d8a34c0a39c66a"
+  },
+  {
+    "field": "latestBlock.uncles",
+    "type": "list",
+    "example": "[]"
+  },
+  {
+    "field": "latestBlock.withdrawals",
+    "type": "list",
+    "example": "[{'index': '0x64066bb', 'validatorIndex': '0x4eb4f"
+  },
+  {
+    "field": "latestBlock.withdrawals[0].index",
+    "type": "str",
+    "example": "0x64066bb"
+  },
+  {
+    "field": "latestBlock.withdrawals[0].validatorIndex",
+    "type": "str",
+    "example": "0x4eb4f"
+  },
+  {
+    "field": "latestBlock.withdrawals[0].address",
+    "type": "str",
+    "example": "0xb9d7934878b5fb9610b3fe8a5e441e8fad7e293f"
+  },
+  {
+    "field": "latestBlock.withdrawals[0].amount",
+    "type": "str",
+    "example": "0x117d3fe"
+  },
+  {
+    "field": "latestBlock.withdrawalsRoot",
+    "type": "str",
+    "example": "0xd6a9cf2694ea2d23374f00c8e8d74244fdfe4f9be002160c"
+  },
+  {
+    "field": "latestBlock.blobGasUsed",
+    "type": "str",
+    "example": "0xe0000"
+  },
+  {
+    "field": "latestBlock.excessBlobGas",
+    "type": "str",
+    "example": "0x700000"
+  },
+  {
+    "field": "latestBlock.parentBeaconBlockRoot",
+    "type": "str",
+    "example": "0xc1f90a09263b5e6db5f3d6e97e59a200b260fcefd1da1fbd"
+  },
+  {
+    "field": "latestBlock.requestsHash",
+    "type": "str",
+    "example": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934c"
+  }
+]

@@ -1,0 +1,1237 @@
+{
+  "metadata": {
+    "description": "Complete Nethermind JSON-RPC API fields and modules for Ethereum node operations",
+    "version": "1.0.0",
+    "nethermind_version": "1.34.0+",
+    "last_updated": "2025-10-16",
+    "purpose": "Comprehensive reference for all RPC methods, modules, and fields available in Nethermind for use by Ethereum clients like Nimbus"
+  },
+  "rpc_modules": {
+    "Eth": {
+      "description": "Standard Ethereum JSON-RPC API methods",
+      "port": 8545,
+      "authentication": "none",
+      "methods": {
+        "eth_getBlockReceipts": {
+          "description": "Returns receipts for all transactions in a block (Nethermind extension)",
+          "parameters": [
+            {"name": "blockNumberOrHash", "type": "string", "required": true}
+          ],
+          "returns": "Array of transaction receipts",
+          "usage": "High-throughput DEX log processing"
+        },
+        "eth_accounts": {
+          "description": "Returns list of addresses owned by client",
+          "parameters": [],
+          "returns": "Array of addresses",
+          "usage": "General wallet/account queries"
+        },
+        "eth_blockNumber": {
+          "description": "Returns the current block number",
+          "parameters": [],
+          "returns": "Current block number as hex",
+          "usage": "Sync status, current chain height"
+        },
+        "eth_call": {
+          "description": "Executes a new message call without creating a transaction",
+          "parameters": [
+            {"name": "transaction", "type": "object", "required": true},
+            {"name": "block", "type": "string", "required": false}
+          ],
+          "returns": "Return value of executed contract",
+          "usage": "Contract interaction, state queries"
+        },
+        "eth_chainId": {
+          "description": "Returns the chain ID",
+          "parameters": [],
+          "returns": "Chain ID as hex",
+          "usage": "Network identification"
+        },
+        "eth_estimateGas": {
+          "description": "Estimates gas needed for transaction execution",
+          "parameters": [
+            {"name": "transaction", "type": "object", "required": true},
+            {"name": "block", "type": "string", "required": false}
+          ],
+          "returns": "Estimated gas as hex",
+          "usage": "Transaction gas estimation"
+        },
+        "eth_gasPrice": {
+          "description": "Returns current gas price",
+          "parameters": [],
+          "returns": "Gas price in wei as hex",
+          "usage": "Dynamic gas pricing"
+        },
+        "eth_getBalance": {
+          "description": "Returns account balance",
+          "parameters": [
+            {"name": "address", "type": "string", "required": true},
+            {"name": "block", "type": "string", "required": false}
+          ],
+          "returns": "Balance in wei as hex",
+          "usage": "Account balance queries"
+        },
+        "eth_getBlockByHash": {
+          "description": "Returns block by hash",
+          "parameters": [
+            {"name": "blockHash", "type": "string", "required": true},
+            {"name": "fullTransactionObjects", "type": "boolean", "required": false}
+          ],
+          "returns": "Block object or null",
+          "usage": "Block data retrieval"
+        },
+        "eth_getBlockByNumber": {
+          "description": "Returns block by number",
+          "parameters": [
+            {"name": "blockNumber", "type": "string", "required": true},
+            {"name": "fullTransactionObjects", "type": "boolean", "required": false}
+          ],
+          "returns": "Block object or null",
+          "usage": "Block data retrieval, consensus layer sync"
+        },
+        "eth_getBlockTransactionCountByHash": {
+          "description": "Returns number of transactions in block by hash",
+          "parameters": [{"name": "blockHash", "type": "string", "required": true}],
+          "returns": "Transaction count as hex",
+          "usage": "Block analysis"
+        },
+        "eth_getBlockTransactionCountByNumber": {
+          "description": "Returns number of transactions in block by number",
+          "parameters": [{"name": "blockNumber", "type": "string", "required": true}],
+          "returns": "Transaction count as hex",
+          "usage": "Block analysis"
+        },
+        "eth_getCode": {
+          "description": "Returns code at given address",
+          "parameters": [
+            {"name": "address", "type": "string", "required": true},
+            {"name": "block", "type": "string", "required": false}
+          ],
+          "returns": "Code as hex string",
+          "usage": "Contract code retrieval"
+        },
+        "eth_getLogs": {
+          "description": "Returns event logs matching filter",
+          "parameters": [{"name": "filter", "type": "object", "required": true}],
+          "returns": "Array of log objects",
+          "usage": "Event monitoring, dApp development"
+        },
+        "eth_getStorageAt": {
+          "description": "Returns storage value at address position",
+          "parameters": [
+            {"name": "address", "type": "string", "required": true},
+            {"name": "position", "type": "string", "required": true},
+            {"name": "block", "type": "string", "required": false}
+          ],
+          "returns": "Storage value as hex",
+          "usage": "Contract storage inspection"
+        },
+        "eth_getTransactionByBlockHashAndIndex": {
+          "description": "Returns transaction by block hash and index",
+          "parameters": [
+            {"name": "blockHash", "type": "string", "required": true},
+            {"name": "transactionIndex", "type": "string", "required": true}
+          ],
+          "returns": "Transaction object or null",
+          "usage": "Transaction retrieval"
+        },
+        "eth_getTransactionByBlockNumberAndIndex": {
+          "description": "Returns transaction by block number and index",
+          "parameters": [
+            {"name": "blockNumber", "type": "string", "required": true},
+            {"name": "transactionIndex", "type": "string", "required": true}
+          ],
+          "returns": "Transaction object or null",
+          "usage": "Transaction retrieval"
+        },
+        "eth_getTransactionByHash": {
+          "description": "Returns transaction by hash",
+          "parameters": [{"name": "transactionHash", "type": "string", "required": true}],
+          "returns": "Transaction object or null",
+          "usage": "Transaction status tracking"
+        },
+        "eth_getTransactionCount": {
+          "description": "Returns number of transactions sent from address",
+          "parameters": [
+            {"name": "address", "type": "string", "required": true},
+            {"name": "block", "type": "string", "required": false}
+          ],
+          "returns": "Transaction count as hex",
+          "usage": "Nonce checking"
+        },
+        "eth_getTransactionReceipt": {
+          "description": "Returns transaction receipt",
+          "parameters": [{"name": "transactionHash", "type": "string", "required": true}],
+          "returns": "Transaction receipt object or null",
+          "usage": "Transaction confirmation, event logs"
+        },
+        "eth_getUncleByBlockHashAndIndex": {
+          "description": "Returns uncle block by hash and index",
+          "parameters": [
+            {"name": "blockHash", "type": "string", "required": true},
+            {"name": "uncleIndex", "type": "string", "required": true}
+          ],
+          "returns": "Uncle block object or null",
+          "usage": "Legacy PoW data"
+        },
+        "eth_getUncleByBlockNumberAndIndex": {
+          "description": "Returns uncle block by number and index",
+          "parameters": [
+            {"name": "blockNumber", "type": "string", "required": true},
+            {"name": "uncleIndex", "type": "string", "required": true}
+          ],
+          "returns": "Uncle block object or null",
+          "usage": "Legacy PoW data"
+        },
+        "eth_getUncleCountByBlockHash": {
+          "description": "Returns number of uncles in block by hash",
+          "parameters": [{"name": "blockHash", "type": "string", "required": true}],
+          "returns": "Uncle count as hex",
+          "usage": "Block structure analysis"
+        },
+        "eth_getUncleCountByBlockNumber": {
+          "description": "Returns number of uncles in block by number",
+          "parameters": [{"name": "blockNumber", "type": "string", "required": true}],
+          "returns": "Uncle count as hex",
+          "usage": "Block structure analysis"
+        },
+        "eth_maxPriorityFeePerGas": {
+          "description": "Returns suggested max priority fee per gas",
+          "parameters": [],
+          "returns": "Max priority fee as hex",
+          "usage": "EIP-1559 gas pricing"
+        },
+        "eth_mining": {
+          "description": "Returns true if client is mining",
+          "parameters": [],
+          "returns": "Mining status boolean",
+          "usage": "Mining status"
+        },
+        "eth_newBlockFilter": {
+          "description": "Creates a filter for new blocks",
+          "parameters": [],
+          "returns": "Filter ID as hex",
+          "usage": "Block monitoring"
+        },
+        "eth_newFilter": {
+          "description": "Creates a filter for logs/events",
+          "parameters": [{"name": "filter", "type": "object", "required": true}],
+          "returns": "Filter ID as hex",
+          "usage": "Event monitoring"
+        },
+        "eth_newPendingTransactionFilter": {
+          "description": "Creates a filter for pending transactions",
+          "parameters": [],
+          "returns": "Filter ID as hex",
+          "usage": "Mempool monitoring"
+        },
+        "eth_pendingTransactions": {
+          "description": "Returns pending transactions",
+          "parameters": [],
+          "returns": "Array of transaction objects",
+          "usage": "Mempool inspection"
+        },
+        "eth_protocolVersion": {
+          "description": "Returns protocol version",
+          "parameters": [],
+          "returns": "Protocol version as string",
+          "usage": "Protocol compatibility"
+        },
+        "eth_sendRawTransaction": {
+          "description": "Submits signed transaction",
+          "parameters": [{"name": "signedTransactionData", "type": "string", "required": true}],
+          "returns": "Transaction hash",
+          "usage": "Transaction submission"
+        },
+        "eth_sendTransaction": {
+          "description": "Creates and submits transaction",
+          "parameters": [{"name": "transaction", "type": "object", "required": true}],
+          "returns": "Transaction hash",
+          "usage": "Transaction creation and submission"
+        },
+        "eth_sign": {
+          "description": "Signs data with address",
+          "parameters": [
+            {"name": "address", "type": "string", "required": true},
+            {"name": "data", "type": "string", "required": true}
+          ],
+          "returns": "Signature as hex",
+          "usage": "Message signing"
+        },
+        "eth_signTransaction": {
+          "description": "Signs transaction",
+          "parameters": [{"name": "transaction", "type": "object", "required": true}],
+          "returns": "Signed transaction object",
+          "usage": "Transaction signing"
+        },
+        "eth_syncing": {
+          "description": "Returns sync status",
+          "parameters": [],
+          "returns": "Sync object or false",
+          "usage": "Sync progress monitoring"
+        },
+        "eth_uninstallFilter": {
+          "description": "Uninstalls filter",
+          "parameters": [{"name": "filterId", "type": "string", "required": true}],
+          "returns": "Success boolean",
+          "usage": "Filter cleanup"
+        },
+        "eth_unsubscribe": {
+          "description": "Unsubscribes from subscription",
+          "parameters": [{"name": "subscriptionId", "type": "string", "required": true}],
+          "returns": "Success boolean",
+          "usage": "WebSocket subscription cleanup"
+        },
+        "eth_feeHistory": {
+          "description": "Returns fee history data for recent blocks (EIP-1559)",
+          "parameters": [
+            {"name": "blockCount", "type": "string", "required": true},
+            {"name": "newestBlock", "type": "string", "required": true},
+            {"name": "rewardPercentiles", "type": "array", "required": false}
+          ],
+          "returns": "Base fee per gas, gas used ratios, and rewards",
+          "usage": "Gas price estimation for trading"
+        },
+        "eth_getFilterChanges": {
+          "description": "Polling method for filter changes",
+          "parameters": [{"name": "filterId", "type": "string", "required": true}],
+          "returns": "Array of log entries or hashes",
+          "usage": "Low-latency event polling when WebSocket unavailable"
+        },
+        "eth_getFilterLogs": {
+          "description": "Returns all logs for a filter",
+          "parameters": [{"name": "filterId", "type": "string", "required": true}],
+          "returns": "Array of log objects",
+          "usage": "Historical event retrieval"
+        },
+        "eth_createAccessList": {
+          "description": "Creates an access list for a transaction (EIP-2930)",
+          "parameters": [
+            {"name": "transaction", "type": "object", "required": true},
+            {"name": "block", "type": "string", "required": false}
+          ],
+          "returns": "Access list and gas estimate",
+          "usage": "Accurate gas estimation for complex swaps"
+        },
+        "eth_getProof": {
+          "description": "Returns Merkle proofs for account and storage slots (EIP-1186)",
+          "parameters": [
+            {"name": "address", "type": "string", "required": true},
+            {"name": "storageKeys", "type": "array", "required": true},
+            {"name": "block", "type": "string", "required": false}
+          ],
+          "returns": "Account proof and storage proofs",
+          "usage": "Trustless verification for off-chain trading systems"
+        }
+      }
+    },
+    "Debug": {
+      "description": "Optional debug and admin methods (requires plugin and enabled module)",
+      "port": 8545,
+      "authentication": "none",
+      "methods": {
+        "debug_traceTransaction": {
+          "description": "Traces the execution of a transaction",
+          "parameters": [
+            {"name": "transactionHash", "type": "string", "required": true},
+            {"name": "tracerOptions", "type": "object", "required": false}
+          ],
+          "returns": "Execution trace",
+          "usage": "DEX call path analysis and gas breakdown"
+        },
+        "debug_traceCall": {
+          "description": "Traces a call without submitting a transaction",
+          "parameters": [
+            {"name": "transaction", "type": "object", "required": true},
+            {"name": "block", "type": "string", "required": false},
+            {"name": "tracerOptions", "type": "object", "required": false}
+          ],
+          "returns": "Execution trace",
+          "usage": "Simulate and analyze swaps"
+        }
+      }
+    },
+    "Trace": {
+      "description": "Optional trace methods (requires TraceStore plugin)",
+      "port": 8545,
+      "authentication": "none",
+      "methods": {
+        "trace_block": {
+          "description": "Traces all transactions in a block",
+          "parameters": [{"name": "blockNumberOrHash", "type": "string", "required": true}],
+          "returns": "Array of traces",
+          "usage": "Historical DEX activity analysis"
+        },
+        "trace_transaction": {
+          "description": "Traces a specific transaction",
+          "parameters": [{"name": "transactionHash", "type": "string", "required": true}],
+          "returns": "Trace object",
+          "usage": "Detailed swap execution analysis"
+        }
+      }
+    },
+    "Engine": {
+      "description": "Engine API for consensus layer communication",
+      "port": 8551,
+      "authentication": "JWT required",
+      "methods": {
+        "engine_exchangeCapabilities": {
+          "description": "Exchange capabilities between CL and EL",
+          "parameters": [{"name": "capabilities", "type": "array", "required": true}],
+          "returns": "Supported capabilities",
+          "usage": "CL-EL capability negotiation"
+        },
+        "engine_exchangeTransitionConfigurationV1": {
+          "description": "Exchange transition configuration",
+          "parameters": [{"name": "transitionConfiguration", "type": "object", "required": true}],
+          "returns": "Transition configuration",
+          "usage": "Merge transition coordination"
+        },
+        "engine_forkchoiceUpdatedV1": {
+          "description": "Updates fork choice state",
+          "parameters": [
+            {"name": "forkchoiceState", "type": "object", "required": true},
+            {"name": "payloadAttributes", "type": "object", "required": false}
+          ],
+          "returns": "Fork choice update result",
+          "usage": "Consensus layer fork choice updates"
+        },
+        "engine_forkchoiceUpdatedV2": {
+          "description": "Updates fork choice state V2",
+          "parameters": [
+            {"name": "forkchoiceState", "type": "object", "required": true},
+            {"name": "payloadAttributes", "type": "object", "required": false}
+          ],
+          "returns": "Fork choice update result",
+          "usage": "Consensus layer fork choice updates"
+        },
+        "engine_forkchoiceUpdatedV3": {
+          "description": "Updates fork choice state V3",
+          "parameters": [
+            {"name": "forkchoiceState", "type": "object", "required": true},
+            {"name": "payloadAttributes", "type": "object", "required": false}
+          ],
+          "returns": "Fork choice update result",
+          "usage": "Consensus layer fork choice updates with withdrawals"
+        },
+        "engine_getClientVersionV1": {
+          "description": "Returns client version information",
+          "parameters": [{"name": "clientVersion", "type": "object", "required": true}],
+          "returns": "Client version info",
+          "usage": "Client identification"
+        },
+        "engine_getPayloadBodiesByHashV1": {
+          "description": "Returns execution payload bodies by hash",
+          "parameters": [{"name": "blockHashes", "type": "array", "required": true}],
+          "returns": "Array of payload bodies",
+          "usage": "Historical payload retrieval"
+        },
+        "engine_getPayloadBodiesByRangeV1": {
+          "description": "Returns execution payload bodies by range",
+          "parameters": [
+            {"name": "start", "type": "string", "required": true},
+            {"name": "count", "type": "string", "required": true}
+          ],
+          "returns": "Array of payload bodies",
+          "usage": "Historical payload retrieval"
+        },
+        "engine_getPayloadV1": {
+          "description": "Returns execution payload",
+          "parameters": [{"name": "payloadId", "type": "string", "required": true}],
+          "returns": "Execution payload",
+          "usage": "Block production"
+        },
+        "engine_getPayloadV2": {
+          "description": "Returns execution payload V2",
+          "parameters": [{"name": "payloadId", "type": "string", "required": true}],
+          "returns": "Execution payload",
+          "usage": "Block production with withdrawals"
+        },
+        "engine_getPayloadV3": {
+          "description": "Returns execution payload V3",
+          "parameters": [{"name": "payloadId", "type": "string", "required": true}],
+          "returns": "Execution payload",
+          "usage": "Block production with withdrawals and blobs"
+        },
+        "engine_getPayloadV4": {
+          "description": "Returns execution payload V4",
+          "parameters": [{"name": "payloadId", "type": "string", "required": true}],
+          "returns": "Execution payload",
+          "usage": "Block production with V4 features"
+        },
+        "engine_newPayloadV1": {
+          "description": "Validates and executes payload",
+          "parameters": [{"name": "executionPayload", "type": "object", "required": true}],
+          "returns": "Payload validation result",
+          "usage": "Block validation"
+        },
+        "engine_newPayloadV2": {
+          "description": "Validates and executes payload V2",
+          "parameters": [{"name": "executionPayload", "type": "object", "required": true}],
+          "returns": "Payload validation result",
+          "usage": "Block validation with withdrawals"
+        },
+        "engine_newPayloadV3": {
+          "description": "Validates and executes payload V3",
+          "parameters": [
+            {"name": "executionPayload", "type": "object", "required": true},
+            {"name": "expectedBlobVersionedHashes", "type": "array", "required": false},
+            {"name": "parentBeaconBlockRoot", "type": "string", "required": false}
+          ],
+          "returns": "Payload validation result",
+          "usage": "Block validation with blobs"
+        },
+        "engine_newPayloadV4": {
+          "description": "Validates and executes payload V4",
+          "parameters": [
+            {"name": "executionPayload", "type": "object", "required": true},
+            {"name": "expectedBlobVersionedHashes", "type": "array", "required": false},
+            {"name": "parentBeaconBlockRoot", "type": "string", "required": false},
+            {"name": "executionRequests", "type": "array", "required": false}
+          ],
+          "returns": "Payload validation result",
+          "usage": "Block validation with V4 features"
+        }
+      }
+    },
+    "Subscribe": {
+      "description": "WebSocket subscription methods",
+      "port": 8545,
+      "transport": "WebSocket",
+      "authentication": "none",
+      "methods": {
+        "eth_subscribe": {
+          "description": "Creates a subscription",
+          "parameters": [
+            {"name": "subscriptionType", "type": "string", "required": true},
+            {"name": "options", "type": "object", "required": false}
+          ],
+          "returns": "Subscription ID",
+          "usage": "Real-time data subscriptions",
+          "subscription_types": {
+            "newHeads": "New block headers",
+            "logs": "Event logs",
+            "newPendingTransactions": "Pending transactions",
+            "syncing": "Sync status updates"
+          }
+        },
+        "eth_unsubscribe": {
+          "description": "Cancels a subscription",
+          "parameters": [{"name": "subscriptionId", "type": "string", "required": true}],
+          "returns": "Success boolean",
+          "usage": "Subscription cleanup"
+        }
+      }
+    },
+    "Web3": {
+      "description": "Web3 utility methods",
+      "port": 8545,
+      "authentication": "none",
+      "methods": {
+        "web3_clientVersion": {
+          "description": "Returns client version",
+          "parameters": [],
+          "returns": "Client version string",
+          "usage": "Client identification"
+        },
+        "web3_sha3": {
+          "description": "Returns Keccak-256 hash",
+          "parameters": [{"name": "data", "type": "string", "required": true}],
+          "returns": "Hash as hex",
+          "usage": "Data hashing"
+        }
+      }
+    },
+    "Net": {
+      "description": "Network information methods",
+      "port": 8545,
+      "authentication": "none",
+      "methods": {
+        "net_listening": {
+          "description": "Returns true if client is listening for connections",
+          "parameters": [],
+          "returns": "Listening status boolean",
+          "usage": "Network status"
+        },
+        "net_peerCount": {
+          "description": "Returns number of connected peers",
+          "parameters": [],
+          "returns": "Peer count as hex",
+          "usage": "Network connectivity"
+        },
+        "net_version": {
+          "description": "Returns network ID",
+          "parameters": [],
+          "returns": "Network ID as string",
+          "usage": "Network identification"
+        }
+      }
+    },
+    "TxPool": {
+      "description": "Transaction pool inspection methods",
+      "port": 8545,
+      "authentication": "none",
+      "methods": {
+        "txpool_content": {
+          "description": "Returns transaction pool content",
+          "parameters": [],
+          "returns": "Transaction pool object",
+          "usage": "Mempool inspection"
+        },
+        "txpool_inspect": {
+          "description": "Returns transaction pool inspection",
+          "parameters": [],
+          "returns": "Transaction pool inspection object",
+          "usage": "Mempool analysis"
+        },
+        "txpool_status": {
+          "description": "Returns transaction pool status",
+          "parameters": [],
+          "returns": "Transaction pool status object",
+          "usage": "Mempool statistics"
+        }
+      }
+    }
+  },
+  "configuration_fields": {
+    "rpc_settings": {
+      "JsonRpc.Enabled": "Enable JSON-RPC server",
+      "JsonRpc.Host": "RPC server host (0.0.0.0 for all interfaces)",
+      "JsonRpc.Port": "RPC server port (8545 standard)",
+      "JsonRpc.EnabledModules": "Comma-separated list of enabled modules",
+      "JsonRpc.AdditionalRpcUrls": "Additional RPC URLs with custom configurations",
+      "JsonRpc.JwtSecretFile": "Path to JWT secret file for Engine API",
+      "JsonRpc.WebSocketsEnabled": "Enable WebSocket support",
+      "JsonRpc.MaxBatchSize": "Maximum batch request size",
+      "JsonRpc.MaxBatchResponseSize": "Maximum batch response size"
+    },
+    "network_settings": {
+      "Network.DiscoveryPort": "P2P discovery port",
+      "Network.P2PPort": "P2P communication port",
+      "Network.LocalIp": "Local IP address to advertise",
+      "Network.ExternalIp": "External IP address",
+      "Network.Bootnodes": "List of bootstrap nodes",
+      "Network.MaxActivePeers": "Maximum active peers",
+      "Network.ActivePeersMaxCount": "Maximum active peer count"
+    },
+    "sync_settings": {
+      "Sync.SnapSync": "Enable snap sync",
+      "Sync.FastSync": "Enable fast sync",
+      "Sync.DownloadBodiesInFastSync": "Download bodies during fast sync",
+      "Sync.DownloadReceiptsInFastSync": "Download receipts during fast sync",
+      "Sync.PivotNumber": "Fast sync pivot block number",
+      "Sync.AncientBodiesBarrier": "Ancient bodies barrier",
+      "Sync.AncientReceiptsBarrier": "Ancient receipts barrier"
+    },
+    "performance_settings": {
+      "MemoryHint": "Memory usage hint in bytes",
+      "Db.CacheSize": "Database cache size",
+      "TxPool.Size": "Transaction pool size",
+      "JsonRpc.MaxLogsPublishEvent": "Maximum logs to publish in events",
+      "Merge.Enabled": "Enable merge (PoS) functionality"
+    },
+    "security_settings": {
+      "JsonRpc.EngineHost": "Engine API host restriction",
+      "JsonRpc.EnginePort": "Engine API port",
+      "JsonRpc.JwtSecretFile": "JWT secret file path",
+      "Network.OnlyStaticPeers": "Only connect to static peers",
+      "Network.TrustedPeers": "List of trusted peers"
+    }
+  },
+  "data_structures": {
+    "block_object": {
+      "number": "Block number as hex",
+      "hash": "Block hash",
+      "parentHash": "Parent block hash",
+      "nonce": "Block nonce",
+      "sha3Uncles": "Uncles hash",
+      "logsBloom": "Logs bloom filter",
+      "transactionsRoot": "Transactions root",
+      "stateRoot": "State root",
+      "receiptsRoot": "Receipts root",
+      "miner": "Miner address",
+      "difficulty": "Block difficulty",
+      "totalDifficulty": "Total difficulty",
+      "extraData": "Extra data",
+      "size": "Block size",
+      "gasLimit": "Gas limit",
+      "gasUsed": "Gas used",
+      "timestamp": "Block timestamp",
+      "transactions": "Transaction array or hashes",
+      "uncles": "Uncle block hashes"
+    },
+    "transaction_object": {
+      "hash": "Transaction hash",
+      "nonce": "Transaction nonce",
+      "blockHash": "Block hash",
+      "blockNumber": "Block number",
+      "transactionIndex": "Transaction index in block",
+      "from": "Sender address",
+      "to": "Recipient address",
+      "value": "Value in wei",
+      "gasPrice": "Gas price",
+      "maxFeePerGas": "Max fee per gas (EIP-1559)",
+      "maxPriorityFeePerGas": "Max priority fee per gas (EIP-1559)",
+      "gas": "Gas limit",
+      "input": "Transaction data",
+      "r": "Signature r value",
+      "s": "Signature s value",
+      "v": "Signature recovery id"
+    },
+    "transaction_receipt": {
+      "transactionHash": "Transaction hash",
+      "transactionIndex": "Transaction index",
+      "blockHash": "Block hash",
+      "blockNumber": "Block number",
+      "from": "Sender address",
+      "to": "Recipient address",
+      "cumulativeGasUsed": "Cumulative gas used",
+      "gasUsed": "Gas used by transaction",
+      "contractAddress": "Contract address (if created)",
+      "logs": "Event logs",
+      "logsBloom": "Logs bloom filter",
+      "status": "Transaction status (1 success, 0 failure)",
+      "effectiveGasPrice": "Effective gas price"
+    },
+    "log_object": {
+      "removed": "True if log was removed due to chain reorganization",
+      "logIndex": "Log index in block",
+      "transactionIndex": "Transaction index",
+      "transactionHash": "Transaction hash",
+      "blockHash": "Block hash",
+      "blockNumber": "Block number",
+      "address": "Contract address",
+      "data": "Log data",
+      "topics": "Log topics array"
+    },
+    "filter_object": {
+      "fromBlock": "Starting block",
+      "toBlock": "Ending block",
+      "address": "Contract address(es)",
+      "topics": "Log topics to filter",
+      "blockhash": "Block hash (alternative to fromBlock/toBlock)"
+    }
+  },
+  "nimbus_integration": {
+    "required_endpoints": {
+      "execution_layer_url": "http://127.0.0.1:8551 (Engine API)",
+      "jwt_secret": "Path to JWT secret file",
+      "fee_recipient": "Address for block rewards"
+    },
+    "key_methods_used": [
+      "eth_getBlockByNumber",
+      "eth_getBlockByHash",
+      "eth_chainId",
+      "engine_forkchoiceUpdatedV3",
+      "engine_newPayloadV3",
+      "engine_getPayloadV3",
+      "engine_getPayloadBodiesByHashV1",
+      "engine_getPayloadBodiesByRangeV1"
+    ],
+    "optional_methods_for_dex": [
+      "eth_feeHistory",
+      "eth_getLogs",
+      "eth_getBlockReceipts",
+      "eth_getProof",
+      "eth_createAccessList",
+      "debug_traceTransaction",
+      "debug_traceCall"
+    ],
+    "subscription_usage": [
+      "newHeads - Block header notifications",
+      "newPendingTransactions - Mempool monitoring"
+    ]
+  },
+  "performance_metrics": {
+    "sync_progress": {
+      "currentBlock": "Current block number",
+      "highestBlock": "Highest block number",
+      "startingBlock": "Sync start block",
+      "pulledStates": "States downloaded",
+      "knownStates": "Total states known"
+    },
+    "network_stats": {
+      "activePeers": "Number of active peers",
+      "connectedPeers": "Total connected peers",
+      "inboundTraffic": "Inbound traffic bytes",
+      "outboundTraffic": "Outbound traffic bytes"
+    },
+    "system_resources": {
+      "memoryUsage": "Memory usage in bytes",
+      "cpuUsage": "CPU usage percentage",
+      "diskUsage": "Disk usage statistics",
+      "cacheHitRate": "Database cache hit rate"
+    }
+  },
+  "error_codes": {
+    "rpc_errors": {
+      "-32700": "Parse error",
+      "-32600": "Invalid request",
+      "-32601": "Method not found",
+      "-32602": "Invalid params",
+      "-32603": "Internal error",
+      "-32000": "Server error",
+      "-32001": "Execution reverted",
+      "-32002": "Gas too low",
+      "-32003": "Transaction rejected"
+    },
+    "engine_errors": {
+      "-32000": "Generic server error",
+      "-38001": "Unknown payload",
+      "-38002": "Invalid forkchoice state",
+      "-38003": "Invalid payload attributes",
+      "-38004": "Too large request",
+      "-38005": "Invalid request"
+    }
+  },
+  "websocket_events": {
+    "subscription_notifications": {
+      "newHeads": {
+        "subscription": "subscription_id",
+        "result": "block_header_object"
+      },
+      "logs": {
+        "subscription": "subscription_id",
+        "result": "log_object"
+      },
+      "newPendingTransactions": {
+        "subscription": "subscription_id",
+        "result": "transaction_hash"
+      },
+      "syncing": {
+        "subscription": "subscription_id",
+        "result": "sync_status_object"
+      }
+    }
+  },
+  "nimbus_rest_api": {
+    "notes": "Ethereum Beacon Node REST API as implemented by Nimbus (paths follow beacon-APIs spec)",
+    "base_url": "http://127.0.0.1:5052",
+    "groups": {
+      "node": {
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/eth/v1/node/health",
+            "description": "Returns node health status",
+            "responses": {
+              "200": "Node is ready",
+              "206": "Node is syncing but available",
+              "503": "Node not ready"
+            },
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/node/health -i"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/node/version",
+            "description": "Client version string",
+            "response_fields": ["version"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/node/version | jq"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/node/syncing",
+            "description": "Sync status and optimistic state",
+            "response_fields": ["is_syncing", "is_optimistic", "el_offline", "head_slot", "sync_distance"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/node/syncing | jq"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/node/peer_count",
+            "description": "Counts of peers by state",
+            "response_fields": ["disconnected", "connecting", "connected", "disconnecting"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/node/peer_count | jq"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/node/peers",
+            "description": "List peers, filter with ?state=connected",
+            "query": ["state"],
+            "response_fields": ["peer_id", "enr", "last_seen_p2p_address", "state", "direction", "agent", "subnets"],
+            "curl_example": "curl -s 'http://127.0.0.1:5052/eth/v1/node/peers?state=connected' | jq '.data | length'"
+          }
+        ]
+      },
+      "config": {
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/eth/v1/config/spec",
+            "description": "Network constants/spec values",
+            "response_fields": ["SECONDS_PER_SLOT", "SLOTS_PER_EPOCH", "MAX_VALIDATORS_PER_COMMITTEE", "MAX_EFFECTIVE_BALANCE"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/config/spec | jq '.data.SECONDS_PER_SLOT'"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/config/fork_schedule",
+            "description": "Fork schedule list",
+            "response_fields": ["current_version", "epoch", "previous_version"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/config/fork_schedule | jq '.data[-1]'"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/config/deposit_contract",
+            "description": "Deposit contract address and chain_id",
+            "response_fields": ["address", "chain_id"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/config/deposit_contract | jq"
+          }
+        ]
+      },
+      "beacon": {
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/genesis",
+            "description": "Genesis information",
+            "response_fields": ["genesis_time", "genesis_validators_root", "genesis_fork_version"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/beacon/genesis | jq"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/headers",
+            "description": "List of recent headers (filter by ?slot=)",
+            "query": ["slot"],
+            "response_fields": ["root", "canonical", "header.message.slot", "header.message.parent_root"],
+            "curl_example": "curl -s 'http://127.0.0.1:5052/eth/v1/beacon/headers?slot=latest' | jq '.data[0]'"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v2/beacon/blocks/{block_id}",
+            "description": "Full block by id (head, finalized, slot, root or hex hash)",
+            "path_params": ["block_id"],
+            "response_fields": ["message.slot", "message.body.execution_payload", "message.body.blob_kzg_commitments"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v2/beacon/blocks/head | jq '.data.message.slot'"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/blocks/{block_id}/root",
+            "description": "Block root by id",
+            "path_params": ["block_id"],
+            "response_fields": ["root"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/beacon/blocks/head/root | jq"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/blob_sidecars/{block_id}",
+            "description": "Blob sidecars for a block (EIP-4844)",
+            "path_params": ["block_id"],
+            "response_fields": ["slot", "block_root", "index", "kzg_commitment", "blob"]
+          }
+        ]
+      },
+      "states": {
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/states/{state_id}/root",
+            "description": "State root",
+            "path_params": ["state_id"],
+            "response_fields": ["root"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/beacon/states/head/root | jq"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/states/{state_id}/fork",
+            "description": "Fork data for state",
+            "path_params": ["state_id"],
+            "response_fields": ["previous_version", "current_version", "epoch"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/beacon/states/head/fork | jq"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/states/{state_id}/finality_checkpoints",
+            "description": "Finality checkpoints",
+            "path_params": ["state_id"],
+            "response_fields": ["previous_justified", "current_justified", "finalized"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/beacon/states/head/finality_checkpoints | jq"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/states/{state_id}/validators",
+            "description": "Validators list (filter by status or indices)",
+            "path_params": ["state_id"],
+            "query": ["status", "indices"],
+            "response_fields": ["index", "status", "validator.pubkey", "balance", "validator.effective_balance"],
+            "curl_example": "curl -s 'http://127.0.0.1:5052/eth/v1/beacon/states/head/validators?status=active_ongoing' | jq '.data[0]'"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/states/{state_id}/validator_balances",
+            "description": "Validator balances",
+            "path_params": ["state_id"],
+            "query": ["indices"],
+            "response_fields": ["index", "balance"],
+            "curl_example": "curl -s 'http://127.0.0.1:5052/eth/v1/beacon/states/head/validator_balances?indices=0,1,2' | jq '.data[0]'"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/states/{state_id}/committees",
+            "description": "Committees for an epoch",
+            "path_params": ["state_id"],
+            "query": ["epoch"],
+            "response_fields": ["index", "slot", "validators"],
+            "curl_example": "curl -s 'http://127.0.0.1:5052/eth/v1/beacon/states/head/committees?epoch=latest' | jq '.data[0]'"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/states/{state_id}/sync_committees",
+            "description": "Sync committees for an epoch",
+            "path_params": ["state_id"],
+            "query": ["epoch"],
+            "response_fields": ["validators", "validator_aggregates"],
+            "curl_example": "curl -s 'http://127.0.0.1:5052/eth/v1/beacon/states/head/sync_committees?epoch=latest' | jq"
+          }
+        ]
+      },
+      "pool": {
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/eth/v1/beacon/pool/attestations",
+            "description": "Pending attestations",
+            "response_fields": ["aggregation_bits", "data.slot", "data.beacon_block_root"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/beacon/pool/attestations | jq '.data | length'"
+          },
+          {
+            "method": "POST",
+            "path": "/eth/v1/beacon/pool/attestations",
+            "description": "Submit attestations",
+            "request_body": "Array<Attestation>",
+            "responses": {"200": "Accepted", "400": "Invalid"}
+          },
+          {
+            "method": "POST",
+            "path": "/eth/v1/beacon/pool/attester_slashings",
+            "description": "Submit attester slashings",
+            "request_body": "Array<AttesterSlashing>",
+            "responses": {"200": "Accepted"}
+          },
+          {
+            "method": "POST",
+            "path": "/eth/v1/beacon/pool/proposer_slashings",
+            "description": "Submit proposer slashings",
+            "request_body": "Array<ProposerSlashing>",
+            "responses": {"200": "Accepted"}
+          },
+          {
+            "method": "POST",
+            "path": "/eth/v1/beacon/pool/voluntary_exits",
+            "description": "Submit voluntary exits",
+            "request_body": "Array<SignedVoluntaryExit>",
+            "responses": {"200": "Accepted"}
+          }
+        ]
+      },
+      "validator": {
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/eth/v1/validator/duties/attester/{epoch}",
+            "description": "Attester duties for epoch",
+            "path_params": ["epoch"],
+            "response_fields": ["pubkey", "slot", "committee_index", "committees_at_slot", "validator_index"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/validator/duties/attester/0 | jq '.data[0]'"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/validator/duties/proposer/{epoch}",
+            "description": "Proposer duties for epoch",
+            "path_params": ["epoch"],
+            "response_fields": ["pubkey", "slot"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/validator/duties/proposer/0 | jq"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/validator/attestation_data",
+            "description": "Produce attestation data",
+            "query": ["slot", "committee_index"],
+            "response_fields": ["slot", "beacon_block_root", "source", "target"],
+            "curl_example": "curl -s 'http://127.0.0.1:5052/eth/v1/validator/attestation_data?slot=latest&committee_index=0' | jq"
+          },
+          {
+            "method": "POST",
+            "path": "/eth/v1/validator/aggregate_and_proofs",
+            "description": "Submit aggregated attestations",
+            "request_body": "Array<SignedAggregateAndProof>",
+            "responses": {"200": "Accepted"}
+          },
+          {
+            "method": "POST",
+            "path": "/eth/v1/validator/prepare_beacon_proposer",
+            "description": "Set fee recipients per validator",
+            "request_body": "Array<{validator_index, fee_recipient}>",
+            "responses": {"200": "Accepted"}
+          }
+        ]
+      },
+      "events": {
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/eth/v1/events",
+            "description": "Server-Sent Events stream; subscribe via topics",
+            "query": ["topics"],
+            "topics": [
+              "head",
+              "block",
+              "attestation",
+              "finalized_checkpoint",
+              "chain_reorg",
+              "voluntary_exits",
+              "payload_attributes",
+              "contribution_and_proofs",
+              "blob_sidecar"
+            ],
+            "curl_example": "curl -N 'http://127.0.0.1:5052/eth/v1/events?topics=head,block'"
+          }
+        ]
+      },
+      "light_client": {
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/eth/v1/light_client/bootstrap/{block_root}",
+            "description": "Light client bootstrap for a block root",
+            "path_params": ["block_root"],
+            "response_fields": ["header", "current_sync_committee", "current_sync_committee_branch"],
+            "curl_example": "curl -s http://127.0.0.1:5052/eth/v1/light_client/bootstrap/0x... | jq"
+          },
+          {
+            "method": "GET",
+            "path": "/eth/v1/light_client/updates",
+            "description": "Stream of light client updates",
+            "query": ["start_period", "count"],
+            "response_fields": ["header", "next_sync_committee", "finality_update"],
+            "curl_example": "curl -s 'http://127.0.0.1:5052/eth/v1/light_client/updates?start_period=0&count=1' | jq"
+          }
+        ]
+      }
+    }
+  }
+  ,
+  "dex_mapping": {
+    "overview": "Mapping of Nimbus (CL) endpoints to Nethermind (EL) RPC for DEX bots",
+    "nimbus_rest_base": "http://127.0.0.1:5052",
+    "el_rpc_base": "http://127.0.0.1:8545",
+    "flow": [
+      {
+        "step": 1,
+        "title": "Subscribe to CL heads",
+        "endpoint": "GET /eth/v1/events?topics=head",
+        "curl": "curl -N 'http://127.0.0.1:5052/eth/v1/events?topics=head'",
+        "output_fields": ["head_slot", "execution_payload.block_hash", "execution_payload.block_number"]
+      },
+      {
+        "step": 2,
+        "title": "Fetch EL receipts/logs for new head",
+        "rpc_method": "eth_getBlockReceipts",
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_getBlockReceipts\",\"params\":[\"latest\"]}' http://127.0.0.1:8545 | jq '.result | length'",
+        "fallback": {
+          "rpc_method": "eth_getBlockByNumber",
+          "note": "then iterate txs → eth_getTransactionReceipt"
+        }
+      },
+      {
+        "step": 3,
+        "title": "Filter DEX events",
+        "rpc_method": "eth_getLogs",
+        "params_template": {"fromBlock": "latest", "address": ["0xPairOrFactory..."], "topics": ["0xTopic"]},
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_getLogs\",\"params\":[{\"fromBlock\":\"latest\",\"address\":[\"0xPairOrFactory...\"],\"topics\":[\"0xTopic\"]}]}' http://127.0.0.1:8545 | jq"
+      },
+      {
+        "step": 4,
+        "title": "Quote and simulate",
+        "rpc_methods": ["eth_call", "debug_traceCall"],
+        "eth_call_curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_call\",\"params\":[{\"to\":\"0xRouter\",\"data\":\"0xCalldata\"},\"latest\"]}' http://127.0.0.1:8545 | jq",
+        "debug_traceCall_curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"debug_traceCall\",\"params\":[{\"to\":\"0xRouter\",\"data\":\"0xCalldata\"},\"latest\",{}]}' http://127.0.0.1:8545 | jq"
+      },
+      {
+        "step": 5,
+        "title": "Submit signed tx",
+        "rpc_method": "eth_sendRawTransaction",
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_sendRawTransaction\",\"params\":[\"0xSignedTx...\"]}' http://127.0.0.1:8545 | jq"
+      },
+      {
+        "step": 6,
+        "title": "Gas strategy",
+        "rpc_method": "eth_feeHistory",
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_feeHistory\",\"params\":[\"0x10\",\"latest\",[5,25,50,75,95]]}' http://127.0.0.1:8545 | jq"
+      }
+    ],
+    "notes": [
+      "Nimbus Engine API: http://127.0.0.1:8551 (JWT) — used by CL only",
+      "Bots should use EL public RPC at :8545 for trading",
+      "Enable Debug/Trace modules in Nethermind to use trace endpoints"
+    ]
+  }
+  ,
+  "el_rpc_curl_examples": {
+    "notes": "Examples assume EL JSON-RPC at http://127.0.0.1:8545; for Engine API use 8551 and include JWT header.",
+    "endpoints": [
+      {
+        "method": "POST",
+        "url": "http://127.0.0.1:8545",
+        "rpc_method": "eth_feeHistory",
+        "description": "EIP-1559 fee history for gas estimation",
+        "body": {"jsonrpc":"2.0","id":1,"method":"eth_feeHistory","params":["0x10","latest",[5,25,50,75,95]]},
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_feeHistory\",\"params\":[\"0x10\",\"latest\",[5,25,50,75,95]]}' http://127.0.0.1:8545 | jq"
+      },
+      {
+        "method": "POST",
+        "url": "http://127.0.0.1:8545",
+        "rpc_method": "eth_getProof",
+        "description": "EIP-1186 account/storage proofs (trustless check)",
+        "body": {"jsonrpc":"2.0","id":1,"method":"eth_getProof","params":["0x0000000000000000000000000000000000000000",[],"latest"]},
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_getProof\",\"params\":[\"0x0000000000000000000000000000000000000000\",[],\"latest\"]}' http://127.0.0.1:8545 | jq"
+      },
+      {
+        "method": "POST",
+        "url": "http://127.0.0.1:8545",
+        "rpc_method": "eth_createAccessList",
+        "description": "Generate access list and gas for complex swaps (EIP-2930)",
+        "body": {"jsonrpc":"2.0","id":1,"method":"eth_createAccessList","params":[{"from":"0x0000000000000000000000000000000000000000","to":"0x0000000000000000000000000000000000000000","data":"0x"},"latest"]},
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_createAccessList\",\"params\":[{\"from\":\"0x0000000000000000000000000000000000000000\",\"to\":\"0x0000000000000000000000000000000000000000\",\"data\":\"0x\"},\"latest\"]}' http://127.0.0.1:8545 | jq"
+      },
+      {
+        "method": "POST",
+        "url": "http://127.0.0.1:8545",
+        "rpc_method": "eth_getLogs",
+        "description": "DEX event logs for pairs, swaps, mints/burns",
+        "body": {"jsonrpc":"2.0","id":1,"method":"eth_getLogs","params":[{"fromBlock":"latest","address":[],"topics":[]}]},
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_getLogs\",\"params\":[{\"fromBlock\":\"latest\",\"address\":[],\"topics\":[]} ]}' http://127.0.0.1:8545 | jq"
+      },
+      {
+        "method": "POST",
+        "url": "http://127.0.0.1:8545",
+        "rpc_method": "eth_getBlockReceipts",
+        "description": "Nethermind extension: receipts for a block (fast DEX parsing)",
+        "body": {"jsonrpc":"2.0","id":1,"method":"eth_getBlockReceipts","params":["latest"]},
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_getBlockReceipts\",\"params\":[\"latest\"]}' http://127.0.0.1:8545 | jq"
+      },
+      {
+        "method": "POST",
+        "url": "http://127.0.0.1:8545",
+        "rpc_method": "eth_call",
+        "description": "Quote on-chain swap (view function)",
+        "body": {"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"0x0000000000000000000000000000000000000000","data":"0x"},"latest"]},
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_call\",\"params\":[{\"to\":\"0x0000000000000000000000000000000000000000\",\"data\":\"0x\"},\"latest\"]}' http://127.0.0.1:8545 | jq"
+      },
+      {
+        "method": "POST",
+        "url": "http://127.0.0.1:8545",
+        "rpc_method": "eth_sendRawTransaction",
+        "description": "Submit signed swap tx",
+        "body": {"jsonrpc":"2.0","id":1,"method":"eth_sendRawTransaction","params":["0x..."]},
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_sendRawTransaction\",\"params\":[\"0x...\"]}' http://127.0.0.1:8545 | jq"
+      },
+      {
+        "method": "POST",
+        "url": "http://127.0.0.1:8545",
+        "rpc_method": "debug_traceCall",
+        "description": "Simulate swap with full trace (requires Debug module)",
+        "body": {"jsonrpc":"2.0","id":1,"method":"debug_traceCall","params":[{"to":"0x0000000000000000000000000000000000000000","data":"0x"},"latest",{}]},
+        "curl": "curl -s -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"debug_traceCall\",\"params\":[{\"to\":\"0x0000000000000000000000000000000000000000\",\"data\":\"0x\"},\"latest\",{}]}' http://127.0.0.1:8545 | jq"
+      }
+    ]
+  }
+}

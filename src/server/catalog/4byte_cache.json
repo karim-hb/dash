@@ -76,6 +76,7 @@
   "77761935": "contract_call(bytes)",
   "78749620": "unknown_78749620(uint256,uint256,uint256,uint256)",
   "78887306": "swapAndIncrease((uint256,(uint256,bytes,uint256),(address,uint256,address,uint256,bytes)[],(address,uint256)[],address[],uint64,uint64))",
+  "81453007": "makeRelation(address)",
   "83655467": "swapTokensForEth(address,uint256,uint256,uint256)",
   "83981808": "proveBlocks((uint32,uint64,bytes32,uint256,bytes32,bytes32)[],(uint256[],uint256[],uint256[],uint8[],uint256[16]))",
   "86593454": "setAutoCompound(bool)",
@@ -4195,5 +4196,14 @@
   "b3ffb760": "buy(address,uint256,address,uint256)",
   "8f9fc08b": "transferWithPermit((uint64,uint128,uint64,uint128,uint32,bytes32,bytes32,bool,bytes),(uint256,uint256,bytes))",
   "f926c2d2": "openTroveWithRawETH((address,uint256,uint256,uint256,uint256,uint256,uint256,address,uint256,address,address,address))",
-  "14ac8cf9": "inCaseGetStuck(address,uint256)"
+  "14ac8cf9": "inCaseGetStuck(address,uint256)",
+  "3da9b9d0": "rebalance(address,uint256)",
+  "20c5429b": "revoke(uint256)",
+  "151c1ade": "accrueInterest((address,address,address,address,uint256))",
+  "ed10e33c": "unLock()",
+  "05a10028": "burn(uint256,uint256,uint256)",
+  "c00c9f7f": "compoundRewards()",
+  "7ac92456": "executeWithdrawal(address,uint256)",
+  "bfd79cae": "claimFromStakingV1(address)",
+  "25d86456": "createAuction(address,uint256,bytes32,uint256,uint256)"
 }

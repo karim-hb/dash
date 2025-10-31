@@ -51,6 +51,7 @@ const factoryContract = FACTORY_ADDRESS
 
 const positionById = new Map<bigint, PositionRecord>();
 const positionsByPool = new Map<string, Map<bigint, PositionRecord>>();
+const deadPositionIds = new Set<bigint>();
 const poolMetas = new Map<string, PoolMeta & { fee: number }>();
 const poolState = new Map<string, PoolState>();
 const poolContracts = new Map<string, ethers.Contract>();
@@ -96,6 +97,7 @@ async function getPoolAddress(token0: string, token1: string, fee: number): Prom
 }
 
 function storePosition(position: PositionRecord): void {
+  deadPositionIds.delete(position.tokenId);
   positionById.set(position.tokenId, position);
   const poolKey = position.pool;
   let poolMap = positionsByPool.get(poolKey);
@@ -117,10 +119,14 @@ function removePosition(tokenId: bigint): string | null {
       positionsByPool.delete(existing.pool);
     }
   }
+  deadPositionIds.add(tokenId);
   return existing.pool;
 }
 
 async function loadPosition(tokenId: bigint): Promise<PositionRecord | null> {
+  if (deadPositionIds.has(tokenId)) {
+    return null;
+  }
   try {
     const raw = await positionManager.positions(tokenId);
     const liquidity = BigInt(raw[7]);
@@ -142,7 +148,12 @@ async function loadPosition(tokenId: bigint): Promise<PositionRecord | null> {
       tickUpper,
       liquidity,
     };
-  } catch (err) {
+  } catch (err: any) {
+    const reason = typeof err === 'object' && err ? (err as any).reason : null;
+    if (reason && typeof reason === 'string' && reason.toLowerCase().includes('invalid token id')) {
+      deadPositionIds.add(tokenId);
+      return null;
+    }
     console.error('Failed to load Uniswap V3 position', err);
     return null;
   }

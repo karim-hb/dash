@@ -1,50 +1,104 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import type { UiSnapshot } from '@/lib/types';
 
-export function useWsSnapshot() {
-  const [snapshot, setSnapshot] = useState<UiSnapshot | null>(null);
-  const [connected, setConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
+type SnapshotState = {
+  snapshot: UiSnapshot | null;
+  connected: boolean;
+};
 
-  useEffect(() => {
-    function connect() {
-      try {
-        const url = (process.env.NEXT_PUBLIC_UI_WS_URL as string) || 'ws://localhost:3006';
-        const ws = new WebSocket(url);
-        wsRef.current = ws;
+let state: SnapshotState = { snapshot: null, connected: false };
+const listeners = new Set<() => void>();
+let started = false;
+let ws: WebSocket | null = null;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
-        ws.onopen = () => setConnected(true);
-        ws.onclose = () => {
-          setConnected(false);
-          setTimeout(connect, 2000);
-        };
-        ws.onerror = () => setConnected(false);
-        ws.onmessage = (evt) => {
-          try {
-            const data = JSON.parse(evt.data);
-            if (data && typeof data === 'object' && (data.summary || data.tokens || data.pools || data.oracles)) {
-    
-              setSnapshot(data as UiSnapshot);
-            }
-          } catch {
-            // ignore
-          }
-        };
-      } catch {
-        setTimeout(connect, 2000);
-      }
-    }
+function emit(partial: Partial<SnapshotState>) {
+  state = { ...state, ...partial };
+  listeners.forEach(listener => listener());
+}
 
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshotState(): SnapshotState {
+  return state;
+}
+
+function scheduleReconnect() {
+  if (typeof window === 'undefined') return;
+  if (reconnectTimer !== null) return;
+  reconnectTimer = window.setTimeout(() => {
+    reconnectTimer = null;
     connect();
-    return () => {
-      try { wsRef.current?.close(); } catch {}
-      wsRef.current = null;
-    };
+  }, 2000);
+}
+
+function handleMessage(evt: MessageEvent<string>) {
+  try {
+    const data = JSON.parse(evt.data);
+    if (data && typeof data === 'object' && (data.summary || data.tokens || data.pools || data.oracles)) {
+      emit({ snapshot: data as UiSnapshot });
+    }
+  } catch (err) {
+    console.warn('Failed to parse WS snapshot payload', err);
+  }
+}
+
+function connect() {
+  if (typeof window === 'undefined') return;
+  if (ws) {
+    try { ws.close(); } catch {}
+  }
+  const url = (process.env.NEXT_PUBLIC_UI_WS_URL as string) || 'ws://localhost:3006';
+  try {
+    ws = new WebSocket(url);
+  } catch (err) {
+    console.error('Failed to create WebSocket connection', err);
+    scheduleReconnect();
+    return;
+  }
+
+  ws.onopen = () => {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+    emit({ connected: true });
+  };
+  ws.onclose = () => {
+    emit({ connected: false });
+    scheduleReconnect();
+  };
+  ws.onerror = () => {
+    emit({ connected: false });
+  };
+  ws.onmessage = handleMessage;
+}
+
+function ensureStarted() {
+  if (started) return;
+  started = true;
+  if (typeof window !== 'undefined') {
+    connect();
+    window.addEventListener('beforeunload', () => {
+      try { ws?.close(); } catch {}
+    });
+  }
+}
+
+export function useWsSnapshot() {
+  useEffect(() => {
+    ensureStarted();
   }, []);
 
-  return { snapshot, connected };
+  const store = useSyncExternalStore(subscribe, getSnapshotState, getSnapshotState);
+  return store;
 }
 
 

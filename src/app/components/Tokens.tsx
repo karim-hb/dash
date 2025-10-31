@@ -1,8 +1,10 @@
+
 'use client';
 
 import React from 'react';
 import Table from './Table';
 import { ethers } from 'ethers';
+import { useWsSnapshot } from '../hooks/useWsSnapshot';
 
 function fmt(num?: number | null, digits = 2): string {
   if (num === null || num === undefined || !Number.isFinite(num)) return '-';
@@ -13,66 +15,143 @@ function fmt(num?: number | null, digits = 2): string {
 }
 
 export default function Tokens() {
+  const { snapshot, connected } = useWsSnapshot();
   const [selected, setSelected] = React.useState<string | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [searchTerm, setSearchTerm] = React.useState('');
-  const deferredSearch = React.useDeferredValue(searchTerm);
   const [tokenTab, setTokenTab] = React.useState<'all' | 'v1' | 'v2' | 'v3'>('all');
   const itemsPerPage = 50;
   const [isPending, startTransition] = React.useTransition();
-
-  const [data, setData] = React.useState<{ rows: any[]; total: number; pricedCount: number; countsByVersion: Record<'V1'|'V2'|'V3', number>; totalTokens: number }>({ rows: [], total: 0, pricedCount: 0, countsByVersion: { V1: 0, V2: 0, V3: 0 }, totalTokens: 0 });
-  const [loading, setLoading] = React.useState(false);
+  const searchInputId = React.useId();
+  const deferredSearch = React.useDeferredValue(searchTerm);
   const apiBase = (process.env.NEXT_PUBLIC_UI_HTTP_URL as string) || 'http://localhost:3005';
-  const abortRef = React.useRef<AbortController | null>(null);
-  const [lastFetchTs, setLastFetchTs] = React.useState<number | null>(null);
-  const [refreshTick, setRefreshTick] = React.useState(0);
-  const AUTO_INTERVAL = 10; // seconds
-  const [countdown, setCountdown] = React.useState(AUTO_INTERVAL);
+  const tokens = snapshot?.tokens ?? [];
+  const pools = snapshot?.pools ?? [];
+  const deferredTokens = React.useDeferredValue(tokens);
+  const deferredPools = React.useDeferredValue(pools);
 
-  // Fetch server-side paginated tokens
-  const refetch = React.useCallback(() => {
-    setLoading(true);
-    if (abortRef.current) {
-      try { abortRef.current.abort(); } catch {}
+  const derived = React.useMemo(() => {
+    const countsByVersion: Record<'V1' | 'V2' | 'V3', number> = { V1: 0, V2: 0, V3: 0 };
+    const versionMap = new Map<string, Set<string>>();
+
+    for (const pool of deferredPools) {
+      if (!pool) continue;
+      const version = (pool.version || '').toUpperCase();
+      if (!version) continue;
+      const token0 = (pool.token0 || '').toLowerCase();
+      const token1 = (pool.token1 || '').toLowerCase();
+      if (token0) {
+        const set = versionMap.get(token0) ?? new Set<string>();
+        set.add(version);
+        versionMap.set(token0, set);
+      }
+      if (token1) {
+        const set = versionMap.get(token1) ?? new Set<string>();
+        set.add(version);
+        versionMap.set(token1, set);
+      }
     }
-    const ac = new AbortController();
-    abortRef.current = ac;
-    const params = new URLSearchParams({ page: String(currentPage), limit: String(itemsPerPage), tab: tokenTab, q: deferredSearch, top: '1', sort: 'score' });
-    fetch(`${apiBase}/api/tokens?${params.toString()}`, { signal: ac.signal })
-      .then(r => r.json())
-      .then(json => {
-        setData({ rows: json.rows || [], total: json.total || 0, pricedCount: json.pricedCount || 0, countsByVersion: json.countsByVersion || { V1: 0, V2: 0, V3: 0 }, totalTokens: json.totalTokens || 0 });
-        setLastFetchTs(Date.now());
-        setCountdown(AUTO_INTERVAL);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [apiBase, currentPage, itemsPerPage, tokenTab, deferredSearch]);
 
-  React.useEffect(() => { refetch(); }, [refetch]);
-
-  React.useEffect(() => {
-    const id = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          refetch();
-          return AUTO_INTERVAL;
-        }
-        return prev - 1;
+    const enriched = deferredTokens.map(token => {
+      const addrLower = (token.address || '').toLowerCase();
+      const versionSet = versionMap.get(addrLower) ?? new Set<string>();
+      const versionKeys = Array.from(versionSet).map(v => v.toUpperCase());
+      const uniqueVersionKeys = Array.from(new Set(versionKeys));
+      uniqueVersionKeys.forEach(key => {
+        if (key === 'V1' || key === 'V2' || key === 'V3') countsByVersion[key] += 1;
       });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [refetch]);
 
-  // Reset to first page when search changes
+      const versionLabel = uniqueVersionKeys.length ? uniqueVersionKeys.join('/') : '—';
+      const score =
+        (token.liquidity_usd ?? 0) +
+        (token.volume_24h_usd ?? 0) * 0.01 +
+        (token.mcap_onchain_usd ?? 0) * 0.001;
+
+      return {
+        ...token,
+        score,
+        versionKeys: uniqueVersionKeys,
+        versionLabel,
+        active: Boolean(token.active),
+      };
+    });
+
+    const pricedCount = enriched.reduce((acc, row) => {
+      const price = row.price_usd;
+      return acc + (price !== null && price !== undefined && Number.isFinite(price) ? 1 : 0);
+    }, 0);
+
+    const totalTokens = deferredTokens.length;
+    const searchLower = deferredSearch.trim().toLowerCase();
+
+    let filtered = enriched;
+    if (searchLower) {
+      filtered = filtered.filter(row => {
+        const symbol = (row.symbol || '').toLowerCase();
+        const address = (row.address || '').toLowerCase();
+        const version = (row.versionLabel || '').toLowerCase();
+        const primaryPool = (row.primary_pool || '').toLowerCase();
+        const heartbeatProvider = (row.heartbeat?.provider || '').toLowerCase();
+        return (
+          symbol.includes(searchLower) ||
+          address.includes(searchLower) ||
+          version.includes(searchLower) ||
+          primaryPool.includes(searchLower) ||
+          heartbeatProvider.includes(searchLower)
+        );
+      });
+    }
+
+    if (tokenTab !== 'all') {
+      const key = tokenTab.toUpperCase();
+      filtered = filtered.filter(row => row.versionKeys.includes(key));
+    }
+
+    const sorted = filtered.slice().sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    const total = sorted.length;
+    const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
+    const safePage = Math.min(Math.max(currentPage, 1), totalPages);
+    const start = (safePage - 1) * itemsPerPage;
+    const rows = sorted.slice(start, start + itemsPerPage);
+
+    return {
+      rows,
+      total,
+      totalPages,
+      pricedCount,
+      countsByVersion,
+      totalTokens,
+      sortedRows: sorted,
+    };
+  }, [deferredPools, deferredTokens, deferredSearch, tokenTab, currentPage, itemsPerPage]);
+
   React.useEffect(() => {
     startTransition(() => setCurrentPage(1));
-  }, [deferredSearch, tokenTab]);
+  }, [deferredSearch, tokenTab, deferredTokens.length]);
 
-  const totalPages = Math.max(1, Math.ceil((data.total || 0) / itemsPerPage));
+  React.useEffect(() => {
+    if (currentPage > derived.totalPages) {
+      startTransition(() => setCurrentPage(derived.totalPages));
+    }
+  }, [currentPage, derived.totalPages]);
 
-  console.log(data, "data")
+  React.useEffect(() => {
+    if (!selected) return;
+    const stillExists = derived.sortedRows.some(row => row.address === selected);
+    if (!stillExists) {
+      setSelected(null);
+    }
+  }, [selected, derived.sortedRows]);
+
+  const selectedRow = React.useMemo(
+    () => (selected ? derived.sortedRows.find(row => row.address === selected) ?? null : null),
+    [derived.sortedRows, selected]
+  );
+
+  const totalPages = derived.totalPages;
+  const loading = !snapshot;
+  const lastUpdatedLabel = React.useMemo(() => (snapshot ? new Date(snapshot.timestamp).toLocaleTimeString() : null), [snapshot?.timestamp]);
+
   const columns = [
     { key: 'symbol', header: 'Token', render: (_: any, row: any) => {
       const addr = row.address;
@@ -93,11 +172,11 @@ export default function Tokens() {
     // Show version column only in ALL tab
     ...(tokenTab === 'all' ? [{
       key: 'versions', header: 'Version', render: (_: any, row: any) => (
-        <span className="font-mono text-[8px] text-sky-400">{row.versions || '-'}</span>
+        <span className="font-mono text-[8px] text-sky-400">{row.versionLabel || '-'}</span>
       )
     }] : []),
     { key: 'score', header: 'Score', render: (v: number, row: any) => (
-      <span className="font-mono text-[9px] text-emerald-300">{fmt(v ?? 0, 0)}</span>
+      <span className="font-mono text-[9px] text-emerald-300">{fmt(v ?? row.score ?? 0, 0)}</span>
     )},
     { key: 'active', header: 'Active', render: (v: boolean) => (
       <span className={`inline-flex items-center justify-center w-3 h-3 rounded-full ${
@@ -151,25 +230,31 @@ export default function Tokens() {
             <span className="text-emerald-400 text-[8px]">💹</span>
             <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">TOKENS</h2>
             <div className="px-1 py-0.5 bg-emerald-900 text-emerald-300 text-[7px] font-mono border border-emerald-700">
-              {data.total} LISTED ({data.pricedCount} PRICED)
+              {derived.total} LISTED ({derived.pricedCount} PRICED)
             </div>
-            {lastFetchTs && (
+            <div className={`px-1 py-0.5 text-[7px] font-mono border ${connected ? 'bg-emerald-900 text-emerald-300 border-emerald-700' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
+              WS {connected ? 'LIVE' : 'RECONNECTING'}
+            </div>
+            {lastUpdatedLabel && (
               <div className="px-1 py-0.5 bg-gray-800 text-gray-300 text-[7px] font-mono border border-gray-700">
-                last {new Date(lastFetchTs).toLocaleTimeString()} • auto {countdown}s
+                last {lastUpdatedLabel}
               </div>
             )}
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => refetch()}
-              className="px-1 py-0.5 bg-gray-800 text-gray-300 text-[8px] font-mono border border-gray-700 hover:bg-gray-700"
-              title="Refresh"
+              onClick={() => startTransition(() => setCurrentPage(1))}
+              disabled={isPending}
+              className="px-1 py-0.5 bg-gray-800 text-gray-300 text-[8px] font-mono border border-gray-700 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Reset to first page"
             >⟳</button>
+            <label htmlFor={searchInputId} className="sr-only">Search tokens</label>
             <input
               type="text"
               placeholder="Search tokens..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              id={searchInputId}
               className="px-2 py-0.5 bg-gray-800 text-gray-300 text-[8px] font-mono border border-gray-700 focus:border-emerald-500 focus:outline-none"
             />
           </div>
@@ -181,50 +266,54 @@ export default function Tokens() {
         <div className="flex items-center gap-1">
           <span className="text-emerald-400 text-[8px] font-mono">🪙 TOKENS:</span>
           <button
-            onClick={() => setTokenTab('all')}
+            onClick={() => startTransition(() => setTokenTab('all'))}
+            disabled={isPending}
             className={`px-2 py-0.5 text-[7px] font-mono border ${
               tokenTab === 'all'
                 ? 'bg-emerald-900 text-emerald-300 border-emerald-700'
                 : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
-            }`}
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            ALL ({data.totalTokens})
+            ALL ({derived.totalTokens})
           </button>
           <button
-            onClick={() => setTokenTab('v1')}
+            onClick={() => startTransition(() => setTokenTab('v1'))}
+            disabled={isPending}
             className={`px-2 py-0.5 text-[7px] font-mono border ${
               tokenTab === 'v1'
                 ? 'bg-emerald-900 text-emerald-300 border-emerald-700'
                 : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
-            }`}
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            V1 ({data.countsByVersion.V1})
+            V1 ({derived.countsByVersion.V1})
           </button>
           <button
-            onClick={() => setTokenTab('v2')}
+            onClick={() => startTransition(() => setTokenTab('v2'))}
+            disabled={isPending}
             className={`px-2 py-0.5 text-[7px] font-mono border ${
               tokenTab === 'v2'
                 ? 'bg-emerald-900 text-emerald-300 border-emerald-700'
                 : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
-            }`}
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            V2 ({data.countsByVersion.V2})
+            V2 ({derived.countsByVersion.V2})
           </button>
           <button
-            onClick={() => setTokenTab('v3')}
+            onClick={() => startTransition(() => setTokenTab('v3'))}
+            disabled={isPending}
             className={`px-2 py-0.5 text-[7px] font-mono border ${
               tokenTab === 'v3'
                 ? 'bg-emerald-900 text-emerald-300 border-emerald-700'
                 : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
-            }`}
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            V3 ({data.countsByVersion.V3})
+            V3 ({derived.countsByVersion.V3})
           </button>
         </div>
       </div>
       <div className="p-1.5">
         <Table
-          data={data.rows}
+          data={derived.rows}
           columns={columns}
           emptyMessage="[NO TOKEN DATA]"
           density="compact"
@@ -238,7 +327,7 @@ export default function Tokens() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => startTransition(() => setCurrentPage(Math.max(1, currentPage - 1)))}
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || isPending}
                 className="px-2 py-0.5 bg-gray-800 text-gray-300 text-[7px] font-mono border border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700"
               >
                 ‹
@@ -248,14 +337,14 @@ export default function Tokens() {
               </span>
               <button
                 onClick={() => startTransition(() => setCurrentPage(Math.min(totalPages, currentPage + 1)))}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || isPending}
                 className="px-2 py-0.5 bg-gray-800 text-gray-300 text-[7px] font-mono border border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700"
               >
                 ›
               </button>
             </div>
             <div className="text-gray-500 text-[7px] font-mono">
-              {(data.total === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1)}-{Math.min(currentPage * itemsPerPage, data.total)} of {data.total}
+              {(derived.total === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1)}-{Math.min(currentPage * itemsPerPage, derived.total)} of {derived.total}
             </div>
           </div>
         )}
@@ -264,7 +353,7 @@ export default function Tokens() {
           <div className="mt-2 border border-gray-800 bg-black">
             <div className="px-2 py-1 bg-gray-900 border-b border-gray-800 flex items-center gap-2">
               <span className="text-[8px] font-mono text-sky-400">POOLS FOR</span>
-              <span className="text-[8px] font-mono text-emerald-400">{data.rows.find(r => r.address === selected)?.symbol}</span>
+              <span className="text-[8px] font-mono text-emerald-400">{selectedRow?.symbol}</span>
               <button className="ml-auto text-[8px] text-gray-500 hover:text-gray-300" onClick={() => setSelected(null)}>[close]</button>
             </div>
             <div className="p-1">

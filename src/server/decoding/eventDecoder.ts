@@ -1,5 +1,5 @@
 import { Transaction, DecodedEvent } from '@/lib/types';
-import { selector, wordAt, hexToNumber, decodeAddressArray } from '@/lib/util/hex';
+import { selector, wordAt, hexToBigInt, decodeAddressArray } from '@/lib/util/hex';
 import { getAbiRegistry } from './abiRegistry';
 import { getConfig } from '@/lib/config';
 import { Interface } from 'ethers';
@@ -469,7 +469,7 @@ function decodeKnownEvent(log: any, template: any, tx: Transaction): DecodedEven
           args.push({
             name: argTemplate.name,
             type: argTemplate.type,
-            value: hexToNumber(topic),
+            value: hexToBigInt(topic).toString(),
             indexed: true
           });
         } else if (argTemplate.type === 'bool') {
@@ -493,7 +493,7 @@ function decodeKnownEvent(log: any, template: any, tx: Transaction): DecodedEven
         // Non-indexed parameter from data
         if (argTemplate.type === 'uint256' && data.length >= dataOffset + 64) {
           const word = `0x${data.slice(dataOffset, dataOffset + 64)}`;
-          const value = hexToNumber(word);
+          const value = hexToBigInt(word).toString();
           args.push({
             name: argTemplate.name,
             type: argTemplate.type,
@@ -570,16 +570,16 @@ function decodeEventFallback(log: any, tx: Transaction): DecodedEvent | null {
       if (topic1 && topic2 && topic1.length >= 40 && topic2.length >= 40) {
         const from = `0x${topic1.slice(-40)}`;
         const to = `0x${topic2.slice(-40)}`;
-        const value = hexToNumber(`0x${data.slice(2, 66)}`);
+        const value = hexToBigInt(`0x${data.slice(2, 66)}`);
 
-        if (value > 0) {
+        if (value > 0n) {
           return {
             event: 'Transfer',
             signature: 'Transfer(address,address,uint256)',
             args: [
               { name: 'from', type: 'address', value: from, indexed: true },
               { name: 'to', type: 'address', value: to, indexed: true },
-              { name: 'value', type: 'uint256', value: value, indexed: false }
+              { name: 'value', type: 'uint256', value: value.toString(), indexed: false }
             ],
             address: log.address,
             topics,

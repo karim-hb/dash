@@ -143,9 +143,8 @@ export function extractAmountInfo(tx: any): AmountInfo {
             );
             if (valueArg && valueArg.value) {
               try {
-                const amountValue = typeof valueArg.value === 'string'
-                  ? parseInt(valueArg.value, 16) : valueArg.value;
-                if (amountValue > 0) {
+                const amountValue = toBigInt(valueArg.value);
+                if (amountValue > 0n) {
                   const tokenInfo = getTokenInfo(event.address);
                   return {
                     amount: formatTokenAmount(amountValue, tokenInfo.decimals),
@@ -255,9 +254,8 @@ export function extractAmountInfo(tx: any): AmountInfo {
               const arg = event.args.find((a: any) => a.name === field);
               if (arg && arg.value) {
                 try {
-                  const amountValue = typeof arg.value === 'string'
-                    ? parseInt(arg.value, 16) : arg.value;
-                  if (amountValue > 0) {
+                  const amountValue = toBigInt(arg.value);
+                  if (amountValue > 0n) {
                     const tokenInfo = getTokenInfo(event.address);
                     return {
                       amount: formatTokenAmount(amountValue, tokenInfo.decimals),

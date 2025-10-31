@@ -24,12 +24,12 @@ export function wordAt(input: string, position: number): string {
 
 // Convert hex to number safely
 export function hexToNumber(hex: string | null): number {
-  if (!hex) return 0;
-  try {
-    return parseInt(hex.startsWith('0x') ? hex : `0x${hex}`, 16);
-  } catch {
-    return 0;
-  }
+  const big = hexToBigInt(hex);
+  const max = BigInt(Number.MAX_SAFE_INTEGER);
+  const min = BigInt(Number.MIN_SAFE_INTEGER);
+  if (big > max) return Number.MAX_SAFE_INTEGER;
+  if (big < min) return Number.MIN_SAFE_INTEGER;
+  return Number(big);
 }
 
 // Convert hex to big int safely
@@ -86,7 +86,7 @@ export function decodeAddressArray(input: string, offsetWords: number): string[]
   try {
     // Get array length at offset
     const lengthWord = wordAt(`0x${data}`, offsetWords);
-    const length = hexToNumber(lengthWord);
+    const length = Number(hexToBigInt(lengthWord));
 
     // Get addresses starting from offset + 1
     for (let i = 0; i < length && i < 20; i++) { // Limit to 20 addresses

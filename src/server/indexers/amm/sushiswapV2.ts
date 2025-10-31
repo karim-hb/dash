@@ -43,16 +43,27 @@ async function handlePairCreated(log: any) {
 }
 
 export async function startSushiV2Indexer(): Promise<void> {
-  if (!config.ENABLE_SUSHI) return;
+  console.log('🏦 Starting SushiSwap V2 indexer...');
+  console.log('🏦 ENABLE_SUSHI:', config.ENABLE_SUSHI);
+  if (!config.ENABLE_SUSHI) {
+    console.log('🏦 SushiSwap V2 indexer disabled');
+    return;
+  }
   const factory = (amm as any).sushiswap_v2?.factory;
-  if (!factory) return;
+  console.log('🏦 Sushi factory address:', factory);
+  if (!factory) {
+    console.log('🏦 No SushiSwap V2 factory configured');
+    return;
+  }
   const ws = getWsClient();
 
   try {
     const latestHex = await ws.rpc('eth_blockNumber', []);
     const latest = parseInt(latestHex, 16);
     const from = Math.max(0, latest - config.BACKFILL_BLOCKS);
+    console.log(`🏦 Sushi backfilling from block ${from} to ${latest} (${latest - from} blocks)`);
     const logs = await ws.rpc('eth_getLogs', [{ address: factory, topics: [PAIR_CREATED_TOPIC], fromBlock: '0x' + from.toString(16), toBlock: latestHex }]);
+    console.log(`🏦 Sushi backfill found ${logs?.length || 0} pair creation events`);
     for (const log of logs || []) await handlePairCreated(log);
   } catch (e) { console.warn('SushiV2 backfill failed', e); }
 

@@ -85,7 +85,7 @@ function getProtocolDisplay(categoryKey: string): string {
 }
 
 // Import shared amount decoding utilities
-import { calculateAmount } from '../utils/amountUtils';
+import { calculateAmount } from '../utils/amountUtilsEthers';
 
 export default function Included() {
   const { snapshot } = useWsSnapshot();

@@ -18,18 +18,22 @@ function loadRouters(): void {
   if (Object.keys(ROUTERS).length > 0) return;
 
   try {
-    // Load router registry
+    // Load router registry (normalize into flat address -> metadata map)
     const routerPath = path.join(process.cwd(), 'src/server/catalog/router_registry.json');
     if (fs.existsSync(routerPath)) {
       const routerData = JSON.parse(fs.readFileSync(routerPath, 'utf8'));
-      Object.assign(ROUTERS, routerData);
+      if (routerData && routerData.routers && typeof routerData.routers === 'object') {
+        Object.assign(ROUTERS, routerData.routers);
+      }
     }
 
-    // Load extended router registry
+    // Load extended router registry (same shape)
     const extRouterPath = path.join(process.cwd(), 'src/server/catalog/router_registry.ext.json');
     if (fs.existsSync(extRouterPath)) {
       const extRouterData = JSON.parse(fs.readFileSync(extRouterPath, 'utf8'));
-      Object.assign(ROUTERS, extRouterData);
+      if (extRouterData && extRouterData.routers && typeof extRouterData.routers === 'object') {
+        Object.assign(ROUTERS, extRouterData.routers);
+      }
     }
 
     console.log(`✅ Loaded ${Object.keys(ROUTERS).length} router entries`);

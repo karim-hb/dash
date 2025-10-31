@@ -18,15 +18,27 @@ function getProvider(): ethers.Provider {
 }
 
 export async function fetchChainlinkPrice(feedAddress: string, pairLabel = 'ETH/USD'): Promise<void> {
+  console.log(`🟡 Fetching Chainlink price for ${pairLabel} from ${feedAddress}`);
   try {
     const pv = getProvider();
+    console.log(`🟡 Using provider for Chainlink: ${pv ? 'OK' : 'NULL'}`);
+
     const agg = new ethers.Contract(feedAddress, AggregatorV3 as any, pv);
+    console.log(`🟡 Created contract for ${pairLabel}`);
+
     const [decimals, rd] = await Promise.all([
       agg.decimals(),
       agg.latestRoundData(),
     ]);
+
+    console.log(`🟡 Got data for ${pairLabel}: decimals=${decimals}, answer=${rd.answer}, updatedAt=${rd.updatedAt}`);
+
     const ans = Number(rd.answer) / 10 ** Number(decimals);
     const updatedAt = Number(rd.updatedAt) * 1000;
+
+    console.log(`🟡 Calculated price for ${pairLabel}: $${ans}, updated: ${new Date(updatedAt).toISOString()}`);
+
+    console.log(`📡 Calling upsertOracleFeed for ${pairLabel}`);
     upsertOracleFeed(`chainlink:${pairLabel}`, {
       provider: 'Chainlink',
       pair: pairLabel,
@@ -37,7 +49,9 @@ export async function fetchChainlinkPrice(feedAddress: string, pairLabel = 'ETH/
       status: 'healthy',
       deviation_vs_spot_pct: null,
     });
+    console.log(`✅ Chainlink price updated for ${pairLabel}: $${ans}`);
   } catch (e) {
+    console.log(`❌ Chainlink fetch failed for ${pairLabel}: ${e.message}`);
     upsertOracleFeed(`chainlink:${pairLabel}`, {
       provider: 'Chainlink',
       pair: pairLabel,

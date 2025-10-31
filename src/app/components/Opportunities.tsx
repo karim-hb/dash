@@ -33,7 +33,7 @@ function getProtocolDisplay(categoryKey: string): string {
 }
 
 // Import shared amount decoding utilities
-import { extractAmountInfo, calculateAmount, calculateUnifiedEth } from '../utils/amountUtils';
+import { extractAmountInfo, calculateAmount, calculateUnifiedEth } from '../utils/amountUtilsEthers';
 
 function summarizeEvents(row: any): string {
   try {

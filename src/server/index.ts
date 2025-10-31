@@ -21,8 +21,13 @@ import { startUniswapV2Indexer } from './indexers/amm/uniswapV2';
 import { startUniswapV3Indexer } from './indexers/amm/uniswapV3';
 import { startSushiV2Indexer } from './indexers/amm/sushiswapV2';
 import { startHoldersBackfillAndPolling } from './holders/erc20HLL';
+import { startTokenDiscovery } from './market/tokenDiscovery';
 import { startBalancerV2Indexer } from './indexers/amm/balancerV2';
 import { startCurveIndexer } from './indexers/amm/curve';
+import { initializeMarketRegistries } from './market/registry';
+import { startTokenStatsRefresh } from './market/tokenStats';
+import * as http from 'http';
+import { URL } from 'url';
 
 // Server startup script
 async function main() {
@@ -30,16 +35,33 @@ async function main() {
 
   try {
     // Initialize MongoDB (optional)
-    if (process.env.PERSIST_TO_MONGO === 'true') {
-      await initMongo();
+    try {
+      await initMongo(process.env.MONGO_URL || 'mongodb://127.0.0.1:27017/tracker');
       console.log('✅ MongoDB initialized');
-    } else {
-      console.log('ℹ️ MongoDB disabled (PERSIST_TO_MONGO!=true)');
+      // Hydrate in-memory registry from persisted tokens if present
+      try {
+        const { getDb } = await import('@/lib/db/mongo');
+        const db = getDb();
+        const docs = await db.collection('market_tokens').find({}).project({ _id: 0 }).limit(50000).toArray();
+        const { upsertToken } = await import('./market/registry');
+        for (const d of docs) {
+          upsertToken(d as any);
+        }
+        console.log(`🗄️ Hydrated ${docs.length} tokens from Mongo into registry`);
+      } catch (e) {
+        console.warn('🗄️ Hydration from Mongo failed:', e);
+      }
+    } catch {
+      console.log('ℹ️ MongoDB not available, continuing without persistence');
     }
 
     // Initialize ABI registry (loads signatures and cached signatures)
     await initAbiRegistry();
     console.log('✅ ABI registry initialized');
+
+    // Initialize market registries (pre-populate tokens from catalog)
+    initializeMarketRegistries();
+    console.log('✅ Market registries initialized');
 
     // Start ingestion pipelines
     await startPendingIngestion();
@@ -48,7 +70,9 @@ async function main() {
     console.log('✅ Ingestion pipelines started');
 
     // Start oracles
+    console.log('Starting oracle updates...');
     startOracleUpdates();
+    console.log('Oracle updates started');
 
     // Start AMM indexers
     await startUniswapV2Indexer();
@@ -58,18 +82,42 @@ async function main() {
     await startCurveIndexer();
 
     // Start holders estimator (approximate)
+    console.log('Starting holders backfill...');
     startHoldersBackfillAndPolling();
+
+    // Start ERC-20 token discovery (from Transfer logs) if enabled
+    if ((process.env.ENABLE_TOKEN_DISCOVERY || 'false') === 'true') {
+      console.log('About to call startTokenDiscovery...');
+      try {
+        console.log('Starting token discovery...');
+        await startTokenDiscovery();
+        console.log('startTokenDiscovery() returned successfully');
+      } catch (e) {
+        console.error('startTokenDiscovery() failed:', e);
+      }
+    } else {
+      console.log('🔒 Token discovery disabled (ENABLE_TOKEN_DISCOVERY!=true)');
+    }
+
+    // Start token stats refresher (onchain supply, liquidity, 24h vol, mcap)
+    console.log('Starting token stats refresh...');
+    startTokenStatsRefresh();
 
     // Start embedded WebSocket broadcast server (shares in-memory state)
     let wsPort = parseInt(process.env.UI_WS_PORT || '3006', 10);
     wsPort = await findFreeWsPort(wsPort, 10);
     await startWsBroadcast(wsPort);
 
+    // Start lightweight HTTP API for paginated data access (CORS-enabled)
+    let httpPort = parseInt(process.env.PORT || '3005', 10);
+    httpPort = await findFreeWsPort(httpPort, 10);
+    await startHttpApi(httpPort);
+
     console.log('🎯 Server ready! WebSocket ingestion active.');
     console.log(`💻 Start Next.js UI with: npm run dev (WS at ws://localhost:${wsPort})`);
     try {
       const runtimePath = path.join(process.cwd(), '.runtime-ports.json');
-      fs.writeFileSync(runtimePath, JSON.stringify({ ws_port: wsPort }, null, 2));
+      fs.writeFileSync(runtimePath, JSON.stringify({ ws_port: wsPort, http_port: httpPort }, null, 2));
     } catch {}
 
     // Keep server running
@@ -111,6 +159,7 @@ async function startWsBroadcast(port: number): Promise<void> {
         } catch {}
 
         if (wss && wss.clients.size === 1 && !broadcastInterval) {
+          console.log('👤 First WebSocket client connected, starting broadcast loop...');
           startBroadcastLoop();
         }
       });
@@ -121,6 +170,9 @@ async function startWsBroadcast(port: number): Promise<void> {
       });
 
       console.log(`✅ WebSocket broadcaster listening on ws://localhost:${port}`);
+      // Start broadcast loop immediately
+      console.log('📡 Starting WebSocket broadcast loop...');
+      startBroadcastLoop();
       resolve();
     } catch (e) {
       reject(e);
@@ -131,28 +183,31 @@ async function startWsBroadcast(port: number): Promise<void> {
 async function findFreeWsPort(start: number, maxTries: number): Promise<number> {
   let port = start;
   for (let i = 0; i < maxTries; i++) {
-    try {
-      // Try to start and immediately close a temporary server to probe the port
-      // @ts-ignore
-      const probe = new WebSocket.Server({ port, perMessageDeflate: false });
-      await new Promise(res => setTimeout(res, 10));
-      // @ts-ignore
-      probe.close();
-      return port;
-    } catch (e: any) {
-      if (e && (e.code === 'EADDRINUSE' || e.message?.includes('EADDRINUSE'))) {
-        port += 1;
-        continue;
-      }
-      // Unknown error, break and use start
-      break;
-    }
+    const probe = http.createServer();
+    const isFree = await new Promise<boolean>((resolve) => {
+      const onError = (err: any) => {
+        if (err && (err.code === 'EADDRINUSE')) {
+          resolve(false);
+        } else {
+          // Treat unknown errors as not free to be safe
+          resolve(false);
+        }
+      };
+      probe.once('error', onError);
+      probe.listen(port, '127.0.0.1', () => {
+        probe.removeListener('error', onError);
+        probe.close(() => resolve(true));
+      });
+    });
+    if (isFree) return port;
+    port += 1;
   }
   return port;
 }
 
 function startBroadcastLoop(): void {
   const aggregator = getMetricsAggregator();
+  console.log('📡 Starting WebSocket broadcast loop...');
   broadcastInterval = setInterval(async () => {
     try {
       const snapshot = await generateUiSnapshot(aggregator);
@@ -160,13 +215,18 @@ function startBroadcastLoop(): void {
         typeof value === 'bigint' ? value.toString() : value
       );
       const dead: any[] = [];
+      let clientCount = 0;
       // @ts-ignore
       wss?.clients.forEach((client: any) => {
+        clientCount++;
         // @ts-ignore
         if (client.readyState === WebSocket.OPEN) {
           try { client.send(message); } catch { dead.push(client); }
         } else { dead.push(client); }
       });
+      if (clientCount > 0) {
+        console.log(`📡 Broadcasted to ${clientCount} clients`);
+      }
       for (const c of dead) {
         try { c.close(); } catch {}
       }
@@ -174,6 +234,225 @@ function startBroadcastLoop(): void {
       console.error('Broadcast error:', err);
     }
   }, 200);
+}
+
+// --- Lightweight HTTP API (read-only) ---
+async function startHttpApi(port: number): Promise<void> {
+  const server = http.createServer(async (req, res) => {
+    try {
+      // CORS
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+      }
+
+      if (!req.url) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Bad request' }));
+        return;
+      }
+
+      const fullUrl = new URL(req.url, `http://localhost:${port}`);
+      const pathname = fullUrl.pathname;
+
+      if (req.method === 'GET' && pathname === '/api/health') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, ts: Date.now() }));
+        return;
+      }
+
+      if (req.method === 'GET' && pathname === '/api/tokens') {
+        const q = (fullUrl.searchParams.get('q') || '').trim().toLowerCase();
+        const tab = (fullUrl.searchParams.get('tab') || 'all').toLowerCase(); // all | v1 | v2 | v3
+        const page = Math.max(1, parseInt(fullUrl.searchParams.get('page') || '1', 10));
+        const limit = Math.min(250, Math.max(1, parseInt(fullUrl.searchParams.get('limit') || '50', 10)));
+        const sort = (fullUrl.searchParams.get('sort') || 'score').toLowerCase(); // price | score
+        const minTvl = parseFloat(fullUrl.searchParams.get('min_tvl') || 'NaN');
+        const minVol = parseFloat(fullUrl.searchParams.get('min_vol') || 'NaN');
+        const minHolders = parseInt(fullUrl.searchParams.get('min_holders') || 'NaN', 10);
+        const topParam = (fullUrl.searchParams.get('top') ?? (process.env.TOKENS_TOP_LIMIT_ENABLED ?? '1')).toLowerCase();
+        const topEnabled = topParam === '1' || topParam === 'true';
+        const topLimit = Math.max(1, parseInt(fullUrl.searchParams.get('top_limit') || (process.env.TOKENS_TOP_LIMIT_N || '300'), 10));
+        const topBy = (fullUrl.searchParams.get('top_by') || 'score').toLowerCase(); // score | price
+
+        const allTokens = getTokens();
+        const allPools = getPools();
+
+        // Build token -> versions map once
+        const tokenVersions = new Map<string, Set<string>>();
+        for (const p of allPools) {
+          const v = (p.version || '').toUpperCase();
+          const t0 = (p.token0 || '').toLowerCase();
+          const t1 = (p.token1 || '').toLowerCase();
+          if (t0) {
+            const set = tokenVersions.get(t0) || new Set<string>();
+            set.add(v);
+            tokenVersions.set(t0, set);
+          }
+          if (t1) {
+            const set = tokenVersions.get(t1) || new Set<string>();
+            set.add(v);
+            tokenVersions.set(t1, set);
+          }
+        }
+
+        // Counts by version across all tokens
+        const countsByVersion = { V1: 0, V2: 0, V3: 0 } as Record<'V1' | 'V2' | 'V3', number>;
+        for (const [_, set] of tokenVersions) {
+          if (set.has('V1')) countsByVersion.V1 += 1;
+          if (set.has('V2')) countsByVersion.V2 += 1;
+          if (set.has('V3')) countsByVersion.V3 += 1;
+        }
+
+        const pricedCount = allTokens.filter(t => t.price_usd != null).length;
+
+        // Filter tokens by search
+        let filtered = allTokens.filter(t => {
+          if (!q) return true;
+          const sym = (t.symbol || '').toLowerCase();
+          const addr = (t.address || '').toLowerCase();
+          return sym.includes(q) || addr.includes(q);
+        });
+
+        // Filter by version tab
+        if (tab !== 'all') {
+          const wanted = tab.toUpperCase(); // V1/V2/V3
+          filtered = filtered.filter(t => tokenVersions.get((t.address || '').toLowerCase())?.has(wanted) === true);
+        }
+
+        // Compute aggregates and score
+        const tokenAgg = new Map<string, { tvl: number; vol24h: number; poolCount: number; dexCount: number; score: number }>();
+        for (const t of filtered) {
+          const addr = (t.address || '').toLowerCase();
+          let tvl = 0;
+          let vol = 0;
+          const poolsForToken = allPools.filter(p => (p.token0?.toLowerCase() === addr || p.token1?.toLowerCase() === addr));
+          const poolCount = poolsForToken.length;
+          const dexSet = new Set<string>();
+          for (const p of poolsForToken) {
+            tvl += p.tvl_usd || 0;
+            vol += p.volume_24h_usd || 0;
+            dexSet.add(`${p.dex}|${p.version}`);
+          }
+          const dexCount = dexSet.size;
+          const score = tvl * 0.5 + vol * 0.3 + poolCount * 1000;
+          tokenAgg.set(addr, { tvl, vol24h: vol, poolCount, dexCount, score });
+        }
+
+        // Optional thresholds
+        if (!Number.isNaN(minTvl)) {
+          filtered = filtered.filter(t => (tokenAgg.get((t.address || '').toLowerCase())?.tvl || 0) >= minTvl);
+        }
+        if (!Number.isNaN(minVol)) {
+          filtered = filtered.filter(t => (tokenAgg.get((t.address || '').toLowerCase())?.vol24h || 0) >= minVol);
+        }
+        if (!Number.isNaN(minHolders)) {
+          filtered = filtered.filter(t => (t.holders_est || 0) >= minHolders);
+        }
+
+        // Select top-N if enabled (pre-sorting stage)
+        if (topEnabled) {
+          const ranked = [...filtered].sort((a, b) => {
+            if (topBy === 'price') {
+              const ap = typeof a.price_usd === 'number' ? a.price_usd : -Infinity;
+              const bp = typeof b.price_usd === 'number' ? b.price_usd : -Infinity;
+              if (bp !== ap) return bp - ap;
+              return (a.symbol || '').localeCompare(b.symbol || '');
+            } else {
+              const as = tokenAgg.get((a.address || '').toLowerCase())?.score || -Infinity;
+              const bs = tokenAgg.get((b.address || '').toLowerCase())?.score || -Infinity;
+              if (bs !== as) return bs - as;
+              return (a.symbol || '').localeCompare(b.symbol || '');
+            }
+          });
+          const topSet = new Set(ranked.slice(0, topLimit).map(t => (t.address || '').toLowerCase()));
+          filtered = filtered.filter(t => topSet.has((t.address || '').toLowerCase()));
+        }
+
+        // Sort
+        if (sort === 'score') {
+          filtered.sort((a, b) => {
+            const as = tokenAgg.get((a.address || '').toLowerCase())?.score || -Infinity;
+            const bs = tokenAgg.get((b.address || '').toLowerCase())?.score || -Infinity;
+            if (bs !== as) return bs - as;
+            return (a.symbol || '').localeCompare(b.symbol || '');
+          });
+        } else {
+          // price desc, then active, then symbol
+          filtered.sort((a, b) => {
+            const ap = typeof a.price_usd === 'number' ? a.price_usd : -Infinity;
+            const bp = typeof b.price_usd === 'number' ? b.price_usd : -Infinity;
+            if (bp !== ap) return bp - ap;
+            const aActive = !!a.active;
+            const bActive = !!b.active;
+            if (aActive !== bActive) return aActive ? -1 : 1;
+            return (a.symbol || '').localeCompare(b.symbol || '');
+          });
+        }
+
+        const total = filtered.length;
+        const start = (page - 1) * limit;
+        const end = start + limit;
+        const pageRows = filtered.slice(start, end).map(t => {
+          const versions = Array.from(tokenVersions.get((t.address || '').toLowerCase()) || new Set<string>())
+            .sort()
+            .join('/');
+          const agg = tokenAgg.get((t.address || '').toLowerCase());
+          return { ...t, versions, score: agg?.score || 0, pool_count: agg?.poolCount || 0, dex_count: agg?.dexCount || 0, tvl_sum_usd: agg?.tvl || 0, vol_24h_sum_usd: agg?.vol24h || 0 };
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          total,
+          page,
+          limit,
+          pricedCount,
+          countsByVersion,
+          totalTokens: allTokens.length,
+          topApplied: topEnabled,
+          topLimit,
+          topBy,
+          rows: pageRows,
+        }));
+        return;
+      }
+
+      if (req.method === 'GET' && pathname === '/api/pools') {
+        const token = (fullUrl.searchParams.get('token') || '').toLowerCase();
+        const allPools = getPools();
+        let rows = allPools;
+        if (token) {
+          rows = allPools.filter(p => (p.token0 || '').toLowerCase() === token || (p.token1 || '').toLowerCase() === token);
+        }
+        // Stable sort for UX
+        rows.sort((a, b) => (b.tvl_usd || 0) - (a.tvl_usd || 0));
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ total: rows.length, rows }));
+        return;
+      }
+
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Not found' }));
+    } catch (error) {
+      try {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal error' }));
+      } catch {}
+      console.error('HTTP API error:', error);
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(port, '127.0.0.1', () => {
+      console.log(`✅ HTTP API listening on http://localhost:${port}`);
+      resolve();
+    });
+  });
 }
 
 async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<UiSnapshot> {
@@ -221,6 +500,22 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
     .sort((a, b) => b.tx_count - a.tx_count)
     .slice(0, 50);
 
+  const tokens = getTokens().map(t => ({ ...t, heartbeat: t.heartbeat ?? undefined }));
+  const pools = getPools();
+  const oracles = getOracleFeeds();
+
+  console.log(`📡 Broadcasting: ${tokens.length} tokens, ${pools.length} pools, ${oracles.length} oracles`);
+  if (tokens.length > 0) {
+    console.log(`📡 First token: ${tokens[0].symbol} active=${tokens[0].active} price=${tokens[0].price_usd} heartbeat=${JSON.stringify(tokens[0].heartbeat)}`);
+    // Check a few more tokens
+    for (let i = 1; i < Math.min(5, tokens.length); i++) {
+      if (tokens[i].price_usd || tokens[i].active) {
+        console.log(`📡 Token ${i}: ${tokens[i].symbol} active=${tokens[i].active} price=${tokens[i].price_usd} heartbeat=${JSON.stringify(tokens[i].heartbeat)}`);
+      }
+    }
+  }
+
+
   return {
     timestamp: Date.now(),
     summary: {
@@ -246,9 +541,9 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
     included,
     senders,
     gas,
-    tokens: getTokens(),
-    pools: getPools(),
-    oracles: getOracleFeeds(),
+    tokens,
+    pools,
+    oracles,
     status: {
       ws_connected: true,
       rpc_latency_ms: rpcLatency,

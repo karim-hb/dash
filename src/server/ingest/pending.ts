@@ -2,6 +2,7 @@ import { RawTransaction, Transaction, TxState } from '@/lib/types';
 import { getWsClient } from '../rpc/wsClient';
 import { getTrackerState } from '../state/state';
 import { now } from '@/lib/util/time';
+import { shouldKeepMempoolTx } from './filters';
 
 let subscriptionId: string | null = null;
 let isRunning = false;
@@ -101,7 +102,11 @@ async function hydrateTransaction(hash: string): Promise<void> {
       _confirmation_depth: 0,
     };
 
-    // Add to state
+    // Apply mempool filtering pipeline
+    const verdict = await shouldKeepMempoolTx(tx);
+    if (!verdict.keep) return; // Skip junk
+
+    // Add to state (kept)
     await getTrackerState().upsert(tx);
 
   } catch (error) {
@@ -155,7 +160,9 @@ async function fetchCurrentPending(): Promise<void> {
                 _state: TxState.PENDING,
                 _confirmation_depth: 0,
               };
-
+              // Filter and insert only if valuable
+              const verdict = await shouldKeepMempoolTx(transaction);
+              if (!verdict.keep) continue;
               await state.upsert(transaction);
               count++;
 

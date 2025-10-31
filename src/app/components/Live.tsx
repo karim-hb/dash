@@ -4,9 +4,10 @@ import { useWsSnapshot } from '../hooks/useWsSnapshot';
 import { useFilters } from '../hooks/useFilters';
 import Card from './Card';
 import Table from './Table';
+import { ethers } from 'ethers';
 
 function short(s: string, n = 10) { return s && s.length > n ? `${s.slice(0, n)}…` : (s || ''); }
-function fmtGwei(hex?: string) { try { return hex ? (parseInt(hex, 16) / 1e9).toFixed(1) : '-'; } catch { return '-'; } }
+function fmtGwei(hex?: string) { try { return hex ? Number(ethers.formatUnits(hex, 9)).toFixed(1) : '-'; } catch { return '-'; } }
 function fmtAge(firstSeen?: number) { if (!firstSeen) return '-'; const age = Date.now() / 1000 - firstSeen; return `${age.toFixed(1)}s`; }
 
 // Get protocol display name (same as app.py)
@@ -32,7 +33,7 @@ function getProtocolDisplay(categoryKey: string): string {
 }
 
 // Import shared amount decoding utilities
-import { calculateAmount } from '../utils/amountUtils';
+import { calculateAmount } from '../utils/amountUtilsEthers';
 
 function summarizeEvents(row: any): string {
   try {
@@ -53,12 +54,12 @@ function summarizeEvents(row: any): string {
   }
 }
 
+
 export default function Live() {
   const { snapshot } = useWsSnapshot();
   const filters = useFilters();
   const rows = filters.applyFilters(snapshot?.live || []);
-
-  // Calculate pending transactions (not yet included)
+  console.log(rows, 'rows')
   const pendingCount = rows.length;
   const gasGaugedCount = rows.filter(tx => tx._decoded_fn?.confidence > 0).length;
   const columns = [

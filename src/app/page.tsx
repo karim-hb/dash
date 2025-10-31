@@ -26,7 +26,7 @@ export default function Home() {
   ];
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || Dashboard;
-
+  console.log("render main component")
   return (
     <div className="min-h-screen bg-black">
       <div className="max-w-full">

@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bash -c 'for P in 3015 3016 3017 3018 3019 3020 3021 3022 3023 3024 3025; do if ! lsof -ti:$P >/dev/null; then echo Using port $P; PORT=$P next dev -p $P; exit 0; fi; done; echo No free port in 3015-3025; exit 1'",
-    "dev:kill": "lsof -ti:3015 | xargs -r kill -9 2>/dev/null || true",
+    "dev": "bash scripts/dev-start.sh",
+    "dev:kill": "echo 'Killing all Next.js processes...'; pkill -f 'next dev' 2>/dev/null || true; pkill -f 'next' 2>/dev/null || true; rm -f .next/dev/lock 2>/dev/null || true; echo 'Cleanup complete.'",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -34,6 +34,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.0",
     "tailwindcss": "^4",

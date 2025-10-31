@@ -23,7 +23,7 @@ const configSchema = z.object({
   ENABLE_COINGECKO: z.string().transform(v => v === 'true').default('false'),
   // Oracle settings
   CG_RATE_LIMIT_QPM: z.string().transform(Number).default('60'),
-  BACKFILL_BLOCKS: z.string().transform(Number).default('5000'),
+  BACKFILL_BLOCKS: z.string().transform(Number).default('50000'),
   ETH_USD_FEED: z.string().default('0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419'),
   ORACLE_HEARTBEAT_SLACK_SEC: z.string().transform(Number).default('3600'),
 });

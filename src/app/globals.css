@@ -630,3 +630,9 @@ body {
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
 }
+.text-\[9px\] {
+  font-size: 12px !important;
+}
+.text-\[8px\] {
+  font-size: 12px !important;
+}

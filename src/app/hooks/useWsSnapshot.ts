@@ -24,7 +24,8 @@ export function useWsSnapshot() {
         ws.onmessage = (evt) => {
           try {
             const data = JSON.parse(evt.data);
-            if (data && typeof data === 'object' && data.summary) {
+            if (data && typeof data === 'object' && (data.summary || data.tokens || data.pools || data.oracles)) {
+    
               setSnapshot(data as UiSnapshot);
             }
           } catch {

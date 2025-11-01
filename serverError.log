@@ -3838,3 +3838,11 @@ Error: No feed found in registry for DOT/USD
     at async OracleAggregator.refreshFeed (/home/hb/dashboard/tracker_web/src/server/oracles/oracleAggregator.ts:265:9)
     at async Promise.allSettled (index 19)
     at async OracleAggregator.refresh (/home/hb/dashboard/tracker_web/src/server/oracles/oracleAggregator.ts:242:23)
+2025-11-01T14:45:54.693Z [WARN Feed Registry query failed for DOT/USD] | Error: No feed found in registry for DOT/USD
+Error: No feed found in registry for DOT/USD
+    at OracleAggregator.refreshViaFeedRegistry (/home/hb/dashboard/tracker_web/src/server/oracles/oracleAggregator.ts:421:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async OracleAggregator.refreshAggregatorFeed (/home/hb/dashboard/tracker_web/src/server/oracles/oracleAggregator.ts:349:18)
+    at async OracleAggregator.refreshFeed (/home/hb/dashboard/tracker_web/src/server/oracles/oracleAggregator.ts:265:9)
+    at async Promise.allSettled (index 19)
+    at async OracleAggregator.refresh (/home/hb/dashboard/tracker_web/src/server/oracles/oracleAggregator.ts:242:23)

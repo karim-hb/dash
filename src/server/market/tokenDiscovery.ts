@@ -747,8 +747,9 @@ async function discoverTokensFromDEXConservative(ws: any): Promise<void> {
       // Get the latest block
       const latestHex = await ws.rpc('eth_blockNumber', []);
       const latest = parseInt(latestHex, 16);
-      // Go back far enough to cover V3 history (V3 launched ~block 12M)
-      const fromBlock = Math.max(0, latest - 12000000); // 12M blocks back
+      // Limit to last 2 million blocks maximum to avoid querying very old blocks
+      const MAX_LOOKBACK_BLOCKS = 2_000_000;
+      const fromBlock = Math.max(0, latest - MAX_LOOKBACK_BLOCKS);
 
       const poolLogs = await ws.rpc('eth_getLogs', [{
         address: v3Factory,

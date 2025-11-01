@@ -29,11 +29,13 @@ import { startAmmEngine } from './market/ammEngine';
 import { startTokenStatsRefresh } from './market/tokenStats';
 import * as http from 'http';
 import { URL } from 'url';
+import { getConfig } from '@/lib/config';
 import { applyOpportunityScoring } from './market/opportunityScoring';
 import { startGasOracle, getGasOracle } from './gas/gasOracle';
+import { logErrorWithConsole, logWarningWithConsole } from './utils/errorLogger';
 
 const MIN_TOKEN_USD = Number(process.env.UI_TOKEN_MIN_USD || '1000');
-const MIN_POOL_USD = Number(process.env.UI_POOL_MIN_USD || '1000');
+const MIN_POOL_USD = Number(process.env.UI_POOL_MIN_USD || '100'); // Lower threshold to show more pools
 
 // Server startup script
 async function main() {
@@ -55,7 +57,7 @@ async function main() {
         }
         console.log(`🗄️ Hydrated ${docs.length} tokens from Mongo into registry`);
       } catch (e) {
-        console.warn('🗄️ Hydration from Mongo failed:', e);
+        logWarningWithConsole(e, 'MongoDB hydration');
       }
     } catch {
       console.log('ℹ️ MongoDB not available, continuing without persistence');
@@ -83,7 +85,7 @@ async function main() {
       // await initializeIncludedFromBlocks();
       console.log('⏭️ Skipped initializing included transactions from recent blocks (Nethermind issues)');
     } catch (e) {
-      console.warn('⚠️ Failed to initialize included transactions from recent blocks:', e);
+      logWarningWithConsole(e, 'Initialize included transactions');
     }
 
     // Start embedded WebSocket broadcast server ASAP (before heavy indexers)
@@ -94,7 +96,7 @@ async function main() {
         await startWsBroadcast(wsPortEarly);
       }
     } catch (e) {
-      console.error('Failed to start early WebSocket broadcaster:', e);
+      logErrorWithConsole(e, 'Early WebSocket broadcaster startup');
     }
 
     // Start oracles
@@ -102,26 +104,42 @@ async function main() {
     await startOracleUpdates();
     console.log('Oracle updates started');
 
-    // Start AMM indexers
+    // Start AMM indexers (use config values, which default to true for V2/V3)
     try {
-      if ((process.env.ENABLE_AMM_UNIV2 || 'false') === 'true') {
+      const cfg = getConfig();
+      if (cfg.ENABLE_AMM_UNIV2) {
+        console.log('🏦 Starting Uniswap V2 indexer...');
         await startUniswapV2Indexer();
+      } else {
+        console.log('🔒 Uniswap V2 indexer disabled (ENABLE_AMM_UNIV2=false)');
       }
-      if ((process.env.ENABLE_AMM_UNIV3 || 'false') === 'true') {
+      if (cfg.ENABLE_AMM_UNIV3) {
+        console.log('🏦 Starting Uniswap V3 indexer...');
         await startUniswapV3Indexer();
+      } else {
+        console.log('🔒 Uniswap V3 indexer disabled (ENABLE_AMM_UNIV3=false)');
       }
-      if ((process.env.ENABLE_SUSHI || 'false') === 'true') {
+      if (cfg.ENABLE_SUSHI) {
+        console.log('🏦 Starting Sushi V2 indexer...');
         await startSushiV2Indexer();
+      } else {
+        console.log('🔒 Sushi indexer disabled (ENABLE_SUSHI=false)');
       }
-      if ((process.env.ENABLE_BALANCER || 'false') === 'true') {
+      if (cfg.ENABLE_BALANCER) {
+        console.log('🏦 Starting Balancer V2 indexer...');
         await startBalancerV2Indexer();
+      } else {
+        console.log('🔒 Balancer indexer disabled (ENABLE_BALANCER=false)');
       }
-      if ((process.env.ENABLE_CURVE || 'false') === 'true') {
+      if (cfg.ENABLE_CURVE) {
+        console.log('🏦 Starting Curve indexer...');
         await startCurveIndexer();
+      } else {
+        console.log('🔒 Curve indexer disabled (ENABLE_CURVE=false)');
       }
       console.log('✅ AMM indexers started');
     } catch (e) {
-      console.error('❌ AMM indexer startup failed:', e);
+      logErrorWithConsole(e, 'AMM indexer startup');
       console.log('⚠️ Continuing without AMM indexers...');
     }
 
@@ -141,7 +159,7 @@ async function main() {
         await startTokenDiscovery();
         console.log('startTokenDiscovery() returned successfully');
       } catch (e) {
-        console.error('startTokenDiscovery() failed:', e);
+        logErrorWithConsole(e, 'startTokenDiscovery');
       }
     } else {
       console.log('🔒 Token discovery disabled (ENABLE_TOKEN_DISCOVERY!=true)');
@@ -190,12 +208,15 @@ async function main() {
     await new Promise(() => {}); // Never resolves
 
   } catch (error) {
-    console.error('❌ Server startup failed:', error);
+    logErrorWithConsole(error, 'Server startup');
     process.exit(1);
   }
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  logErrorWithConsole(error, 'Main process');
+  process.exit(1);
+});
 
 // --- Embedded WS Broadcast Server ---
 let wss: any = null as any;
@@ -230,7 +251,7 @@ async function startWsBroadcast(port: number): Promise<void> {
 
       // @ts-ignore
       wss.on('error', (err: any) => {
-        console.error('WS server error:', err);
+        logErrorWithConsole(err, 'WS server');
         reject(err);
       });
     } catch (e) {
@@ -290,7 +311,7 @@ function startBroadcastLoop(): void {
         try { c.close(); } catch {}
       }
     } catch (err) {
-      console.error('Broadcast error:', err);
+      logErrorWithConsole(err, 'Broadcast');
     }
   }, 200);
 }
@@ -524,7 +545,7 @@ async function startHttpApi(port: number): Promise<void> {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Internal error' }));
       } catch {}
-      console.error('HTTP API error:', error);
+      logErrorWithConsole(error, 'HTTP API');
     }
   });
 
@@ -598,15 +619,34 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
   });
 
   const rawPools = getPools();
-  // Show pools with TVL or reserves above threshold, or if they have volume
+  // Show pools with TVL/reserves above threshold, volume, or just discovered (less aggressive filtering)
   const pools = rawPools.filter(p => {
+    // Always show if TVL is above threshold
     const tvl = typeof p.tvl_usd === 'number' ? p.tvl_usd : null;
     if (tvl != null && tvl >= MIN_POOL_USD) return true;
+    
+    // Show if reserves are above threshold
     const partial = (typeof p.pool0_usd === 'number' ? p.pool0_usd : 0) + (typeof p.pool1_usd === 'number' ? p.pool1_usd : 0);
     if (partial >= MIN_POOL_USD) return true;
-    // Also show pools with volume even if TVL is low
+    
+    // Show if it has volume (even if TVL is low)
     const hasVolume = typeof p.volume_24h_usd === 'number' && p.volume_24h_usd > 0;
-    return hasVolume;
+    if (hasVolume) return true;
+    
+    // Show V3 pools even if TVL not yet calculated (position indexer might be delayed)
+    if (p.version === 'V3') {
+      // Show if pool has been registered (address exists)
+      return !!p.address;
+    }
+    
+    // Show V2 pools if they have reserves (even if below threshold)
+    if (p.version === 'V2') {
+      const hasReserves = (typeof p.pool0_usd === 'number' && p.pool0_usd > 0) || 
+                         (typeof p.pool1_usd === 'number' && p.pool1_usd > 0);
+      return hasReserves;
+    }
+    
+    return false;
   });
   const oracles = getOracleFeeds();
 

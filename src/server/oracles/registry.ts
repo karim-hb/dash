@@ -1,5 +1,4 @@
 import { getConfig } from '@/lib/config';
-import { fetchCoinGeckoSimplePrice } from './coingecko';
 import { getTokens, upsertToken } from '../market/registry';
 import { getUsdPriceForToken } from '../market/priceEngine';
 import { startOracleAggregator } from './oracleAggregator';
@@ -24,17 +23,18 @@ export async function startOracleUpdates() {
           console.log(`🔗 Checking DEX prices for ${tokens.length} tokens without prices`);
           // The price engine will automatically check DEX prices when called
         }
-      } catch (e) {
-        console.log(`🔗 DEX price discovery error: ${e.message}`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.log(`🔗 DEX price discovery error: ${message}`);
       }
     }, 45_000);
 
     // Periodically refresh token USD prices for discovered tokens
-    const refreshTokens = () => {
+    const refreshTokens = async () => {
       const toks = getTokens();
       let updated = 0;
       for (const t of toks) {
-        const p = getUsdPriceForToken(t.address);
+        const p = await getUsdPriceForToken(t.address);
         upsertToken({
           address: t.address,
           symbol: t.symbol,
@@ -54,8 +54,16 @@ export async function startOracleUpdates() {
         console.log(`💰 Updated ${updated}/${toks.length} token prices`);
       }
     };
-    refreshTokens();
-    setInterval(refreshTokens, 30_000);
+    refreshTokens().catch(err => {
+      const message = err instanceof Error ? err.message : String(err);
+      console.log(`💰 Token price refresh error: ${message}`);
+    });
+    setInterval(() => {
+      refreshTokens().catch(err => {
+        const message = err instanceof Error ? err.message : String(err);
+        console.log(`💰 Token price refresh error: ${message}`);
+      });
+    }, 30_000);
   } else {
     console.log('🛰️ Oracles disabled in config');
   }

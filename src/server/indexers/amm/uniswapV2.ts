@@ -9,6 +9,7 @@ import { recordSwapBucket } from '../../market/bucket';
 import { registerPool, updateV2PoolReserves } from '../../market/ammEngine';
 import tokensCatalog from '../../catalog/tokens.json';
 import { getTokens } from '../../market/registry';
+import { logErrorWithConsole } from '@/server/utils/errorLogger';
 
 const V2_FACTORY_ABI = [
   'event PairCreated(address indexed token0, address indexed token1, address pair, uint256)'
@@ -62,7 +63,7 @@ async function handlePairCreated(log: any, dexName: string) {
       console.warn(`🏦 Failed to seed initial reserves for ${pair}:`, err);
     }
   } catch (e) {
-    console.error('🏦 PairCreated error:', e);
+    logErrorWithConsole(e, 'PairCreated error');
   }
 }
 
@@ -84,7 +85,7 @@ async function handleSync(log: any) {
       feeBps: pool.fee_bps ?? 30,
     }, r0, r1);
   } catch (err) {
-    console.warn('🏦 Sync handler error:', err);
+    logErrorWithConsole(err, 'Sync handler error');
   }
 }
 
@@ -108,7 +109,7 @@ export async function startUniswapV2Indexer(): Promise<void> {
     const logs = await provider.getLogs({ address: factory, topics: [PAIR_CREATED_TOPIC], fromBlock: from, toBlock: latest });
     for (const log of logs || []) await handlePairCreated(log, 'Uniswap');
   } catch (e) {
-    console.warn('UniswapV2 backfill failed', e);
+    logErrorWithConsole(e, 'UniswapV2 backfill failed');
   }
 
   // Backfill last 24h swaps into buckets/volume
@@ -156,12 +157,12 @@ export async function startUniswapV2Indexer(): Promise<void> {
 
   // Live subscriptions
   provider.on({ address: factory, topics: [PAIR_CREATED_TOPIC] }, (res: any) => {
-    handlePairCreated(res, 'Uniswap').catch(err => console.error('🏦 PairCreated handler error:', err));
+    handlePairCreated(res, 'Uniswap').catch(err => logErrorWithConsole(err, 'PairCreated handler error'));
   });
 
   // Subscribe to Sync for discovered pairs (broad filter over topic, no address list)
   provider.on({ topics: [SYNC_TOPIC] }, (res: any) => {
-    handleSync(res).catch(err => console.error('🏦 Sync handler error:', err));
+    handleSync(res).catch(err => logErrorWithConsole(err, 'Sync handler error'));
   });
 
   // Subscribe to Swap events (compute 24h volume/fees)
@@ -194,7 +195,7 @@ export async function startUniswapV2Indexer(): Promise<void> {
       if (isFinite(usd) && usd > 0) {
         recordSwapBucket(pair, price || 0, usd, log.blockNumber).catch(() => {});
       }
-    } catch {}
+    } catch (e) { logErrorWithConsole(e, 'Swap handler error'); }
   });
 }
 

@@ -4,6 +4,7 @@ import { getTxpoolStatus } from '../ingest/txpool';
 import { getWsClient } from '../rpc/wsClient';
 import { hexToBigInt } from '@/lib/util/hex';
 import { formatUnits } from 'ethers';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 // Metrics aggregator for real-time statistics
 export class MetricsAggregator {
@@ -70,7 +71,8 @@ export class MetricsAggregator {
           queued = Number(hexToBigInt(txpoolStatus.queued));
         }
       } catch (error) {
-        console.error('Failed to parse txpool status:', error);
+        logErrorWithConsole(error, 'Failed to parse txpool status');
+
       }
     }
 
@@ -226,7 +228,7 @@ export async function getFeeHistoryAnalytics(blocks: number = 20): Promise<FeeHi
       },
     };
   } catch (error) {
-    console.error('Failed to get fee history analytics:', error);
+    logErrorWithConsole(error, 'Failed to get fee history analytics');
     return {
       base_fee: null,
       suggested_gas_price: null,

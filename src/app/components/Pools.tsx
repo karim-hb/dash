@@ -11,7 +11,7 @@ function pct(v?: number | null) { if (v === null || v === undefined) return '-';
 export default function Pools() {
   const { snapshot } = useWsSnapshot();
   const rows = snapshot?.pools || [];
-  const [poolTab, setPoolTab] = React.useState<'v1' | 'v2' | 'v3'>('v2');
+  const [poolTab, setPoolTab] = React.useState<'v2' | 'v3'>('v2');
   console.log(rows, 'rows')
   const columns = [
     { key: 'dex', header: 'DEX', render: (v: string, r: any) => (
@@ -37,7 +37,7 @@ export default function Pools() {
 
   // Filter pools by selected version
   const filteredPools = rows.filter(p => {
-    const versionMap = { v1: 'V1', v2: 'V2', v3: 'V3' };
+    const versionMap = { v2: 'V2', v3: 'V3' };
     return p.version === versionMap[poolTab];
   });
 
@@ -57,16 +57,6 @@ export default function Pools() {
       <div className="px-1.5 py-1 bg-black border-b border-gray-800">
         <div className="flex items-center gap-1">
           <span className="text-sky-400 text-[8px] font-mono">🏊 POOLS:</span>
-          <button
-            onClick={() => setPoolTab('v1')}
-            className={`px-2 py-0.5 text-[7px] font-mono border ${
-              poolTab === 'v1'
-                ? 'bg-sky-900 text-sky-300 border-sky-700'
-                : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
-            }`}
-          >
-            V1 ({rows.filter(p => p.version === 'V1').length})
-          </button>
           <button
             onClick={() => setPoolTab('v2')}
             className={`px-2 py-0.5 text-[7px] font-mono border ${

@@ -3,6 +3,7 @@ import { selector, wordAt, hexToBigInt, decodeAddressArray } from '@/lib/util/he
 import { getAbiRegistry } from './abiRegistry';
 import { getConfig } from '@/lib/config';
 import { Interface } from 'ethers';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 // Common event signatures for DeFi protocols
 const EVENT_SIGNATURES: Record<string, { name: string; signature: string; args: any[] }> = {
@@ -352,7 +353,7 @@ export async function decodeEventLogs(tx: Transaction): Promise<DecodedEvent[]> 
         decodedEvents.push(decoded);
       }
     } catch (error) {
-      console.error(`Failed to decode event log:`, error);
+      logErrorWithConsole(error, 'Failed to decode event log');
     }
   }
 
@@ -384,7 +385,7 @@ async function decodeSingleEvent(log: any, tx: Transaction): Promise<DecodedEven
       }
     }
   } catch (error) {
-    console.error(`Remote event signature lookup failed for ${sigHash}:`, error);
+    logErrorWithConsole(error, `Remote event signature lookup failed for ${sigHash}`);
   }
 
   // Fallback: try to identify common patterns
@@ -535,7 +536,7 @@ function decodeKnownEvent(log: any, template: any, tx: Transaction): DecodedEven
       decoded: true
     };
   } catch (error) {
-    console.error(`Failed to decode known event ${template.name}:`, error);
+    logErrorWithConsole(error, `Failed to decode known event ${template.name}`);
     return null;
   }
 }

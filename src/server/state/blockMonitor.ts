@@ -1,3 +1,4 @@
+import { logErrorWithConsole } from '../utils/errorLogger';
 import { getTrackerState } from './state';
 import { TxState, Transaction } from '@/lib/types';
 
@@ -26,7 +27,7 @@ export class BlockMonitor {
         }
       }
     } catch (error) {
-      console.error('BlockMonitor.onBlock error:', error);
+      logErrorWithConsole(error, 'BlockMonitor.onBlock');
     }
   }
 
@@ -59,7 +60,7 @@ export class BlockMonitor {
         await state.upsert(updated);
       }
     } catch (error) {
-      console.error('BlockMonitor.markCompetingPendingAsReplaced error:', error);
+      logErrorWithConsole(error, 'BlockMonitor.markCompetingPendingAsReplaced');
     }
   }
 

@@ -3,6 +3,7 @@ import { getTransactionsCollection, getReceiptsCollection } from '@/lib/db/mongo
 import { classifyTx } from '../classify';
 import { decodeFunctionAndArgs, decodeTransactionEvents } from '../decoding/decoders';
 import { applyOpportunityScoring } from '../market/opportunityScoring';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 // In-memory state management with MongoDB persistence
 export class TrackerState {
@@ -43,7 +44,7 @@ export class TrackerState {
         const classification = classifyTx(next);
         next.category_key = `${classification.category}:${classification.protocol.toLowerCase()}`;
       } catch (error) {
-        console.error(`Failed to classify tx ${hash}:`, error);
+        logErrorWithConsole(error, `Failed to classify tx ${hash}`);
       }
     }
 
@@ -55,7 +56,7 @@ export class TrackerState {
           next._decoded_fn = decoded;
         }
       } catch (error) {
-        console.error(`Failed to decode function for tx ${hash}:`, error);
+        logErrorWithConsole(error, `Failed to decode function for tx ${hash}`);
       }
     }
 
@@ -68,7 +69,7 @@ export class TrackerState {
           next._decoded_events = decodedEvents;
         }
       } catch (error) {
-        console.error(`Failed to decode events for tx ${hash}:`, error);
+        logErrorWithConsole(error, `Failed to decode events for tx ${hash}`);
       }
     }
 
@@ -271,7 +272,7 @@ export class TrackerState {
         { upsert: true }
       );
     } catch (error) {
-      console.error('Failed to persist transaction:', error);
+      logErrorWithConsole(error, 'Failed to persist transaction');
     }
   }
 
@@ -330,7 +331,7 @@ export class TrackerState {
           { upsert: true }
         );
       } catch (error) {
-        console.error('Failed to persist receipt:', error);
+        logErrorWithConsole(error, 'Failed to persist receipt');
       }
     }
 
@@ -371,7 +372,7 @@ export class TrackerState {
             confirmation_depth: Math.max(0, depth),
           };
 
-          if (depth >= 12 && tx._state !== TxState.FINALIZED) {
+          if (depth >= 12 && tx._state === TxState.INCLUDED) {
             updated._state = TxState.FINALIZED;
           } else if (depth >= 1 && tx._state === TxState.INCLUDED) {
             updated._state = TxState.CONFIRMED;
@@ -469,7 +470,7 @@ export class TrackerState {
 
       console.log(`? Loaded ${recent.length} transactions from MongoDB`);
     } catch (error) {
-      console.error('Failed to load recent state:', error);
+      logErrorWithConsole(error, 'Failed to load recent state');
     }
   }
 

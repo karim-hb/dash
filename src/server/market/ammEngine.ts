@@ -3,6 +3,7 @@ import { getUsdPriceForToken, getCachedPrice, PriceCacheEntry } from './priceEng
 import { setV2Reserves } from './reserves';
 import { getTokenMetadata } from '../modules/tokens';
 import { ethers } from 'ethers';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 export type PoolMeta = {
   address: string;
@@ -142,13 +143,13 @@ export function startAmmEngine(): void {
         const meta = await ensureTokenMeta(token);
         updateTokenEntry(token, meta);
       } catch (err) {
-        console.error('AMM engine price refresh failed for token', token, err);
+        logErrorWithConsole(err, `AMM engine price refresh failed for token ${token}`);
       }
     }
   };
 
-  refresh().catch(err => console.error('AMM engine initial refresh failed', err));
-  setInterval(() => { refresh().catch(err => console.error('AMM engine refresh error', err)); }, PRICE_REFRESH_MS);
+  refresh().catch(err => logErrorWithConsole(err, 'AMM engine initial refresh failed'));
+  setInterval(() => { refresh().catch(err => logErrorWithConsole(err, 'AMM engine refresh error')); }, PRICE_REFRESH_MS);
 }
 
 // --- helpers ---

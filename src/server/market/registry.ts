@@ -1,5 +1,7 @@
 // In-memory registries for tokens, pools, and oracle feeds
 
+import { logErrorWithConsole } from '../utils/errorLogger';
+
 type TokenEntry = {
   address: string;
   symbol: string;
@@ -49,6 +51,12 @@ type OracleFeed = {
   heartbeat_sec?: number | null;
   status?: 'healthy' | 'stale' | 'error';
   deviation_vs_spot_pct?: number | null;
+  // Enhanced Nethermind heartbeat data
+  authenticity_score?: number; // 0-100 confidence score
+  verification_flags?: string; // comma-separated verification flags
+  oracle_count?: number; // number of oracles in the feed
+  round_id?: number; // current round ID
+  aggregator_phase?: number; // proxy phase ID
 };
 
 const tokens: Map<string, TokenEntry> = new Map();
@@ -145,7 +153,7 @@ export function initializeMarketRegistries() {
     }
     console.log(`✅ Initialized ${count} tokens from catalog`);
   } catch (e) {
-    console.warn('Failed to initialize token catalog:', e);
+    logErrorWithConsole(e, 'Failed to initialize token catalog');
   }
 }
 

@@ -3,6 +3,7 @@ import amm from '../../catalog/amm.json';
 import { getProvider } from '../../modules/provider';
 import { updateV3PoolBalances, registerPool, type PoolMeta } from '../../market/ammEngine';
 import { computeAmountsForPosition, derivePriceRatio } from './uniswapV3Math';
+import { logErrorWithConsole } from '@/server/utils/errorLogger';
 
 const POSITION_MANAGER_ADDRESS = (process.env.UNIV3_POSITION_MANAGER || '0xC36442b4a4522E871399CD717aBDD847Ab11FE88').toLowerCase();
 const rawFactory = (amm as any).uniswap_v3?.factory || process.env.UNIV3_FACTORY;
@@ -91,7 +92,7 @@ async function getPoolAddress(token0: string, token1: string, fee: number): Prom
       return pool.toLowerCase();
     }
   } catch (err) {
-    console.error('Failed to compute pool address', err);
+    logErrorWithConsole(err, 'Failed to compute pool address');
   }
   return null;
 }
@@ -154,7 +155,7 @@ async function loadPosition(tokenId: bigint): Promise<PositionRecord | null> {
       deadPositionIds.add(tokenId);
       return null;
     }
-    console.error('Failed to load Uniswap V3 position', err);
+    logErrorWithConsole(err, 'Failed to load Uniswap V3 position');
     return null;
   }
 }
@@ -179,7 +180,7 @@ async function recomputePool(poolAddr: string): Promise<void> {
   try {
     await registerPool(meta);
   } catch (err) {
-    console.error('Failed to register V3 pool', err);
+    logErrorWithConsole(err, 'Failed to register V3 pool');
   }
 
   const poolMap = positionsByPool.get(key);
@@ -216,7 +217,7 @@ async function recomputePool(poolAddr: string): Promise<void> {
       amount1 = BigInt(bal1);
     }
   } catch (err) {
-    console.error('Failed to recompute V3 pool amounts', err);
+    logErrorWithConsole(err, 'Failed to recompute V3 pool amounts');
     return;
   }
 
@@ -230,8 +231,8 @@ async function recomputePool(poolAddr: string): Promise<void> {
   try {
     await updateV3PoolBalances(meta, amount0, amount1);
   } catch (err) {
-    console.error('Failed to update V3 pool balances', err);
-  }
+    logErrorWithConsole(err, 'Failed to update V3 pool balances');
+  } 
 }
 
 export function schedulePoolRecompute(poolAddr: string): Promise<void> {
@@ -244,7 +245,7 @@ export function schedulePoolRecompute(poolAddr: string): Promise<void> {
     try {
       await recomputePool(key);
     } catch (err) {
-      console.error('V3 recompute error', err);
+      logErrorWithConsole(err, 'V3 recompute error');
     } finally {
       recomputeLocks.delete(key);
     }
@@ -256,7 +257,7 @@ export function schedulePoolRecompute(poolAddr: string): Promise<void> {
 export function registerV3PoolMeta(meta: PoolMeta & { fee: number }): void {
   const key = meta.address.toLowerCase();
   poolMetas.set(key, { ...meta, fee: meta.fee });
-  schedulePoolRecompute(key).catch(err => console.error('Failed to schedule recompute on register', err));
+  schedulePoolRecompute(key).catch(err => logErrorWithConsole(err, 'Failed to schedule recompute on register'));
 }
 
 export function getCachedPoolState(poolAddr: string): PoolState | undefined {
@@ -282,7 +283,7 @@ async function processPositionLog(log: ethers.Log): Promise<void> {
         break;
     }
   } catch (err) {
-    console.error('Failed to process position log', err);
+    logErrorWithConsole(err, 'Failed to process position log');
   }
 }
 
@@ -306,26 +307,26 @@ async function backfillPositions(): Promise<void> {
         await processPositionLog(log);
       }
     } catch (err) {
-      console.error(`Failed to backfill positions for range [${from}, ${to}]`, err);
+      logErrorWithConsole(err, `Failed to backfill positions for range [${from}, ${to}]`);
     }
   }
 }
 
 function subscribeToEvents(): void {
   provider.on({ address: POSITION_MANAGER_ADDRESS, topics: [MINT_TOPIC] }, (log) => {
-    processPositionLog(log).catch(err => console.error('Mint log processing failed', err));
+    processPositionLog(log).catch(err => logErrorWithConsole(err, 'Mint log processing failed'));
   });
 
   provider.on({ address: POSITION_MANAGER_ADDRESS, topics: [INCREASE_TOPIC] }, (log) => {
-    processPositionLog(log).catch(err => console.error('IncreaseLiquidity log processing failed', err));
+    processPositionLog(log).catch(err => logErrorWithConsole(err, 'IncreaseLiquidity log processing failed'));
   });
 
   provider.on({ address: POSITION_MANAGER_ADDRESS, topics: [DECREASE_TOPIC] }, (log) => {
-    processPositionLog(log).catch(err => console.error('DecreaseLiquidity log processing failed', err));
+    processPositionLog(log).catch(err => logErrorWithConsole(err, 'DecreaseLiquidity log processing failed'));
   });
 
   provider.on({ address: POSITION_MANAGER_ADDRESS, topics: [BURN_TOPIC] }, (log) => {
-    processPositionLog(log).catch(err => console.error('Burn log processing failed', err));
+    processPositionLog(log).catch(err => logErrorWithConsole(err, 'Burn log processing failed'));
   });
 }
 
@@ -334,7 +335,7 @@ export async function initUniswapV3PositionIndexer(): Promise<void> {
   started = true;
 
   if (!FACTORY_ADDRESS) {
-    console.warn('Uniswap V3 factory address missing; position indexer disabled');
+    logWarningWithConsole('Uniswap V3 factory address missing; position indexer disabled');
     return;
   }
 

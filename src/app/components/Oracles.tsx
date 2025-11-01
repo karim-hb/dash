@@ -49,6 +49,7 @@ export default function Oracles() {
     const row: any = {
       pair: pairGroup.pair,
       time: formatTime(pairGroup.feeds?.[0]?.last_updated),
+      _feeds: pairGroup.feeds, // Include feeds for authenticity calculation
     };
     
     // Add columns for each provider
@@ -113,6 +114,9 @@ export default function Oracles() {
       );
     }},
     { key: 'deviation_vs_spot_pct', header: 'Dev vs DEX', render: (v: number) => v != null ? `${v.toFixed(2)}%` : '-', className: 'text-[#58A6FF]' },
+    { key: 'authenticity_score', header: 'Authenticity', render: (v: number) => v != null ? `${v}%` : '-', className: 'text-[#00FF66] font-mono' },
+    { key: 'oracle_count', header: 'Oracles', render: (v: number) => v != null ? `${v}` : '-', className: 'text-[#58A6FF]' },
+    { key: 'round_id', header: 'Round', render: (v: number) => v != null ? `#${v}` : '-', className: 'text-[#C9D1D9] font-mono' },
   ];
 
   const comparisonColumns = [
@@ -125,6 +129,9 @@ export default function Oracles() {
         const status = row[`${provider}_status`];
         const lastUpdate = row[`${provider}_updated`];
         const secondsAgo = lastUpdate ? Math.floor((Date.now() - lastUpdate) / 1000) : null;
+        const feed = row._feeds?.find((f: any) => f.provider === provider);
+        const authenticityScore = feed?.authenticity_score;
+        const oracleCount = feed?.oracle_count;
 
         if (v == null || !Number.isFinite(v)) return '-';
         return (
@@ -136,11 +143,17 @@ export default function Oracles() {
               }`} style={{ animationDuration: '3s' }} />
               <span className={`${providerColors[provider] || 'text-[#C9D1D9]'} font-semibold`}>${v.toFixed(2)}</span>
             </div>
-            {secondsAgo !== null && (
-              <span className="text-xs text-[#8B949E]">
-                {secondsAgo}s
-              </span>
-            )}
+            <div className="flex items-center gap-1 text-xs">
+              {authenticityScore != null && (
+                <span className="text-[#00FF66] font-mono">{authenticityScore}%</span>
+              )}
+              {oracleCount && (
+                <span className="text-[#58A6FF]">{oracleCount}o</span>
+              )}
+              {secondsAgo !== null && (
+                <span className="text-[#8B949E]">{secondsAgo}s</span>
+              )}
+            </div>
           </div>
         );
       },
@@ -166,14 +179,26 @@ export default function Oracles() {
         </div>
       );
     }},
-    { key: 'status', header: 'Status', render: (v: string) => (
-      <div className="flex items-center gap-1">
-        <span className={`inline-block w-2 h-2 rounded-full opacity-60 ${
-          v === 'Active' ? 'bg-[#00FF66] animate-pulse shadow-[0_0_4px_rgba(0,255,102,0.5)]' : 'bg-[#F85149]'
-        }`} style={{ animationDuration: '3s' }} />
-        <span className={v === 'Active' ? 'text-[#00FF66]' : 'text-[#F85149]'}>{v}</span>
-      </div>
-    )},
+    { key: 'status', header: 'Status', render: (v: string, row: any) => {
+      // Calculate average authenticity for the pair
+      const feeds = row._feeds || [];
+      const avgAuthenticity = feeds.length > 0
+        ? feeds.reduce((sum: number, f: any) => sum + (f.authenticity_score || 0), 0) / feeds.length
+        : 0;
+      return (
+        <div className="flex flex-col items-center gap-0.5">
+          <div className="flex items-center gap-1">
+            <span className={`inline-block w-2 h-2 rounded-full opacity-60 ${
+              v === 'Active' ? 'bg-[#00FF66] animate-pulse shadow-[0_0_4px_rgba(0,255,102,0.5)]' : 'bg-[#F85149]'
+            }`} style={{ animationDuration: '3s' }} />
+            <span className={v === 'Active' ? 'text-[#00FF66]' : 'text-[#F85149]'}>{v}</span>
+          </div>
+          {avgAuthenticity > 0 && (
+            <span className="text-xs text-[#8B949E] font-mono">{avgAuthenticity.toFixed(0)}% auth</span>
+          )}
+        </div>
+      );
+    }},
   ];
 
   return (

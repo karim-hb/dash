@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getConfig } from '@/lib/config';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 export class AbiCache {
   private memoryCache: Map<string, any[]> = new Map(); // address -> ABI
@@ -24,7 +25,7 @@ export class AbiCache {
         const abi = JSON.parse(fs.readFileSync(fp, 'utf8'));
         this.memoryCache.set(key, abi);
         return abi;
-      } catch {}
+      } catch (e) { logErrorWithConsole(e, 'Failed to parse ABI file'); }
     }
     return null;
   }
@@ -34,7 +35,7 @@ export class AbiCache {
     this.memoryCache.set(key, abi);
     try {
       fs.writeFileSync(this.filePath(key), JSON.stringify(abi, null, 2));
-    } catch {}
+    } catch (e) { logErrorWithConsole(e, 'Failed to write ABI file'); }
   }
 
   async fetchFromEtherscan(address: string): Promise<any[] | null> {
@@ -58,9 +59,8 @@ export class AbiCache {
         }
       }
       return null;
-    } catch {
+    } catch (e) { logErrorWithConsole(e, 'Failed to fetch ABI from Etherscan'); }
       return null;
-    }
   }
 }
 

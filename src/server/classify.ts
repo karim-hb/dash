@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Transaction } from '@/lib/types';
+import { logErrorWithConsole } from './utils/errorLogger';
 
 // Classification result
 export interface Classification {
@@ -38,7 +39,8 @@ function loadRouters(): void {
 
     console.log(`✅ Loaded ${Object.keys(ROUTERS).length} router entries`);
   } catch (error) {
-    console.error('Failed to load router registries:', error);
+    logErrorWithConsole(error, 'Router registry loading');
+
   }
 }
 
@@ -116,7 +118,7 @@ export function classifyTx(tx: Transaction): Classification {
       }
     }
   } catch (error) {
-    console.error('Protocol classification error:', error);
+    logErrorWithConsole(error, 'Protocol classification');
   }
 
   // Check for NFT patterns (ERC-721/1155)

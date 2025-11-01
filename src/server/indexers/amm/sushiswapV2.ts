@@ -6,6 +6,7 @@ import { recordSwapUsd } from '../../market/poolStats';
 import { getUsdPriceForToken } from '../../market/priceEngine';
 import tokensCatalog from '../../catalog/tokens.json';
 import { id } from 'ethers';
+import { logErrorWithConsole } from '@/server/utils/errorLogger';
 
 const PAIR_CREATED_TOPIC = '0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9';
 const SWAP_TOPIC = id('Swap(address,uint256,uint256,uint256,uint256,address)');
@@ -65,7 +66,7 @@ export async function startSushiV2Indexer(): Promise<void> {
     const logs = await ws.rpc('eth_getLogs', [{ address: factory, topics: [PAIR_CREATED_TOPIC], fromBlock: '0x' + from.toString(16), toBlock: latestHex }]);
     console.log(`🏦 Sushi backfill found ${logs?.length || 0} pair creation events`);
     for (const log of logs || []) await handlePairCreated(log);
-  } catch (e) { console.warn('SushiV2 backfill failed', e); }
+  } catch (e) { logErrorWithConsole(e, 'SushiV2 backfill failed'); }
 
   await ws.subscribeLogs({ address: factory, topics: [PAIR_CREATED_TOPIC] }, (res) => handlePairCreated(res));
 

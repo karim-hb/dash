@@ -3,6 +3,7 @@ import { getTrackerState } from '../state/state';
 import { getFeeHistoryAnalytics } from '../metrics/aggregator';
 import { hexToBigInt } from '@/lib/util/hex';
 import { formatUnits } from 'ethers';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 type PercentileMap = {
   p10: number;
@@ -77,9 +78,9 @@ class GasOracle {
 
   start(): void {
     if (this.interval) return;
-    this.refresh().catch(err => console.error('GasOracle initial refresh failed', err));
+    this.refresh().catch(err => logErrorWithConsole(err, 'GasOracle initial refresh failed'));
     this.interval = setInterval(() => {
-      this.refresh().catch(err => console.error('GasOracle refresh failed', err));
+      this.refresh().catch(err => logErrorWithConsole(err, 'GasOracle refresh failed'));
     }, this.refreshMs);
     console.log(`? Gas oracle started (refresh ${this.refreshMs} ms)`);
   }
@@ -185,9 +186,8 @@ class GasOracle {
         return Number(formatUnits(hexToBigInt(tx.maxFeePerGas), 9));
       }
       return null;
-    } catch {
-      return null;
-    }
+    } catch (e) { logErrorWithConsole(e, 'Failed to extract priority fee'); }
+    return null;
   }
 }
 

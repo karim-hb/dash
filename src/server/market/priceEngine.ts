@@ -1,4 +1,5 @@
 import tokensCatalog from '../catalog/tokens.json';
+import { logErrorWithConsole } from '../utils/errorLogger';
 import { getOracleFeeds, getTokens, getPools } from './registry';
 import { getV2Reserves, getV2PoolsForPair, setV2Reserves } from './reserves';
 import { ethers } from 'ethers';
@@ -587,7 +588,8 @@ async function getNethermindDexPrice(tokenAddress: string): Promise<number | nul
 
     return null;
   } catch (e: any) {
-    console.log(`? Nethermind DEX price fetch failed for ${tokenAddress}: ${e?.message || e}`);
+    logErrorWithConsole(e, `Nethermind DEX price fetch failed for ${tokenAddress}`);
+
     return null;
   }
 }

@@ -10,6 +10,7 @@ import { recordSwapBucket } from '../../market/bucket';
 import { registerPool } from '../../market/ammEngine';
 import { initUniswapV3PositionIndexer, registerV3PoolMeta, schedulePoolRecompute } from './uniswapV3Positions';
 import { derivePriceRatio } from './uniswapV3Math';
+import { logErrorWithConsole } from '@/server/utils/errorLogger';
 
 const V3_FACTORY_ABI = [
   'event PoolCreated(address indexed token0, address indexed token1, uint24 fee, int24 tickSpacing, address pool)'
@@ -49,7 +50,7 @@ async function handlePoolCreated(log: any) {
 
     await registerPool({ dex: 'Uniswap', version: 'V3', address: pool, token0, token1, feeBps });
     registerV3PoolMeta({ dex: 'Uniswap', version: 'V3', address: pool, token0, token1, feeBps, fee });
-  } catch {}
+  } catch (e) { logErrorWithConsole(e, 'PoolCreated error'); }
 }
 
 export async function startUniswapV3Indexer(): Promise<void> {
@@ -99,10 +100,11 @@ export async function startUniswapV3Indexer(): Promise<void> {
           for (const log of logs) await handlePoolCreated(log);
         }
       } catch (e) {
+        logErrorWithConsole(e, 'PoolCreated backfill failed');
         // continue to next chunk
       }
     }
-  } catch (e) { console.warn('UniswapV3 backfill failed', e); }
+  } catch (e) { logErrorWithConsole(e, 'UniswapV3 backfill failed'); }
 
   // Backfill last 24h swaps into buckets/volume
   try {
@@ -118,17 +120,17 @@ export async function startUniswapV3Indexer(): Promise<void> {
         for (const log of logs || []) {
           await processSwapLog(log);
         }
-      } catch {}
+      } catch (e) { logErrorWithConsole(e, 'Swap backfill failed'); }
     }
-  } catch {}
+  } catch (e) { logErrorWithConsole(e, 'Swap backfill failed'); }
 
   provider.on({ address: factory, topics: [POOL_CREATED_TOPIC] }, (res: any) => {
-    handlePoolCreated(res).catch(err => console.error('🏦 V3 PoolCreated handler error:', err));
+    handlePoolCreated(res).catch(err => logErrorWithConsole(err, 'V3 PoolCreated handler error'));
   });
 
   // Subscribe to V3 Swap events across pools
   provider.on({ topics: [SWAP_TOPIC_V3] }, (log: any) => {
-    processSwapLog(log).catch(err => console.error('🏦 V3 swap processing failed', err));
+    processSwapLog(log).catch(err => logErrorWithConsole(err, 'V3 swap processing failed'));
   });
 
   // Periodically refresh TVL for V3 pools via position recompute
@@ -137,7 +139,7 @@ export async function startUniswapV3Indexer(): Promise<void> {
       for (const p of getPools().filter((x: any) => x.version === 'V3')) {
         schedulePoolRecompute(p.address).catch(() => {});
       }
-    } catch {}
+    } catch (e) { logErrorWithConsole(e, 'Pool refresh error'); }
   }, 60_000);
 }
 
@@ -201,7 +203,7 @@ async function processSwapLog(log: any): Promise<void> {
     recordSwapBucket(poolAddr, priceForBucket, usd, log.blockNumber).catch(() => {});
   }
 
-  schedulePoolRecompute(poolAddr).catch(() => {});
+  schedulePoolRecompute(poolAddr).catch(err => logErrorWithConsole(err, 'Pool recompute error'));
 }
 
 

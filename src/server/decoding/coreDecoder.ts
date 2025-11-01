@@ -4,6 +4,7 @@ import { getAbiRegistry } from './abiRegistry';
 import { getAbiCache } from './abiCache';
 import { decodeEventLogs, getProtocolFromAddress } from './eventDecoder';
 import { Interface, getAddress, toBigInt } from 'ethers';
+import { logErrorWithConsole, logWarningWithConsole } from '../utils/errorLogger';
 
 const SWAP_FUNCTION_SIGNATURES = [
   'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)',
@@ -51,7 +52,7 @@ function normalizeAddressLower(value: any): string | null {
       if (typeof value === 'string') {
         return `0x${value.replace(/^0x/, '')}`.toLowerCase();
       }
-    } catch {}
+    } catch (e) { logErrorWithConsole(e, 'Failed to normalize address'); }
     return null;
   }
 }
@@ -94,9 +95,8 @@ function toBigIntOrNull(value: any): bigint | null {
   } catch {
     try {
       return toBigInt(value.toString());
-    } catch {
-      return null;
-    }
+    } catch (e) { logErrorWithConsole(e, 'Failed to convert value to bigint'); }  
+    return null;
   }
 }
 
@@ -153,8 +153,8 @@ export class CoreDecoder {
           if (enriched) {
             decodedFunction = enriched;
           }
-        } catch (e) {
-          console.warn(`Multicall sub-decode failed for ${hash.slice(0,8)}:`, e);
+        } catch (e: any) {
+          logWarningWithConsole(e, `Multicall sub-decode failed for ${hash.slice(0,8)}`);
         }
       }
 
@@ -177,7 +177,7 @@ export class CoreDecoder {
             console.log(`✅ TX ${hash.slice(0,8)}: Decoded ${decodedEvents.length} events`);
           }
         } catch (error) {
-          console.error(`❌ TX ${hash.slice(0,8)}: Event decoding failed:`, error);
+          logErrorWithConsole(error, `TX ${hash.slice(0,8)}: Event decoding failed`);
         }
       }
 
@@ -188,7 +188,7 @@ export class CoreDecoder {
       };
 
     } catch (error) {
-      console.error(`❌ TX decode error:`, error);
+      logErrorWithConsole(error, 'TX decode error');
       return {
         decoded: false,
         error: `Decode error: ${error instanceof Error ? error.message : 'Unknown'}`
@@ -225,7 +225,7 @@ export class CoreDecoder {
       const iface = new Interface(abi as any);
       const parsed = iface.parseTransaction({ data });
       if (!parsed) return null;
-      const args = parsed.functionFragment.inputs.map((inp, idx) => ({
+      const args = parsed.fragment.inputs.map((inp: any, idx: number) => ({
         name: inp.name || `arg${idx}`,
         type: inp.format(),
         value: parsed.args?.[idx]
@@ -237,6 +237,7 @@ export class CoreDecoder {
         decoded: true
       };
     } catch (err) {
+      logErrorWithConsole(err, 'Failed to decode with contract ABI');
       return null;
     }
   }
@@ -260,7 +261,8 @@ export class CoreDecoder {
           ],
           confidence: 0.8
         };
-      } catch {
+      } catch (e) {
+        logErrorWithConsole(e, 'Failed to decode with ERC-20 transfer');
         return null;
       }
     }
@@ -279,7 +281,8 @@ export class CoreDecoder {
           ],
           confidence: 0.7
         };
-      } catch {
+      } catch (e) {
+        logErrorWithConsole(e, 'Failed to decode with ERC-20 approve');
         return null;
       }
     }
@@ -300,7 +303,8 @@ export class CoreDecoder {
           ],
           confidence: 0.7
         };
-      } catch {
+      } catch (e) {
+        logErrorWithConsole(e, 'Failed to decode with ERC-20 transferFrom');
         return null;
       }
     }
@@ -323,8 +327,9 @@ export class CoreDecoder {
             };
           }
         }
-      } catch {
-        // Ignore multicall detection errors
+      } catch (e) {
+        logErrorWithConsole(e, 'Failed to decode with multicall');
+        return null;
       }
     }
 
@@ -341,7 +346,7 @@ export class CoreDecoder {
           const amountIn = hexToBigInt(`0x${param1}`);
           const amountOutMin = hexToBigInt(`0x${param2}`);
 
-          if (amountIn > 0n && amountOutMin > 0n) {
+          if (amountIn > BigInt(0) && amountOutMin > BigInt(0)) {
             // Look for path array (common in DEX swaps)
             if (dataLen >= 8 + 64 * 6) {
               const pathOffset = data.slice(8 + 192, 8 + 256);
@@ -377,7 +382,7 @@ export class CoreDecoder {
           const value = hexToBigInt(`0x${paramData}`);
 
           // If we find a large value (> 1 ETH in wei), assume it's an amount
-          if (value > 1_000_000_000_000_000_000n) {
+          if (value > BigInt('1000000000000000000')) {
             params.push({ name: `amount${i}`, type: 'uint256', value });
           } else if (paramData.match(/^000000000000000000000000[0-9a-f]{40}$/)) {
             // Looks like an address
@@ -720,7 +725,7 @@ export class CoreDecoder {
       '70a082': { function: 'balanceOf', argCount: 1 }, // ERC-20 balanceOf
       '18160d': { function: 'totalSupply', argCount: 0 }, // ERC-20 totalSupply
       'dd62ed': { function: 'allowance', argCount: 2 }, // ERC-20 allowance
-      '095ea7': { function: 'permit', argCount: 4 }, // ERC-20 permit (overlapping with approve)
+      // '095ea7' already mapped above for approve
       '022c0d': { function: 'swap', argCount: 4 }, // Generic swap
       '7ff36a': { function: 'swapExactETHForTokens', argCount: 4 }, // Uniswap style
       '18cbafe': { function: 'swapExactETHForTokensSupportingFeeOnTransfer', argCount: 4 },
@@ -1068,7 +1073,7 @@ export class CoreDecoder {
         const callData = calls[i];
         try {
           // Try enhanced signatures first
-          const decoded = await this.decodeWithEnhancedSignatures(callData, to);
+          const decoded = await this.decodeWithEnhancedSignatures(callData, tx.to || '');
           if (decoded) {
             subcalls.push({ index: i, function: decoded.function, args: decoded.args, confidence: decoded.confidence || 0.8 });
             continue;
@@ -1095,7 +1100,7 @@ export class CoreDecoder {
           ...decodedCall.args, // Keep original args
           { name: 'subcalls', type: 'DecodedCall[]', value: subcalls }
         ],
-        confidence: decodedCall.confidence + 0.1, // Slightly higher confidence
+        confidence: (decodedCall.confidence || 0) + 0.1, // Slightly higher confidence
         decoded: true
       };
     } catch {
@@ -1187,7 +1192,7 @@ export class CoreDecoder {
 
       return null;
     } catch (error) {
-      console.error('Enhanced signature decoding failed:', error);
+      logErrorWithConsole(error, 'Enhanced signature decoding failed');
       return null;
     }
   }
@@ -1288,6 +1293,10 @@ export class CoreDecoder {
 
     try {
       const parsed = SWAP_INTERFACE.parseTransaction({ data: tx.input });
+      if (!parsed) {
+        return base;
+      }
+      
       const path: string[] = [];
       let amountIn: bigint | null = null;
       let amountOut: bigint | null = null;
@@ -1432,7 +1441,7 @@ export class CoreDecoder {
         }
       }
     } catch (err) {
-      console.error('Swap decode fallback error:', err);
+      logErrorWithConsole(err, 'Swap decode fallback error');
     }
 
     return fallback;

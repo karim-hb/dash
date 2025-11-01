@@ -3,6 +3,7 @@ import { getWsClient } from '../rpc/wsClient';
 import { getTrackerState } from '../state/state';
 import { now } from '@/lib/util/time';
 import { shouldKeepMempoolTx } from './filters';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 let subscriptionId: string | null = null;
 let isRunning = false;
@@ -25,7 +26,7 @@ export async function startPendingIngestion(): Promise<void> {
     await fetchCurrentPending();
 
   } catch (error) {
-    console.error('❌ Failed to start pending ingestion:', error);
+    logErrorWithConsole(error, 'Start pending ingestion');
     isRunning = false;
     throw error;
   }
@@ -43,7 +44,7 @@ export async function stopPendingIngestion(): Promise<void> {
     isRunning = false;
     console.log('✅ Stopped pending transactions ingestion');
   } catch (error) {
-    console.error('Failed to stop pending ingestion:', error);
+    logErrorWithConsole(error, 'Stop pending ingestion');
   }
 }
 
@@ -58,7 +59,7 @@ async function handlePendingHash(hash: string): Promise<void> {
     await hydrateTransaction(hash);
 
   } catch (error) {
-    console.error(`Failed to handle pending hash ${hash}:`, error);
+    logErrorWithConsole(error, `Handle pending hash ${hash}`);
   }
 }
 
@@ -110,7 +111,7 @@ async function hydrateTransaction(hash: string): Promise<void> {
     await getTrackerState().upsert(tx);
 
   } catch (error) {
-    console.error(`Failed to hydrate transaction ${hash}:`, error);
+    logErrorWithConsole(error, `Hydrate transaction ${hash}`);
   }
 }
 
@@ -169,7 +170,7 @@ async function fetchCurrentPending(): Promise<void> {
               // Limit initial load
               if (count >= 500) break;
             } catch (error) {
-              console.error(`Failed to process pending tx ${tx.hash}:`, error);
+              logErrorWithConsole(error, `Process pending tx ${tx.hash}`);
             }
           }
         }
@@ -180,7 +181,7 @@ async function fetchCurrentPending(): Promise<void> {
     console.log(`✅ Loaded ${count} pending transactions from txpool`);
 
   } catch (error) {
-    console.error('Failed to fetch current pending transactions:', error);
+    logErrorWithConsole(error, 'Fetch current pending transactions');
   }
 }
 

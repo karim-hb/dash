@@ -134,23 +134,23 @@ export default function Live() {
   ];
 
   return (
-    <div className="h-full">
+    <div className="h-full bg-black">
       {/* Live Transactions Header */}
-      <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+      <div className="bg-gray-900 border-b-2 border-green-600 px-3 py-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className="text-emerald-400 text-[9px]">⚡</span>
-            <h2 className="font-mono text-[9px] uppercase tracking-widest text-gray-300">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-5 bg-green-500"></div>
+            <h2 className="font-mono text-[12px] font-bold uppercase tracking-widest text-green-400">
               LIVE TRANSACTIONS
             </h2>
-            <div className="px-1 py-0.5 bg-emerald-900 text-emerald-300 text-[7px] font-mono border border-emerald-700">
+            <div className="px-3 py-1 bg-gray-800 text-green-300 text-[9px] font-mono border border-gray-600 rounded">
               {pendingCount} PENDING
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-1">
-              <div className={`w-0.5 h-0.5 rounded-full ${gasGaugedCount > 0 ? 'bg-sky-500' : 'bg-gray-700'}`}></div>
-              <span className={`font-mono text-[7px] tracking-widest ${gasGaugedCount > 0 ? 'text-sky-400' : 'text-gray-600'}`}>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${gasGaugedCount > 0 ? 'bg-green-500 animate-pulse' : 'bg-gray-600'}`}></div>
+              <span className={`font-mono text-[9px] font-bold tracking-wide ${gasGaugedCount > 0 ? 'text-green-400' : 'text-gray-500'}`}>
                 {gasGaugedCount}/{pendingCount} GASSED
               </span>
             </div>

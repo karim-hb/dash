@@ -19,7 +19,7 @@ export default function Tokens() {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [tokenTab, setTokenTab] = React.useState<'all' | 'v1' | 'v2' | 'v3'>('all');
+  const [tokenTab, setTokenTab] = React.useState<'all' | 'v1' | 'v2' | 'v3' | 'v4'>('all');
   const itemsPerPage = 50;
   const [isPending, startTransition] = React.useTransition();
   const searchInputId = React.useId();
@@ -30,8 +30,17 @@ export default function Tokens() {
   const deferredTokens = React.useDeferredValue(tokens);
   const deferredPools = React.useDeferredValue(pools);
 
+  // Sorting configuration
+  const FREEZE_MS = Number(process.env.NEXT_PUBLIC_SORT_FREEZE_MS || '3600000'); // default 1h
+  const pinTokens = (process.env.NEXT_PUBLIC_PIN_TOKENS || 'ETH,USDT,USDC')
+    .split(',')
+    .map(s => s.trim().toUpperCase())
+    .filter(Boolean);
+  const freezeUntilRef = React.useRef<number>(0);
+  const orderRef = React.useRef<string[]>([]);
+
   const derived = React.useMemo(() => {
-    const countsByVersion: Record<'V1' | 'V2' | 'V3', number> = { V1: 0, V2: 0, V3: 0 };
+    const countsByVersion: Record<'V1' | 'V2' | 'V3' | 'V4', number> = { V1: 0, V2: 0, V3: 0, V4: 0 };
     const versionMap = new Map<string, Set<string>>();
 
     for (const pool of deferredPools) {
@@ -58,21 +67,21 @@ export default function Tokens() {
       const versionKeys = Array.from(versionSet).map(v => v.toUpperCase());
       const uniqueVersionKeys = Array.from(new Set(versionKeys));
       uniqueVersionKeys.forEach(key => {
-        if (key === 'V1' || key === 'V2' || key === 'V3') countsByVersion[key] += 1;
+        if (key === 'V1' || key === 'V2' || key === 'V3' || key === 'V4') countsByVersion[key] += 1;
       });
 
       const versionLabel = uniqueVersionKeys.length ? uniqueVersionKeys.join('/') : '—';
-      const score =
-        (token.liquidity_usd ?? 0) +
-        (token.volume_24h_usd ?? 0) * 0.01 +
-        (token.mcap_onchain_usd ?? 0) * 0.001;
+      const liq = token.liquidity_usd ?? 0;
+      const vol = token.volume_24h_usd ?? 0;
+      const mcap = token.mcap_onchain_usd ?? 0;
+      const score = liq * 0.6 + vol * 0.3 + mcap * 0.1;
 
       return {
         ...token,
         score,
         versionKeys: uniqueVersionKeys,
         versionLabel,
-        active: Boolean(token.active),
+        active: Boolean((token as any).active || token.heartbeat?.status === 'healthy'),
       };
     });
 
@@ -107,7 +116,35 @@ export default function Tokens() {
       filtered = filtered.filter(row => row.versionKeys.includes(key));
     }
 
-    const sorted = filtered.slice().sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    const now = Date.now();
+    const pinRank = (row: any) => {
+      const sym = (row.symbol || '').toUpperCase();
+      const idx = pinTokens.indexOf(sym);
+      return idx === -1 ? Number.POSITIVE_INFINITY : idx;
+    };
+
+    let sorted: any[];
+    if (orderRef.current.length && now < freezeUntilRef.current) {
+      const byAddr = new Map<string, any>(filtered.map(r => [String(r.address).toLowerCase(), r]));
+      const preserved = orderRef.current
+        .map(addr => byAddr.get(String(addr).toLowerCase()))
+        .filter(Boolean) as any[];
+      const rest = filtered.filter(r => !orderRef.current.includes(r.address as string));
+      rest.sort((a, b) => {
+        const pa = pinRank(a), pb = pinRank(b);
+        if (pa !== pb) return pa - pb;
+        return (b.score ?? 0) - (a.score ?? 0);
+      });
+      sorted = preserved.concat(rest);
+    } else {
+      sorted = filtered.slice().sort((a, b) => {
+        const pa = pinRank(a), pb = pinRank(b);
+        if (pa !== pb) return pa - pb;
+        return (b.score ?? 0) - (a.score ?? 0);
+      });
+      orderRef.current = sorted.map(r => r.address as string);
+      freezeUntilRef.current = now + FREEZE_MS;
+    }
     const total = sorted.length;
     const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
     const safePage = Math.min(Math.max(currentPage, 1), totalPages);
@@ -153,7 +190,7 @@ export default function Tokens() {
   const lastUpdatedLabel = React.useMemo(() => (snapshot ? new Date(snapshot.timestamp).toLocaleTimeString() : null), [snapshot?.timestamp]);
 
   const columns = [
-    { key: 'symbol', header: 'Token', render: (_: any, row: any) => {
+    { key: 'symbol', header: 'TOKEN', render: (_: any, row: any) => {
       const addr = row.address;
       let short = '';
       try {
@@ -163,57 +200,59 @@ export default function Tokens() {
         }
       } catch {}
       return (
-        <div className="flex items-center gap-1">
-          <span className="font-mono text-emerald-400">{row.symbol || '-'}</span>
-          <span className="font-mono text-[9px] text-gray-600">{short}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[11px] font-bold text-white">{row.symbol || '-'}</span>
+          <span className="font-mono text-[8px] text-gray-500">{short}</span>
         </div>
       );
-    } },
+    }, className: 'font-mono' },
     // Show version column only in ALL tab
     ...(tokenTab === 'all' ? [{
-      key: 'versions', header: 'Version', render: (_: any, row: any) => (
-        <span className="font-mono text-[8px] text-sky-400">{row.versionLabel || '-'}</span>
+      key: 'versions', header: 'VER', render: (_: any, row: any) => (
+        <span className="font-mono text-[9px] text-yellow-400">{row.versionLabel || '-'}</span>
       )
     }] : []),
-    { key: 'score', header: 'Score', render: (v: number, row: any) => (
-      <span className="font-mono text-[9px] text-emerald-300">{fmt(v ?? row.score ?? 0, 0)}</span>
-    )},
-    { key: 'active', header: 'Active', render: (v: boolean) => (
+    { key: 'active', header: 'STS', render: (v: boolean) => (
       <span className={`inline-flex items-center justify-center w-3 h-3 rounded-full ${
-        v
-          ? 'bg-emerald-400 animate-pulse shadow-lg shadow-emerald-400/50'
-          : 'bg-red-400'
+        v ? 'bg-[#00FF66] shadow-[0_0_4px_rgba(0,255,102,0.5)]' : 'bg-[#F85149]'
       }`}>
-        {v && <span className="text-xs text-black font-bold">●</span>}
+        {v && <span className="text-[10px] text-[#0D1117] font-bold">●</span>}
       </span>
-    ) },
-    { key: 'price_usd', header: 'Price', render: (v: number) => `$${fmt(v, 4)}`, className: 'text-sky-400' },
-    { key: 'change_24h', header: 'Change (%)', render: (v: number) => (
-      <span className={v >= 0 ? 'text-emerald-400' : 'text-red-400'}>{v ? v.toFixed(2) : '-'}</span>
+    ), className: 'text-center' },
+    { key: 'price_usd', header: 'PRICE', render: (v: number) => `$${fmt(v, 4)}`, className: 'text-[#00FF66] font-mono font-semibold' },
+    { key: 'change_24h', header: 'CHG %', render: (v: number) => (
+      <span className={`font-mono text-[10px] font-semibold ${v >= 0 ? 'text-[#00FF66]' : 'text-[#F85149]'}`}>
+        {v ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%` : '-'}
+      </span>
     )},
-    { key: 'volume_24h_usd', header: 'Volume (24H)', render: (v: number) => `$${fmt(v)}` },
-    { key: 'mcap_circ_usd', header: 'Circ MCap', render: (v: number) => `$${fmt(v)}` },
-    { key: 'mcap_onchain_usd', header: 'Onchain MCap', render: (v: number) => `$${fmt(v)}` },
-    { key: 'holders_est', header: 'Holders', render: (v: number) => v ? v.toLocaleString() : '-' },
+    { key: 'volume_24h_usd', header: 'VOL 24H', render: (v: number) => (
+      <span className="font-mono text-[10px] text-[#58A6FF]">{v ? fmt(v) : '-'}</span>
+    ) },
+    { key: 'mcap_circ_usd', header: 'MCAP', render: (v: number) => (
+      <span className="font-mono text-[10px] text-[#A371F7]">{v ? fmt(v) : '-'}</span>
+    ) },
+    { key: 'holders_est', header: 'HLDRS', render: (v: number) => (
+      <span className="font-mono text-[9px] text-[#FFA657]">{v ? v.toLocaleString() : '-'}</span>
+    ) },
     {
       key: 'heartbeat',
-      header: 'Heartbeat',
+      header: 'SRC',
       render: (_: any, row: any) => {
         const heartbeat = row.heartbeat;
         if (!heartbeat) {
-          return <span className="text-gray-500">—</span>;
+          return <span className="font-mono text-[8px] text-gray-600">—</span>;
         }
 
         const isHealthy = heartbeat.status === 'healthy';
         const isStale = heartbeat.status === 'stale';
 
         return (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <span className={`inline-block w-2 h-2 rounded-full ${
-              isHealthy ? 'bg-green-400 animate-pulse' :
-              isStale ? 'bg-yellow-400' : 'bg-red-400'
+              isHealthy ? 'bg-[#00FF66] shadow-[0_0_4px_rgba(0,255,102,0.5)]' :
+              isStale ? 'bg-[#FFA657]' : 'bg-[#F85149]'
             }`} />
-            <span className="text-xs text-gray-400">
+            <span className="font-mono text-[8px] text-[#8B949E]">
               {heartbeat.provider?.[0]?.toUpperCase() || '?'}
             </span>
           </div>
@@ -223,21 +262,25 @@ export default function Tokens() {
   ];
 
   return (
-    <div className="h-full">
-      <div className="bg-gray-900 border-b border-gray-800 px-1.5 py-0.5">
+    <div className="h-full bg-[#0D1117]">
+      <div className="bg-[#161B22] border-b-2 border-[#0066FF] px-4 py-3 shadow-md">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <span className="text-emerald-400 text-[8px]">💹</span>
-            <h2 className="font-mono text-[8px] uppercase tracking-widest text-gray-300">TOKENS</h2>
-            <div className="px-1 py-0.5 bg-emerald-900 text-emerald-300 text-[7px] font-mono border border-emerald-700">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 bg-[#0066FF] shadow-[0_0_6px_rgba(0,102,255,0.5)]"></div>
+            <h2 className="font-mono text-[13px] font-bold uppercase tracking-widest text-[#0066FF]">TOKENS</h2>
+            <div className="px-3 py-1.5 bg-[#21262D] text-[#C9D1D9] text-[9px] font-mono border border-[#30363D] rounded">
               {derived.total} LISTED ({derived.pricedCount} PRICED)
             </div>
-            <div className={`px-1 py-0.5 text-[7px] font-mono border ${connected ? 'bg-emerald-900 text-emerald-300 border-emerald-700' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
-              WS {connected ? 'LIVE' : 'RECONNECTING'}
+            <div className={`px-3 py-1.5 text-[9px] font-mono border rounded ${
+              connected 
+                ? 'bg-[#0066FF]/20 text-[#00FF66] border-[#0066FF] shadow-[0_0_4px_rgba(0,102,255,0.3)]' 
+                : 'bg-[#F85149]/20 text-[#F85149] border-[#F85149]'
+            }`}>
+              {connected ? '●' : '○'} WS {connected ? 'LIVE' : 'OFFLINE'}
             </div>
             {lastUpdatedLabel && (
-              <div className="px-1 py-0.5 bg-gray-800 text-gray-300 text-[7px] font-mono border border-gray-700">
-                last {lastUpdatedLabel}
+              <div className="px-3 py-1.5 bg-[#21262D] text-[#8B949E] text-[9px] font-mono border border-[#30363D] rounded">
+                {lastUpdatedLabel}
               </div>
             )}
           </div>
@@ -245,7 +288,7 @@ export default function Tokens() {
             <button
               onClick={() => startTransition(() => setCurrentPage(1))}
               disabled={isPending}
-              className="px-1 py-0.5 bg-gray-800 text-gray-300 text-[8px] font-mono border border-gray-700 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-2 py-1 bg-[#21262D] text-[#C9D1D9] text-[9px] font-mono border border-[#30363D] hover:bg-[#30363D] hover:border-[#0066FF] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               title="Reset to first page"
             >⟳</button>
             <label htmlFor={searchInputId} className="sr-only">Search tokens</label>
@@ -255,23 +298,23 @@ export default function Tokens() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               id={searchInputId}
-              className="px-2 py-0.5 bg-gray-800 text-gray-300 text-[8px] font-mono border border-gray-700 focus:border-emerald-500 focus:outline-none"
+              className="px-3 py-1.5 bg-[#0D1117] text-[#C9D1D9] text-[9px] font-mono border border-[#30363D] focus:border-[#0066FF] focus:outline-none focus:ring-1 focus:ring-[#0066FF]/50 rounded transition-all"
             />
           </div>
         </div>
       </div>
 
       {/* Token Filter Tabs */}
-      <div className="px-1.5 py-1 bg-black border-b border-gray-800">
-        <div className="flex items-center gap-1">
-          <span className="text-emerald-400 text-[8px] font-mono">🪙 TOKENS:</span>
+      <div className="px-4 py-2.5 bg-[#161B22] border-b border-[#21262D]">
+        <div className="flex items-center gap-2">
+          <span className="text-[#0066FF] text-[10px] font-mono font-bold">FLT:</span>
           <button
             onClick={() => startTransition(() => setTokenTab('all'))}
             disabled={isPending}
-            className={`px-2 py-0.5 text-[7px] font-mono border ${
+            className={`px-5 py-2 text-[9px] font-mono border rounded transition-all ${
               tokenTab === 'all'
-                ? 'bg-emerald-900 text-emerald-300 border-emerald-700'
-                : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
+                ? 'bg-[#0066FF] text-[#0D1117] border-[#0066FF] shadow-[0_2px_8px_rgba(0,102,255,0.4)]'
+                : 'bg-[#21262D] text-[#C9D1D9] border-[#30363D] hover:bg-[#30363D] hover:border-[#0066FF]/50'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             ALL ({derived.totalTokens})
@@ -279,10 +322,10 @@ export default function Tokens() {
           <button
             onClick={() => startTransition(() => setTokenTab('v1'))}
             disabled={isPending}
-            className={`px-2 py-0.5 text-[7px] font-mono border ${
+            className={`px-5 py-2 text-[9px] font-mono border rounded transition-all ${
               tokenTab === 'v1'
-                ? 'bg-emerald-900 text-emerald-300 border-emerald-700'
-                : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
+                ? 'bg-[#0066FF] text-[#0D1117] border-[#0066FF] shadow-[0_2px_8px_rgba(0,102,255,0.4)]'
+                : 'bg-[#21262D] text-[#C9D1D9] border-[#30363D] hover:bg-[#30363D] hover:border-[#0066FF]/50'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             V1 ({derived.countsByVersion.V1})
@@ -290,10 +333,10 @@ export default function Tokens() {
           <button
             onClick={() => startTransition(() => setTokenTab('v2'))}
             disabled={isPending}
-            className={`px-2 py-0.5 text-[7px] font-mono border ${
+            className={`px-5 py-2 text-[9px] font-mono border rounded transition-all ${
               tokenTab === 'v2'
-                ? 'bg-emerald-900 text-emerald-300 border-emerald-700'
-                : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
+                ? 'bg-[#0066FF] text-[#0D1117] border-[#0066FF] shadow-[0_2px_8px_rgba(0,102,255,0.4)]'
+                : 'bg-[#21262D] text-[#C9D1D9] border-[#30363D] hover:bg-[#30363D] hover:border-[#0066FF]/50'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             V2 ({derived.countsByVersion.V2})
@@ -301,13 +344,24 @@ export default function Tokens() {
           <button
             onClick={() => startTransition(() => setTokenTab('v3'))}
             disabled={isPending}
-            className={`px-2 py-0.5 text-[7px] font-mono border ${
+            className={`px-5 py-2 text-[9px] font-mono border rounded transition-all ${
               tokenTab === 'v3'
-                ? 'bg-emerald-900 text-emerald-300 border-emerald-700'
-                : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
+                ? 'bg-[#0066FF] text-[#0D1117] border-[#0066FF] shadow-[0_2px_8px_rgba(0,102,255,0.4)]'
+                : 'bg-[#21262D] text-[#C9D1D9] border-[#30363D] hover:bg-[#30363D] hover:border-[#0066FF]/50'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             V3 ({derived.countsByVersion.V3})
+          </button>
+          <button
+            onClick={() => startTransition(() => setTokenTab('v4'))}
+            disabled={isPending}
+            className={`px-5 py-2 text-[9px] font-mono border rounded transition-all ${
+              tokenTab === 'v4'
+                ? 'bg-[#0066FF] text-[#0D1117] border-[#0066FF] shadow-[0_2px_8px_rgba(0,102,255,0.4)]'
+                : 'bg-[#21262D] text-[#C9D1D9] border-[#30363D] hover:bg-[#30363D] hover:border-[#0066FF]/50'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            V4 ({derived.countsByVersion.V4})
           </button>
         </div>
       </div>

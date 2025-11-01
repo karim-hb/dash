@@ -1,17 +1,11 @@
 [
   {
     "provider": "Chainlink",
-    "pair": "ETH/USD",
-    "address": "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419",
-    "referenceToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    "heartbeatSec": 60
-  },
-  {
-    "provider": "Chainlink",
-    "pair": "BTC/USD",
-    "address": "0xf4030086522a5beea4988f8ca5b36dbc97bee88c",
-    "referenceToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-    "heartbeatSec": 60
+    "pair": "PLACEHOLDER",
+    "address": "0x0000000000000000000000000000000000000000",
+    "referenceToken": null,
+    "heartbeatSec": 3600,
+    "note": "This will be replaced by dynamic Chainlink feed loading"
   },
   {
     "provider": "DEX_TWAP",
@@ -19,36 +13,48 @@
     "dex": {
       "type": "uniswap_v3",
       "pool": "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640",
-      "token0": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-      "token1": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "token0": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "token1": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       "fee": 500
     },
     "referenceToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    "heartbeatSec": 30
+    "heartbeatSec": 5
   },
   {
-    "provider": "Pyth",
+    "provider": "DEX_TWAP",
     "pair": "ETH/USD",
-    "address": null,
-    "heartbeatSec": 10
-  },
-  {
-    "provider": "Band",
-    "pair": "ETH/USD",
-    "address": null,
-    "heartbeatSec": 30
-  },
-  {
-    "provider": "Tellor",
-    "pair": "ETH/USD",
-    "address": null,
-    "heartbeatSec": 30
+    "dex": {
+      "type": "uniswap_v3",
+      "pool": "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640",
+      "token0": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "token1": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "fee": 500
+    },
+    "referenceToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "heartbeatSec": 5
   },
   {
     "provider": "API3",
     "pair": "ETH/USD",
     "address": null,
-    "heartbeatSec": 30
+    "referenceToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "heartbeatSec": 30,
+    "note": "API3 uses data feed IDs, not direct contract calls - requires different implementation"
+  },
+  {
+    "provider": "Band",
+    "pair": "ETH/USD",
+    "address": null,
+    "referenceToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "heartbeatSec": 15,
+    "note": "Band Protocol requires specific integration - not a simple contract call"
+  },
+  {
+    "provider": "Pyth",
+    "pair": "ETH/USD",
+    "address": null,
+    "referenceToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "heartbeatSec": 5,
+    "note": "Pyth requires price feed IDs and different API - not direct contract"
   }
 ]
-

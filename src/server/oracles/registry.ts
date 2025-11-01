@@ -6,14 +6,14 @@ import { startOracleAggregator } from './oracleAggregator';
 
 // Kick off periodic oracle updates
 let started = false;
-export function startOracleUpdates() {
+export async function startOracleUpdates() {
   if (started) return; started = true;
   console.log('🛰️ Starting oracle updates...');
   const cfg = getConfig();
   console.log(`🛰️ Config loaded: ENABLE_ORACLES=${cfg.ENABLE_ORACLES}, ENABLE_CHAINLINK=${cfg.ENABLE_CHAINLINK}`);
   if (cfg.ENABLE_ORACLES) {
     console.log('🛰️ Oracles enabled');
-    startOracleAggregator();
+    await startOracleAggregator();
 
     // Nethermind on-chain price discovery (DEX-based)
     console.log('🔗 Starting Nethermind DEX price discovery...');

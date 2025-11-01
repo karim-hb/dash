@@ -105,6 +105,18 @@ export function getTokens(): TokenEntry[] { return Array.from(tokens.values()); 
 export function getPools(): PoolEntry[] { return Array.from(pools.values()); }
 export function getOracleFeeds(): OracleFeed[] { return Array.from(oracleFeeds.values()); }
 
+// Group oracle feeds by pair for comparison view
+export function getOracleFeedsByPair(): Map<string, OracleFeed[]> {
+  const byPair = new Map<string, OracleFeed[]>();
+  for (const feed of oracleFeeds.values()) {
+    const pair = feed.pair || 'UNKNOWN';
+    const existing = byPair.get(pair) || [];
+    existing.push(feed);
+    byPair.set(pair, existing);
+  }
+  return byPair;
+}
+
 // Initialize with empty defaults to avoid undefined in UI
 export function initializeMarketRegistries() {
   // Pre-populate with known tokens from catalog

@@ -15,7 +15,7 @@ import { startHeadsIngestion, initializeIncludedFromBlocks } from './ingest/head
 import { startTxpoolMonitoring } from './ingest/txpool';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getTokens, getPools, getOracleFeeds } from './market/registry';
+import { getTokens, getPools, getOracleFeeds, getOracleFeedsByPair } from './market/registry';
 import { startOracleUpdates } from './oracles/registry';
 import { startUniswapV2Indexer } from './indexers/amm/uniswapV2';
 import { startUniswapV3Indexer } from './indexers/amm/uniswapV3';
@@ -86,23 +86,52 @@ async function main() {
       console.warn('⚠️ Failed to initialize included transactions from recent blocks:', e);
     }
 
+    // Start embedded WebSocket broadcast server ASAP (before heavy indexers)
+    // Bind to the exact requested port to avoid UI/WS mismatches
+    try {
+      if (!wss) {
+        const wsPortEarly = parseInt(process.env.UI_WS_PORT || '3006', 10);
+        await startWsBroadcast(wsPortEarly);
+      }
+    } catch (e) {
+      console.error('Failed to start early WebSocket broadcaster:', e);
+    }
+
     // Start oracles
     console.log('Starting oracle updates...');
-    // Temporarily disable oracles due to hanging
-    // startOracleUpdates();
-    console.log('Oracle updates skipped (temporarily disabled)');
+    await startOracleUpdates();
+    console.log('Oracle updates started');
 
     // Start AMM indexers
-    // Temporarily disable AMM indexers due to hanging
-    // await startUniswapV2Indexer();
-    // await startUniswapV3Indexer();
-    // await startSushiV2Indexer();
-    // await startBalancerV2Indexer();
-    // await startCurveIndexer();
+    try {
+      if ((process.env.ENABLE_AMM_UNIV2 || 'false') === 'true') {
+        await startUniswapV2Indexer();
+      }
+      if ((process.env.ENABLE_AMM_UNIV3 || 'false') === 'true') {
+        await startUniswapV3Indexer();
+      }
+      if ((process.env.ENABLE_SUSHI || 'false') === 'true') {
+        await startSushiV2Indexer();
+      }
+      if ((process.env.ENABLE_BALANCER || 'false') === 'true') {
+        await startBalancerV2Indexer();
+      }
+      if ((process.env.ENABLE_CURVE || 'false') === 'true') {
+        await startCurveIndexer();
+      }
+      console.log('✅ AMM indexers started');
+    } catch (e) {
+      console.error('❌ AMM indexer startup failed:', e);
+      console.log('⚠️ Continuing without AMM indexers...');
+    }
 
     // Start holders estimator (approximate)
-    console.log('Starting holders backfill...');
-    startHoldersBackfillAndPolling();
+    if ((process.env.ENABLE_HOLDERS || 'false') === 'true') {
+      console.log('Starting holders backfill...');
+      startHoldersBackfillAndPolling();
+    } else {
+      console.log('🔒 Holders backfill disabled (ENABLE_HOLDERS!=true)');
+    }
 
     // Start ERC-20 token discovery (from Transfer logs) if enabled
     if ((process.env.ENABLE_TOKEN_DISCOVERY || 'false') === 'true') {
@@ -119,13 +148,19 @@ async function main() {
     }
 
     // Start token stats refresher (onchain supply, liquidity, 24h vol, mcap)
-    console.log('Starting token stats refresh...');
-    startTokenStatsRefresh();
+    if ((process.env.ENABLE_TOKEN_STATS || 'false') === 'true') {
+      console.log('Starting token stats refresh...');
+      startTokenStatsRefresh();
+    } else {
+      console.log('🔒 Token stats refresh disabled (ENABLE_TOKEN_STATS!=true)');
+    }
 
     // Start embedded WebSocket broadcast server (shares in-memory state)
-    // Bind to the exact requested port to avoid UI/WS mismatches
-    const wsPort = parseInt(process.env.UI_WS_PORT || '3006', 10);
-    await startWsBroadcast(wsPort);
+    // (May already be started above; guard to avoid double-start)
+    if (!wss) {
+      const wsPort = parseInt(process.env.UI_WS_PORT || '3006', 10);
+      await startWsBroadcast(wsPort);
+    }
 
     // Start lightweight HTTP API for paginated data access (CORS-enabled)
     let httpPort = parseInt(process.env.PORT || '3005', 10);
@@ -133,10 +168,11 @@ async function main() {
     await startHttpApi(httpPort);
 
     console.log('🎯 Server ready! WebSocket ingestion active.');
-    console.log(`💻 Start Next.js UI with: NEXT_PUBLIC_UI_WS_URL=ws://localhost:${wsPort} npm run dev`);
+    const wsPortLog = parseInt(process.env.UI_WS_PORT || '3006', 10);
+    console.log(`💻 Start Next.js UI with: NEXT_PUBLIC_UI_WS_URL=ws://localhost:${wsPortLog} npm run dev`);
     try {
       const runtimePath = path.join(process.cwd(), '.runtime-ports.json');
-      fs.writeFileSync(runtimePath, JSON.stringify({ ws_port: wsPort, http_port: httpPort }, null, 2));
+      fs.writeFileSync(runtimePath, JSON.stringify({ ws_port: wsPortLog, http_port: httpPort }, null, 2));
     } catch {}
 
     // Keep server running
@@ -333,12 +369,28 @@ async function startHttpApi(port: number): Promise<void> {
 
         const pricedCount = allTokens.filter(t => t.price_usd != null).length;
 
+        const pinnedSymbols = new Set(['ETH', 'WETH', 'WBTC', 'USDT', 'USDC', 'DAI']);
+
         // Filter tokens by search
         let filtered = allTokens.filter(t => {
           if (!q) return true;
           const sym = (t.symbol || '').toLowerCase();
           const addr = (t.address || '').toLowerCase();
           return sym.includes(q) || addr.includes(q);
+        });
+
+        // Drop obviously bad tokens (no price, zero, or absurd) unless pinned
+        filtered = filtered.filter(t => {
+          const symbol = (t.symbol || '').toUpperCase();
+          const pinned = pinnedSymbols.has(symbol);
+          const price = typeof t.price_usd === 'number' ? t.price_usd : null;
+          if (pinned) return true;
+          if (price == null || !Number.isFinite(price)) return false;
+          if (price <= 0) return false;
+          if (price > 1_000_000) return false;
+          const status = t.heartbeat?.status?.toLowerCase();
+          if (!t.active && status && status !== 'healthy' && status !== 'warm') return false;
+          return true;
         });
 
         // Filter by version tab
@@ -535,31 +587,32 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
     .slice(0, 50);
 
   const rawTokens = getTokens().map(t => ({ ...t, heartbeat: t.heartbeat ?? undefined }));
+  // Show all tokens with price OR liquidity OR mcap, or if they're active
   const tokens = rawTokens.filter(t => {
-    const liquidity = typeof t.liquidity_usd === 'number' ? t.liquidity_usd : null;
-    if (liquidity != null && liquidity >= MIN_TOKEN_USD) return true;
-    const fallback = typeof t.mcap_onchain_usd === 'number' ? t.mcap_onchain_usd : null;
-    return fallback != null && fallback >= MIN_TOKEN_USD;
+    const hasPrice = typeof t.price_usd === 'number' && Number.isFinite(t.price_usd) && t.price_usd > 0;
+    const hasLiquidity = typeof t.liquidity_usd === 'number' && t.liquidity_usd >= MIN_TOKEN_USD;
+    const hasMcap = typeof t.mcap_onchain_usd === 'number' && t.mcap_onchain_usd >= MIN_TOKEN_USD;
+    const isActive = t.active === true;
+    // Show if it has any meaningful data or is active
+    return hasPrice || hasLiquidity || hasMcap || isActive;
   });
 
   const rawPools = getPools();
+  // Show pools with TVL or reserves above threshold, or if they have volume
   const pools = rawPools.filter(p => {
     const tvl = typeof p.tvl_usd === 'number' ? p.tvl_usd : null;
     if (tvl != null && tvl >= MIN_POOL_USD) return true;
     const partial = (typeof p.pool0_usd === 'number' ? p.pool0_usd : 0) + (typeof p.pool1_usd === 'number' ? p.pool1_usd : 0);
-    return partial >= MIN_POOL_USD;
+    if (partial >= MIN_POOL_USD) return true;
+    // Also show pools with volume even if TVL is low
+    const hasVolume = typeof p.volume_24h_usd === 'number' && p.volume_24h_usd > 0;
+    return hasVolume;
   });
   const oracles = getOracleFeeds();
 
   console.log(`📡 Broadcasting: ${tokens.length} tokens, ${pools.length} pools, ${oracles.length} oracles`);
   if (tokens.length > 0) {
     console.log(`📡 First token: ${tokens[0].symbol} active=${tokens[0].active} price=${tokens[0].price_usd} heartbeat=${JSON.stringify(tokens[0].heartbeat)}`);
-    // Check a few more tokens
-    for (let i = 1; i < Math.min(5, tokens.length); i++) {
-      if (tokens[i].price_usd || tokens[i].active) {
-        console.log(`📡 Token ${i}: ${tokens[i].symbol} active=${tokens[i].active} price=${tokens[i].price_usd} heartbeat=${JSON.stringify(tokens[i].heartbeat)}`);
-      }
-    }
   }
 
 

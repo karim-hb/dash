@@ -28,48 +28,49 @@ export default function Home() {
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || Dashboard;
   console.log("render main component")
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#0D1117]">
       <div className="max-w-full">
       {/* Bloomberg Terminal Header */}
-      <header className="bg-black border-b border-gray-800 px-2 py-0.5">
+      <header className="bg-[#0D1117] border-b-2 border-[#0066FF] px-5 py-3.5 shadow-lg">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="text-emerald-400 font-mono text-[10px] font-bold tracking-wider">
-              Ξ ETHEREUM TERMINAL v3.0.0
+          <div className="flex items-center gap-4">
+            <div className="w-1.5 h-8 bg-[#0066FF] shadow-[0_0_8px_rgba(0,102,255,0.5)]"></div>
+            <div className="text-[#0066FF] font-mono text-[15px] font-bold tracking-[0.15em]">
+              Ξ BLOOMBERG TERMINAL v3.0.0
             </div>
-            <div className="text-gray-700 font-mono text-[8px] tracking-wide">
-              BLOOMBERG-STYLE ANALYTICS
+            <div className="text-[#8B949E] font-mono text-[10px] tracking-wide border-l-2 border-[#21262D] pl-4">
+              ETHEREUM ANALYTICS PLATFORM
             </div>
           </div>
 
           {/* Status Bar */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <div className="w-1 h-1 bg-emerald-600 rounded-full"></div>
-              <span className="text-emerald-400 font-mono text-[8px] tracking-wide">LIVE</span>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 bg-[#00FF66] rounded-full animate-pulse shadow-[0_0_6px_rgba(0,255,102,0.6)]"></div>
+              <span className="text-[#00FF66] font-mono text-[10px] font-bold tracking-wide">LIVE</span>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-1 h-1 bg-sky-600 rounded-full"></div>
-              <span className="text-sky-400 font-mono text-[8px] tracking-wide">SYNC</span>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 bg-[#0066FF] rounded-full animate-pulse shadow-[0_0_6px_rgba(0,102,255,0.6)]"></div>
+              <span className="text-[#0066FF] font-mono text-[10px] font-bold tracking-wide">SYNC</span>
             </div>
-            <div className="text-gray-600 font-mono text-[8px] tracking-wide">
-              {new Date().toLocaleTimeString('en-US', { hour12: false })}
+            <div className="text-[#C9D1D9] font-mono text-[11px] font-bold tracking-wide border-l-2 border-[#21262D] pl-4">
+              {new Date().toLocaleTimeString('en-US', { hour12: false, timeZone: 'America/New_York' })} EST
             </div>
           </div>
         </div>
       </header>
 
       {/* Navigation Bar */}
-      <nav className="bg-black border-b border-gray-800 px-2 py-0.5">
-        <div className="flex gap-3">
+      <nav className="bg-[#161B22] border-b border-[#21262D] px-5 py-2.5">
+        <div className="flex gap-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`font-mono text-[9px] px-2 py-1 border-b transition-colors tracking-wider ${
+              className={`font-mono text-[11px] px-6 py-3 border-b-2 transition-all tracking-wider font-bold rounded-t ${
                 activeTab === tab.id
-                  ? 'text-emerald-400 border-emerald-500 bg-gray-900'
-                  : 'text-gray-600 border-transparent hover:text-gray-400 hover:border-gray-700'
+                  ? 'text-[#0D1117] bg-[#0066FF] border-[#0066FF] shadow-[0_4px_12px_rgba(0,102,255,0.4)]'
+                  : 'text-[#8B949E] border-transparent hover:text-[#0066FF] hover:bg-[#21262D] hover:border-[#0066FF]/30'
               }`}
             >
               {tab.label}
@@ -79,13 +80,13 @@ export default function Home() {
       </nav>
 
       {/* Filters Panel */}
-      <div className="px-3 py-1 bg-black border-b border-gray-800">
+      <div className="px-4 py-2 bg-[#0D1117] border-b border-[#21262D]">
         <FilterPanel />
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 px-3 py-2">
-        <div className="bg-black border border-gray-800">
+      <main className="flex-1 px-4 py-3">
+        <div className="bg-[#0D1117] border border-[#21262D] shadow-xl">
           <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)', minHeight: '600px' }}>
             <ActiveComponent />
           </div>
@@ -93,25 +94,31 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-black border-t border-gray-800 px-2 py-0.5">
+      <footer className="bg-[#0D1117] border-t-2 border-[#0066FF] px-5 py-3.5 shadow-lg">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <div className="w-1 h-1 bg-emerald-600 rounded-full"></div>
-              <span className="text-emerald-400 font-mono text-[8px] tracking-widest">WS SUB</span>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 bg-[#00FF66] rounded-full animate-pulse shadow-[0_0_6px_rgba(0,255,102,0.6)]"></div>
+              <span className="text-[#00FF66] font-mono text-[10px] font-bold tracking-wide">WS ACTIVE</span>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-1 h-1 bg-sky-600 rounded-full"></div>
-              <span className="text-sky-400 font-mono text-[8px] tracking-widest">SYNC</span>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 bg-[#0066FF] rounded-full animate-pulse shadow-[0_0_6px_rgba(0,102,255,0.6)]"></div>
+              <span className="text-[#0066FF] font-mono text-[10px] font-bold tracking-wide">RPC SYNC</span>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-1 h-1 bg-gray-700 rounded-full"></div>
-              <span className="text-gray-600 font-mono text-[8px] tracking-widest">NO ERR</span>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 bg-[#8B949E] rounded-full"></div>
+              <span className="text-[#8B949E] font-mono text-[10px] font-bold tracking-wide">NO ERRORS</span>
+            </div>
+            <div className="text-[#C9D1D9] font-mono text-[9px] border-l-2 border-[#21262D] pl-4">
+              ETH/USD: $3,856.42 | BTC/USD: $69,420.15
             </div>
           </div>
 
-          <div className="text-gray-700 font-mono text-[7px] tracking-widest">
-            BLOOMBERG TERMINAL v3.0.0
+          <div className="flex items-center gap-4">
+            <div className="text-[#0066FF] font-mono text-[10px] font-bold tracking-[0.15em]">
+              BLOOMBERG TERMINAL v3.0.0
+            </div>
+            <div className="w-1.5 h-5 bg-[#0066FF] shadow-[0_0_8px_rgba(0,102,255,0.5)]"></div>
           </div>
         </div>
       </footer>

@@ -4,6 +4,7 @@ import { getFeeHistoryAnalytics } from '../metrics/aggregator';
 import { hexToBigInt } from '@/lib/util/hex';
 import { formatUnits } from 'ethers';
 import { logErrorWithConsole } from '../utils/errorLogger';
+import BigNumber from 'bignumber.js';
 
 type PercentileMap = {
   p10: number;
@@ -122,14 +123,24 @@ class GasOracle {
       p90,
     };
 
-    const pressure = Math.min(0.5, mempoolCount / 2000);
-    const predictedBaseFeeGwei = baseFeeGwei != null ? Math.max(baseFeeGwei, baseFeeGwei * (1 + pressure)) : null;
+    // Use BigNumber for precise pressure and fee calculations
+    const pressureBN = new BigNumber(mempoolCount).div(2000);
+    const pressure = BigNumber.max(BigNumber.min(pressureBN, new BigNumber(0.5)), new BigNumber(0)).toNumber();
+
+    let predictedBaseFeeGwei: number | null = null;
+    if (baseFeeGwei != null) {
+      const baseFeeBN = new BigNumber(baseFeeGwei);
+      const predictedBN = BigNumber.max(baseFeeBN, baseFeeBN.multipliedBy(new BigNumber(1).plus(pressure)));
+      predictedBaseFeeGwei = predictedBN.toNumber();
+    }
+
     const predictedPriorityFeeGwei = p75 || historyPercentiles.p90 || historyPercentiles.p50;
 
+    // Use BigNumber for precise suggestion calculations
     const suggestions = {
-      slow: baseFeeGwei != null ? baseFeeGwei + (p25 || historyPercentiles.p10) : null,
-      average: baseFeeGwei != null ? baseFeeGwei + (p50 || historyPercentiles.p50) : null,
-      fast: baseFeeGwei != null ? baseFeeGwei + (p90 || historyPercentiles.p90) : null,
+      slow: baseFeeGwei != null ? new BigNumber(baseFeeGwei).plus(p25 || historyPercentiles.p10).toNumber() : null,
+      average: baseFeeGwei != null ? new BigNumber(baseFeeGwei).plus(p50 || historyPercentiles.p50).toNumber() : null,
+      fast: baseFeeGwei != null ? new BigNumber(baseFeeGwei).plus(p90 || historyPercentiles.p90).toNumber() : null,
     };
 
     if (baseFeeGwei != null) {
@@ -144,7 +155,8 @@ class GasOracle {
       }
     }
 
-    const confidence = Math.min(1, mempoolCount / 200);
+    // Use BigNumber for precise confidence calculation
+    const confidence = BigNumber.max(BigNumber.min(new BigNumber(mempoolCount).div(200), new BigNumber(1)), new BigNumber(0)).toNumber();
 
     this.latest = {
       updatedAt: now,

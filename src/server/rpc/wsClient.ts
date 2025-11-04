@@ -25,6 +25,7 @@ interface PendingRequest {
   resolve: (value: any) => void;
   reject: (error: Error) => void;
   timeout: NodeJS.Timeout;
+  method?: string; // Store method name for error logging
 }
 
 // WebSocket JSON-RPC client with concurrent request support
@@ -134,16 +135,22 @@ export class WsJsonRpc extends EventEmitter {
       params
     };
 
+    // Store method name for error logging
+    (request as any).method = method;
+
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pendingRequests.delete(id);
-        reject(new Error(`RPC timeout: ${method}`));
+        const timeoutError = new Error(`RPC timeout: ${method}`);
+        logErrorWithConsole(timeoutError, `RPC timeout ${method}`);
+        reject(timeoutError);
       }, timeoutMs);
 
       this.pendingRequests.set(id, {
         resolve,
         reject,
-        timeout
+        timeout,
+        method
       });
 
       try {
@@ -151,10 +158,13 @@ export class WsJsonRpc extends EventEmitter {
           this.ws.send(JSON.stringify(request));
         } else {
           clearTimeout(timeout);
-          reject(new Error('WebSocket not connected'));
+          const error = new Error('WebSocket not connected');
+          logErrorWithConsole(error, `RPC ${method}`);
+          reject(error);
         }
       } catch (error) {
         clearTimeout(timeout);
+        logErrorWithConsole(error, `RPC ${method}`);
         reject(error);
       }
     });
@@ -196,11 +206,35 @@ export class WsJsonRpc extends EventEmitter {
       // Handle RPC responses
       if (message.id && this.pendingRequests.has(message.id)) {
         const pending = this.pendingRequests.get(message.id)!;
-        this.pendingRequests.delete(message.id);
+        const requestId = message.id;
+        this.pendingRequests.delete(requestId);
         clearTimeout(pending.timeout);
 
         if (message.error) {
-          pending.reject(new Error(`RPC Error: ${message.error.message}`));
+          // Get method name from pending request
+          const methodName = pending.method || 'unknown';
+          
+          // Log RPC errors to serverError.log
+          const error = new Error(`RPC Error: ${message.error.message}`);
+          (error as any).code = message.error.code;
+          (error as any).rpcId = requestId;
+          (error as any).method = methodName;
+          
+          // Check if this is an expected execution reverted error (don't spam logs for expected errors)
+          const isExecutionReverted = message.error.code === -32000 || 
+                                     message.error.code === -32001 ||
+                                     message.error.message?.includes('execution reverted') ||
+                                     message.error.message?.includes('execution revert');
+          
+          if (isExecutionReverted) {
+            // Still log but as warning for expected errors (less verbose)
+            logWarningWithConsole(error, `RPC ${methodName}`);
+          } else {
+            // Log unexpected errors
+            logErrorWithConsole(error, `RPC ${methodName}`);
+          }
+          
+          pending.reject(error);
         } else {
           pending.resolve(message.result);
         }
@@ -228,7 +262,8 @@ export class WsJsonRpc extends EventEmitter {
   // Schedule reconnect with exponential backoff
   private scheduleReconnect(): void {
     setTimeout(() => {
-      this.connect().catch(() => {
+      this.connect().catch((error) => {
+        logWarningWithConsole(error, 'WebSocket reconnection');
         // Reconnect failed, will retry again
       });
     }, this.reconnectDelay);

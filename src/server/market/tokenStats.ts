@@ -3,6 +3,7 @@ import ERC20 from '../abi/ERC20.json';
 import { getConfig } from '@/lib/config';
 import { getPools, getTokens, getOracleFeeds, upsertToken, upsertPool } from './registry';
 import { getUsdPriceForToken } from './priceEngine';
+import { logErrorWithConsole, logWarningWithConsole } from '../utils/errorLogger';
 import { recordTokenPrice, getChange24hPercent } from './priceHistory';
 import { computePoolMetrics24h, computeTokenMetrics24h } from './metrics';
 import { isTokenActive } from './tokenDiscovery';
@@ -220,8 +221,14 @@ export function startTokenStatsRefresh(): void {
   }
 
   // Run immediately and then periodically (longer interval for thousands of tokens)
-  refreshOnce().catch(() => {});
-  setInterval(() => { refreshOnce().catch(() => {}); }, 60_000); // Every minute for thousands of tokens
+  refreshOnce().catch((err) => {
+    logErrorWithConsole(err, 'Token stats refresh initial');
+  });
+  setInterval(() => {
+    refreshOnce().catch((err) => {
+      logWarningWithConsole(err, 'Token stats refresh periodic');
+    });
+  }, 60_000); // Every minute for thousands of tokens
 }
 
 

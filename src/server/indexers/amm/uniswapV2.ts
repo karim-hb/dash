@@ -48,6 +48,35 @@ async function handlePairCreated(log: any, dexName: string) {
 
     console.log(`🏦 ${dexName} V2: discovered pair ${pair} (${token0.slice(0,6)}…/${token1.slice(0,6)}…)`);
 
+    // Store to MongoDB
+    try {
+      const { getPoolMetadataCollection } = await import('../../../lib/db/mongo');
+      const metadataCollection = getPoolMetadataCollection();
+      const metadata = {
+        poolAddress: pair,
+        chainId: 1, // Ethereum mainnet
+        protocol: dexName,
+        factoryAddress: (amm as any).uniswap_v2?.factory,
+        token0Address: token0,
+        token1Address: token1,
+        feeTier: 30, // 0.3% for V2
+        creationBlock: log.blockNumber,
+        creationTimestamp: new Date(),
+        status: 'active' as const,
+        lastActivityBlock: log.blockNumber,
+        liquidityUSD: 0, // Will be updated by metrics
+        volume24hUSD: 0,
+        fees24hUSD: 0
+      };
+      await metadataCollection.updateOne(
+        { poolAddress: pair },
+        { $set: metadata },
+        { upsert: true }
+      );
+    } catch (dbError) {
+      logErrorWithConsole(dbError, 'V2 pool metadata storage failed');
+    }
+
     await registerPool({ dex: dexName, version: 'V2', address: pair, token0, token1, feeBps: 30 });
 
     // Seed reserves immediately to enable pricing before first Sync
@@ -105,9 +134,12 @@ export async function startUniswapV2Indexer(): Promise<void> {
   // Backfill recent PairCreated events
   try {
     const latest = await provider.getBlockNumber();
-    const from = Math.max(0, latest - config.BACKFILL_BLOCKS);
+    const from = Math.max(0, latest - 10000); // Backfill last 10k blocks
+    console.log(`🏦 V2 backfilling pairs from block ${from} to ${latest}`);
     const logs = await provider.getLogs({ address: factory, topics: [PAIR_CREATED_TOPIC], fromBlock: from, toBlock: latest });
+    console.log(`🏦 Found ${logs.length} PairCreated logs`);
     for (const log of logs || []) await handlePairCreated(log, 'Uniswap');
+    console.log('🏦 V2 backfill completed');
   } catch (e) {
     logErrorWithConsole(e, 'UniswapV2 backfill failed');
   }
@@ -118,42 +150,98 @@ export async function startUniswapV2Indexer(): Promise<void> {
     const LOOKBACK = Number(process.env.VOL_24H_LOOKBACK_BLOCKS || '7200');
     const from = Math.max(0, latest - LOOKBACK);
     const poolsV2 = getPools().filter((p: any) => p.version === 'V2').map((p: any) => p.address);
+    console.log(`🏦 Backfilling swaps for ${poolsV2.length} V2 pools from block ${from} to ${latest}`);
     const chunk = 200;
     for (let i = 0; i < poolsV2.length; i += chunk) {
       const addrs = poolsV2.slice(i, i + chunk);
       try {
         const logs = await provider.getLogs({ address: addrs, topics: [SWAP_TOPIC], fromBlock: from, toBlock: latest });
+        console.log(`🏦 Processing ${logs.length} swap logs for chunk ${i / chunk + 1}/${Math.ceil(poolsV2.length / chunk)}`);
         for (const log of logs || []) {
           try {
-            const pair = (log.address || '').toLowerCase();
-            const pool = getPools().find((p: any) => p.address.toLowerCase() === pair);
-            if (!pool) continue;
-            const parsed = IPair.parseLog({ topics: log.topics, data: log.data });
-            if (!parsed) continue;
-            const a0in = BigInt(parsed.args[1]);
-            const a1in = BigInt(parsed.args[2]);
-            const a0out = BigInt(parsed.args[3]);
-            const a1out = BigInt(parsed.args[4]);
-            let amount: bigint = BigInt(0);
-            let token: string = pool.token0;
-            const zero = BigInt(0);
-            if (a0in > zero) { amount = a0in; token = pool.token0; }
-            else if (a1in > zero) { amount = a1in; token = pool.token1; }
-            else if (a0out > zero) { amount = a0out; token = pool.token0; }
-            else if (a1out > zero) { amount = a1out; token = pool.token1; }
-            const price = getUsdPriceViaWeth(token);
-            const decimals = getTokenDecimalsCached(token);
-            if (price == null) continue;
-            const qty = Number(amount) / 10 ** decimals;
-            const usd = qty * (price || 0);
-            if (isFinite(usd) && usd > 0) {
-              recordSwapBucket(pair, price || 0, usd, log.blockNumber).catch(() => {});
-            }
-          } catch {}
+            await processSwapLog(log);
+          } catch (err) {
+            console.warn(`🏦 Failed to process swap log:`, err);
+          }
         }
-      } catch {}
+      } catch (err) {
+        console.warn(`🏦 Failed to backfill swaps for chunk:`, err);
+      }
     }
-  } catch {}
+    console.log('🏦 V2 swap backfill completed');
+  } catch (e) {
+    logErrorWithConsole(e, 'UniswapV2 swap backfill failed');
+  }
+
+  async function processSwapLog(log: any): Promise<void> {
+    try {
+      const poolAddr = (log.address || '').toLowerCase();
+      const pool = getPools().find((p: any) => p.address.toLowerCase() === poolAddr);
+      if (!pool) return;
+
+      const parsed = IPair.parseLog({ topics: log.topics, data: log.data });
+      if (!parsed) return;
+
+      const amount0In = BigInt(parsed.args[0]);
+      const amount1In = BigInt(parsed.args[1]);
+      const amount0Out = BigInt(parsed.args[2]);
+      const amount1Out = BigInt(parsed.args[3]);
+
+      const decimals0 = getTokenDecimalsCached(pool.token0);
+      const decimals1 = getTokenDecimalsCached(pool.token1);
+
+      const qty0 = Number(ethers.formatUnits(amount0In > amount0Out ? amount0In : amount0Out, decimals0));
+      const qty1 = Number(ethers.formatUnits(amount1In > amount1Out ? amount1In : amount1Out, decimals1));
+
+      const [price0, price1] = await Promise.all([
+        getUsdPriceForToken(pool.token0),
+        getUsdPriceForToken(pool.token1),
+      ]);
+
+      let volumeUSD = 0;
+      if (price0 != null && isFinite(price0) && qty0 > 0) {
+        volumeUSD = qty0 * price0;
+      } else if (price1 != null && isFinite(price1) && qty1 > 0) {
+        volumeUSD = qty1 * price1;
+      }
+
+      if (!isFinite(volumeUSD) || volumeUSD <= 0) return;
+
+      const feeBps = pool.fee_bps ?? 30;
+      const feeUSD = volumeUSD * (feeBps / 10000);
+
+      // Store to MongoDB
+      try {
+        const { getPoolEventsCollection } = await import('../../../lib/db/mongo');
+        const eventsCollection = getPoolEventsCollection();
+        const event = {
+          poolAddress: poolAddr,
+          chainId: 1,
+          eventType: 'Swap',
+          blockNumber: log.blockNumber,
+          logIndex: log.logIndex,
+          timestamp: new Date(),
+          amount0: qty0.toString(),
+          amount1: qty1.toString(),
+          volumeUSD,
+          feeUSD,
+        };
+        await eventsCollection.insertOne(event);
+      } catch (dbError) {
+        logErrorWithConsole(dbError, 'V2 swap event storage failed');
+      }
+
+      recordSwapUsd(poolAddr, volumeUSD, feeUSD);
+
+      const priceForBucket = price0 != null && isFinite(price0) ? price0 :
+                            (price1 != null && isFinite(price1) ? price1 : null);
+      if (priceForBucket) {
+        recordSwapBucket(poolAddr, priceForBucket, volumeUSD, log.blockNumber).catch(() => {});
+      }
+    } catch (e) {
+      logErrorWithConsole(e, 'processSwapLog error');
+    }
+  }
 
   // Live subscriptions
   provider.on({ address: factory, topics: [PAIR_CREATED_TOPIC] }, (res: any) => {
@@ -167,35 +255,7 @@ export async function startUniswapV2Indexer(): Promise<void> {
 
   // Subscribe to Swap events (compute 24h volume/fees)
   provider.on({ topics: [SWAP_TOPIC] }, (log: any) => {
-    try {
-      const pair = (log.address || '').toLowerCase();
-      const pool = getPools().find((p: any) => p.address.toLowerCase() === pair);
-      if (!pool) return;
-      const parsed = IPair.parseLog({ topics: log.topics, data: log.data });
-      if (!parsed) return;
-      const a0in = BigInt(parsed.args[1]);
-      const a1in = BigInt(parsed.args[2]);
-      const a0out = BigInt(parsed.args[3]);
-      const a1out = BigInt(parsed.args[4]);
-      let amount: bigint = BigInt(0);
-      let token: string = pool.token0;
-      const zero = BigInt(0);
-      if (a0in > zero) { amount = a0in; token = pool.token0; }
-      else if (a1in > zero) { amount = a1in; token = pool.token1; }
-      else if (a0out > zero) { amount = a0out; token = pool.token0; }
-      else if (a1out > zero) { amount = a1out; token = pool.token1; }
-      const price = getUsdPriceViaWeth(token);
-      const decimals = getTokenDecimalsCached(token);
-      if (price == null) return;
-      const qty = Number(amount) / 10 ** decimals;
-      const usd = qty * (price || 0);
-      const feeBps = pool.fee_bps || 30;
-      const feeUsd = usd * (feeBps / 10000);
-      if (isFinite(usd) && usd > 0) recordSwapUsd(pair, usd, feeUsd);
-      if (isFinite(usd) && usd > 0) {
-        recordSwapBucket(pair, price || 0, usd, log.blockNumber).catch(() => {});
-      }
-    } catch (e) { logErrorWithConsole(e, 'Swap handler error'); }
+    processSwapLog(log).catch(err => logErrorWithConsole(err, 'Swap handler error'));
   });
 }
 

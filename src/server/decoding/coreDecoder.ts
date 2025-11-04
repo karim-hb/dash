@@ -1261,7 +1261,9 @@ export class CoreDecoder {
 
     // Cache this pattern
     if (sel) {
-      this.registry.cacheDiscoveredSignature(sel, genericSig).catch(() => {});
+      this.registry.cacheDiscoveredSignature(sel, genericSig).catch((err) => {
+        logWarningWithConsole(err, 'Signature cache');
+      });
     }
 
     return {

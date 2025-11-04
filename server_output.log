@@ -1,0 +1,1756 @@
+🚀 Starting Ethereum Mempool Tracker Server...
+✅ MongoDB connected and initialized
+✅ MongoDB initialized
+[MongoDB hydration] Error: MongoDB not initialized
+    at getDb (/home/hb/dashboard/tracker_web/src/lib/db/mongo.ts:65:18)
+    at main (/home/hb/dashboard/tracker_web/src/server/index.ts:53:20)
+✅ Loaded 5017 signatures (main + 4byte cache)
+✅ ABI registry initialized
+✅ Initialized 46 tokens from catalog
+✅ Market registries initialized
+🔒 Ingestion pipelines temporarily disabled for HTTP API testing
+⏭️ Skipped initializing included transactions from recent blocks (Nethermind issues)
+✅ WebSocket broadcaster listening on ws://localhost:3006
+📡 Starting WebSocket broadcast loop...
+📡 Starting WebSocket broadcast loop...
+🔒 Oracle updates temporarily disabled for HTTP API testing
+🏦 Starting Uniswap V2 indexer...
+🏦 Starting Uniswap V2 indexer...
+🏦 V2 backfilling pairs from block 23699942 to 23709942
+✅ MongoDB connected and initialized
+✅ WebSocket connected
+📡 Broadcasting: 0 tokens, 0 pools, 0 oracles
+🏦 Found 289 PairCreated logs
+🏦 Uniswap V2: discovered pair 0xf7f78be6da990cda25e7ae3d8ecb0b1fead9036b (0xc02a…/0xcc69…)
+📊 Storing token FINU with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x30b202473573c7318152461863f6d16ffc4685c2 (0xc02a…/0xefe8…)
+📊 Storing token RBH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x8d0f3196110a73a3930de6edb06911f3a620ace4 (0x2351…/0xc02a…)
+📊 Storing token vwance with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe6881ac51401d9c192bafc9a3059dc8e1dfc7633 (0x6021…/0xc02a…)
+📊 Storing token ATB with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x3690a6324ba1692c99b332939b4e387b1fc02569 (0xc02a…/0xfcf4…)
+📊 Storing token ZRC with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x46115fa37b152f40dc7d73544908035079a766cf (0x9d17…/0xc02a…)
+📊 Storing token CREPE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x85c4332d2b1977ff1196251e2c2bf373e08d3cd1 (0x2884…/0xc02a…)
+📊 Storing token APX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x38a557fe7f8d947ede44e3e549af6ffe7262009c (0x4a1b…/0xc02a…)
+📊 Storing token TITAN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe74d7adedc36ede540839f13348f327fdaa6a0d4 (0x19c7…/0xc02a…)
+📊 Storing token FNFN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x5c08656aca8bd844636df6058f67f1d42dc12fda (0xbb69…/0xc02a…)
+📊 Storing token DMD with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x345132a5c2fd7ed3e794f2533c89be8a048eb75e (0x877f…/0xc02a…)
+📊 Storing token 🪙PMMT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x736eb3ca9efc6fa846d194ada15e3eb0a040468f (0x1632…/0xc02a…)
+📊 Storing token MNRI with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x33a4935fe74ee2532914b426d704602d7337b884 (0xc02a…/0xfa62…)
+📊 Storing token ONPUMP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0878de5f8ddd0b647f681769a62824fdbabd5f45 (0x068a…/0xc02a…)
+📊 Storing token BZIL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0829fd8b442a2b7804568f9badf4113122f524bf (0xa822…/0xc02a…)
+📊 Storing token METEOR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x32606f809bfc07629b33ae67cb1f5b9b72eebf09 (0x4df4…/0xc02a…)
+📊 Storing token SPX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x331bbd93ee456be91b92359aa2ff31937ec1d1bb (0xc02a…/0xe811…)
+📊 Storing token LENDF with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf78e0cdac0fd0f7aa425a80938bf52578dcc50c4 (0x9f93…/0xc02a…)
+📊 Storing token VARX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe768da82bc5f64702a1094154a14297d27672e06 (0x664b…/0xc02a…)
+📊 Storing token MWG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x888d2af12aef3513c416f2553b85ad5a20d4fb34 (0x51c4…/0xc02a…)
+📊 Storing token STMV with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xea52b7dafb10bac621e69a5a933843368794f22c (0xa716…/0xc02a…)
+📊 Storing token CRVS with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x72314f36b4873a821fcf429faaf5ed7512dda82e (0xc02a…/0xf2c6…)
+📊 Storing token TRX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x8b547aa8cd92981ce96c7fc102e50e4c114b2ca7 (0x0d30…/0xc02a…)
+📊 Storing token XRP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe2179401c7340b438812db9d40d9b4148e7c2fe5 (0xc02a…/0xfc0f…)
+📊 Storing token MYTH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x27ef0791e53732fc878999a302b64257fbbeb0e1 (0x3139…/0xc02a…)
+📊 Storing token 🐲ATTH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x037bfa0858ffcf9812b8a36418147e7d93e1a7a7 (0xc02a…/0xd593…)
+📊 Storing token APXM with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0895dd4a9aab7a4457f34a6268a0ec95fe7b2f16 (0x8341…/0xc02a…)
+📊 Storing token BIG CHUNGUS with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x93ec2b45d66dcb2fb0b16f72fe54bfb7ddb8ac8f (0xc02a…/0xc7d6…)
+📡 Broadcasting: 0 tokens, 0 pools, 0 oracles
+📊 Storing token SLSH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x98be750dac38dd501df67cd5b37caabfa5c92b44 (0x9e8f…/0xc02a…)
+📊 Storing token UNIVA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x1238412a80c6f62071f81178c9672fd2e86509be (0x9544…/0xc02a…)
+📊 Storing token TRICK with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x079c91f5c4c9fbee7f6501f74e5d06797c8983d6 (0x3741…/0xc02a…)
+📊 Storing token FTMX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0a691cacce88ab8ff09c1cc1671dec7ad6f1dec2 (0x0538…/0xc02a…)
+📊 Storing token ☁️NMBG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x02a2751b68cf56b4548f3615585bec330581eeb4 (0x9065…/0xc02a…)
+📊 Storing token BDWX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xb7a7c7ab6c65c9ce3de354514c181474f3af45d7 (0x4a40…/0xc02a…)
+📊 Storing token HYPMG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xb34179b389d583cff66acfdeb5d1bf89ce53dcdf (0x2d96…/0xc02a…)
+📊 Storing token LOTR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xb4cf6dc04299d137e355399595877438150a6cec (0x3847…/0xc02a…)
+📊 Storing token TRAX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0bb6fe16e2617f4db23e84919fd2440a0fc11ddd (0xc02a…/0xf926…)
+📊 Storing token CST with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x202b229139d4826f7af2cd572940e8ddceac3e93 (0x9544…/0xa02c…)
+📊 Storing token TRICK with heartbeat: metrics (stale)
+📊 Storing token TREAT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x61b9ef609b02345d6ec35b560513b28b1804832d (0x007c…/0xc02a…)
+📊 Storing token BLR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xbefa2bceba34c782f172998a8870f9b078ddf5a0 (0xc02a…/0xde94…)
+📊 Storing token ADG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xaf999cf6e7becce6babf68ac6cde90d2ed2e4aca (0x15d2…/0xc02a…)
+📊 Storing token X444 with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x76aab6c2a695638d43fceace226c84711b69dc76 (0x91ee…/0xc02a…)
+📊 Storing token ARM with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd4ae2fe2a13af863bee17ad09e8761f137aeb046 (0x7395…/0xc02a…)
+📊 Storing token PENDLE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x22ff4b7d0bb593e63ec6c14704af0666c5e27ba2 (0xb0cb…/0xc02a…)
+📊 Storing token CARLSON with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xa605c1c6b58d5f2511455e95a0296d7b45ead059 (0xa743…/0xc02a…)
+📊 Storing token 🐱GROR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xfed16aa3ce35a43c496ab7bd6458dba934441e58 (0x5359…/0xc02a…)
+📊 Storing token VEXEL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd0bf82a6e21ca8c3fffd8ee61195f35ae69bb491 (0x2481…/0xc02a…)
+📊 Storing token CRPX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x2e816d4061a90e58f34b8aa2e450442d4fd2834a (0xae58…/0xc02a…)
+📊 Storing token 🥝KTKW with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x45e7e722610c65c755c111f16729ec605f5be842 (0xae93…/0xc02a…)
+📊 Storing token ELONGATED MUSKET with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x3a82f6b386ab08b60efd4c3836ad474fd6424861 (0x2d5c…/0xc02a…)
+📊 Storing token COMET with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x2ab662b1a8da82677ae61856c2226e3c6065b729 (0x7420…/0xc02a…)
+📊 Storing token MHV with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf66843b896618c37923e8e53c4481ef559f0fd92 (0x9a26…/0xc02a…)
+📊 Storing token VINT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0a022d0af2d1fa37e260cc9a7e9b8eff188552cd (0xc02a…/0xfee0…)
+📊 Storing token NWM with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x5a1a46a04d3f8ca409e00cddca9b40bce77e5621 (0x3fe6…/0xc02a…)
+📊 Storing token NEKOT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x6ade35322b3daff21cccee891d0365b701aed3a3 (0x578b…/0xc02a…)
+📊 Storing token KITE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe7c720e4c8cbf6bf9349a8f10add7db3ee494cb5 (0xaec2…/0xc02a…)
+📊 Storing token HOBBY with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x9ab95915616ef4f2559b3a8dab48d0dc792630e2 (0x6262…/0xc02a…)
+📊 Storing token 👻FMOR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x452c6eb8179dfdad77b3b324b8cbb2f456c0e642 (0xc02a…/0xfe68…)
+📊 Storing token ATL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x3b4f0817743f817343a8b1a9e131643e2e1e5cb7 (0xaf7a…/0xc02a…)
+📊 Storing token CLIFFORD with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf071bb714eb40e5d42ea684ef9b36bfc181fdafe (0x2225…/0xc02a…)
+📊 Storing token 🦊BYIG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf4ccb91189f977367d614d505bd2af242b94eea4 (0xc02a…/0xd6a6…)
+📊 Storing token puppies with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xffb86bfc48f1296b4b124bfefdf77acfa4480a2e (0x7e64…/0xc02a…)
+📊 Storing token ELEF with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x219f381195cbb77514b69272fb3414297531a8de (0x31c3…/0xc02a…)
+📊 Storing token RPR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x9cdb3522783020f2e16c949b623621bffbb1af1b (0x32cb…/0xc02a…)
+📊 Storing token MORDR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x946254e83df111f3118a51ea78ecb085f3cfd0e9 (0x10fd…/0xc02a…)
+📊 Storing token MAN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xbe901a16e13c09f89d6f5476f8b9b2da1113e031 (0x57a2…/0xc02a…)
+📊 Storing token HP100 with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xcd49c31aaabfac3259fa070b5abcbee698ce9b98 (0x198a…/0xc02a…)
+📊 Storing token XRP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xeacf2b55044867b6620f6c3fdaf6e604cd59fbb4 (0x6ee4…/0xc02a…)
+📊 Storing token AJET with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x3abe773ebf6dbbf52e469c5ad14f3794fb7c047c (0xc02a…/0xd7bc…)
+📊 Storing token GOW with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x404d7072f51010a15e2d1ecc678bae44a53b7ed3 (0x19cb…/0xc02a…)
+📊 Storing token MLNR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf2164bcf8b2f7dd6ab7a3a973d2011369e7b1bc1 (0x216b…/0xc02a…)
+📊 Storing token 🐉PMRX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x79a089741ed28cc801b61235a251c529d74bb03c (0x0162…/0xc02a…)
+📊 Storing token PPAI with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xdb1d83408469cd7958815cdea1e20f53cf7eba87 (0x0cde…/0xc02a…)
+📡 Broadcasting: 0 tokens, 0 pools, 0 oracles
+📊 Storing token OHTANI with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0ca52d4d6b1db080307454f86b8eff1dc4ecaaf6 (0xc02a…/0xee68…)
+📊 Storing token DNS with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x9a61e0fdc870684f925795fe7b693dd9ded3bb0c (0xc02a…/0xf329…)
+📊 Storing token VANCO with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x90032a8b7bd7ebf842dc74c7fab548243e0308ac (0xc02a…/0xc2ae…)
+📊 Storing token 💵WLCM with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xa2fa0ed2072e74601fbceafe09281ab8c7d136c3 (0xc02a…/0xe6f0…)
+📊 Storing token DDUMP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x132d0b6abe2c182191df12a5da7c4bea1036199e (0xc02a…/0xe76b…)
+📊 Storing token ALOT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x6f60aed198ae07be10980ae9176b8727b17b2bba (0xc02a…/0xc7d4…)
+📊 Storing token BAY with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x350fe80c884690349c68cb1d992309cce70f1951 (0x8ca9…/0xc02a…)
+📊 Storing token TSC with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0a9fb108db560585e08e3f833c54e67194aaf64c (0xb552…/0xc02a…)
+📊 Storing token BEAT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd52331df8da92ba71e39d1923ee7dc78d40ccef5 (0x0d66…/0xc02a…)
+📊 Storing token PNKSTR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x1dbcecd4e0bcab4fa03519c1498d8e6916fd8e45 (0x905f…/0xc02a…)
+📊 Storing token APES with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xc6e5236990c49120280f2867f1cd805484e91334 (0xc02a…/0xe6c6…)
+📊 Storing token Teal Wallpaper with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x37ce9ee9637b1a96b60c4cbb5bcad9314d95ea12 (0x4141…/0xc02a…)
+📊 Storing token 🐋WhalesClub with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x1c6cb35fd48c0413692238713b8874a47394fa30 (0x1b5b…/0xc02a…)
+📊 Storing token 🤑BYIG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x22e084b1d5f96dd38a24b21d51de6c7acb7b4f17 (0x8dd1…/0xc02a…)
+📊 Storing token TIGER with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x90ac0789329ced732df5d7df67354a389ad28e12 (0x92fb…/0xc02a…)
+📊 Storing token AAVE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x8b12230e692756c8d67add39f0ef7463ed84c100 (0x44ef…/0xc02a…)
+📊 Storing token RPG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xa9439586202d889c5c2e4686b2d9ef0239720d6b (0xc02a…/0xe599…)
+📊 Storing token NEO with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xb1c8883df097fdb07aa8a43096d4e36dc9de70bb (0x0828…/0xc02a…)
+📊 Storing token LMX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xcedece5bde5c81e59687847b0ca5a2162d782df8 (0x6d4f…/0xc02a…)
+📊 Storing token TREVT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x28fad1bb491ea904ac0d4aa51ba874e4bedb6514 (0xc02a…/0xc1f7…)
+📊 Storing token CAMA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x410728c32477b00d6798ece3f6124195e26d2a93 (0x08a2…/0xc02a…)
+📊 Storing token ARCV with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x9488f7fccc9e46200b52cf036c15a1d583dec789 (0xc02a…/0xe9b3…)
+📊 Storing token SLVT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x49ebdc7be25098487e2007af3fc329a8531e4a77 (0xb2e0…/0xc02a…)
+📊 Storing token TYP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x2773ec99c1c771b4b51d54170caeb37f68ab5d6d (0xc02a…/0xf2bf…)
+📊 Storing token PLSX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xfe2aff7c3d37cf18d3def93fcca9bcb0c3f31051 (0x9398…/0xc02a…)
+📊 Storing token ULTI with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x5ac665ffcda3268f922c2a520a3e451a6c34b3a0 (0x43e3…/0xc02a…)
+📊 Storing token ABOET with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x98becc96ae41ce5577895aef2192e52047a839f2 (0x1699…/0xc02a…)
+📊 Storing token ROLG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x1f5d5fd8e66d8783b5884a138eaaf930d991af3e (0x3075…/0xc02a…)
+📊 Storing token PPAI with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x9f022f64c4cf65d291f5ca4421409226e8b301be (0x5b36…/0xc02a…)
+📊 Storing token PEPE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x8610bcd0c87f1c832c0bc169623a8fb7bd07cb71 (0xc02a…/0xdbab…)
+📊 Storing token 💻FMSP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x1e1501b1cfd56445646d42f624d60cd3003019bc (0xaee9…/0xc02a…)
+📊 Storing token ASH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xad1a1638ee91e93be3d6707994922fb6010df989 (0xc02a…/0xe5d6…)
+📊 Storing token CRVSW with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x6d9500fa5fe6689951dc18ab54e09050da173b13 (0xc02a…/0xcbe0…)
+📊 Storing token JVX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xa02548d82905ddeaf8242456a174be6222717a6d (0x344c…/0xc02a…)
+📊 Storing token JUHDL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x387dfeb3f470a504ea2a262909d2fe0539682e12 (0x46a5…/0xc02a…)
+📊 Storing token 🐕WLAX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xc4e0a990a644b6b9baa4e22939c3ff8f7d1a59ba (0xc02a…/0xd2a6…)
+📊 Storing token HPV with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x552cb1045e9e4763ed2e23282c7bb332dbeb93a2 (0x9d9e…/0xc02a…)
+📊 Storing token SOIL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x161c0fd8e4a89cda70f360bf8b3adf5cc56f7e54 (0x7274…/0xc02a…)
+📊 Storing token COGO with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xb00b6af08b394b91d0c41fe0269cacef1818aebf (0xc02a…/0xc89e…)
+📊 Storing token 🐼PANDA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x541a309e2244e399f5672f4d18d8a4cb38bcd8bf (0xc02a…/0xf170…)
+📊 Storing token SPCR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe264d99644aa3399d6ea8ef367116f00879e29e9 (0xc02a…/0xe74f…)
+📊 Storing token LIRN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x254f0a9fe896db7527028c69195ed1a2aabfdd7f (0x79a4…/0xc02a…)
+📊 Storing token SHHE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe3756cb82d45852d875907ee0ecd153f795631f8 (0x1563…/0x54d2…)
+📊 Storing token ADvt with heartbeat: metrics (stale)
+📊 Storing token BGB with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x1859e9f06c006c21cdb580665dc325806b45a053 (0x157c…/0xc02a…)
+📊 Storing token KITE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf4d7543aa9d89b7539f11d148374f8e85b2c90bc (0x1371…/0xc02a…)
+📊 Storing token CRYCE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x75e13b22730aa0cf2ebf4f8403e2d581aa428d79 (0xc02a…/0xf2c3…)
+📊 Storing token TOC with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf351c513bb1d94c2c9e41aae5c026a895d201c2c (0x31ae…/0xa0b8…)
+📡 Broadcasting: 0 tokens, 0 pools, 0 oracles
+📊 Storing token Grayt with heartbeat: metrics (stale)
+📊 Storing token USDC with heartbeat: stable (healthy)
+🏦 Uniswap V2: discovered pair 0xb084bd415ede000fe8afe2be5229c54567177589 (0xadab…/0xc02a…)
+📊 Storing token BABYKITE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x2ac536d6f2ba66a30a2d41fde3acf56a30586646 (0x3c78…/0xc02a…)
+📊 Storing token ALIA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x6ac190fdf75592d3f9194daa4b1649fb61968f2e (0x6d98…/0xc02a…)
+📊 Storing token VOG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x59f83be51e9f7a92825e01b518f8c048eb2fcf40 (0x4f78…/0xc02a…)
+📊 Storing token 🦾WLMX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x6ba772cdb30b0b4d79f3fb860c7d27ec1c606e8a (0x9265…/0xc02a…)
+📊 Storing token FOFG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf6793162b9dd295a96a2a247514ddd15b76a1cbd (0xc02a…/0xf042…)
+📊 Storing token ATRDR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0be362143e7fe7ba5ce8bd11b36f2479822c4a0f (0x870a…/0xc02a…)
+📊 Storing token AUFA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xa06fd2e9b69c534ec52543d3e8f9c10d4febf20d (0xc02a…/0xe492…)
+📊 Storing token Tucker with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x7b5e153231d5535de51623e09222659686c0c1f6 (0xc02a…/0xdf88…)
+📊 Storing token ALPND with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xb5848bf54bba87635648bb33a6f322380fe5e98b (0xc02a…/0xff28…)
+📊 Storing token ⭐STGT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x4bc476a853a7dbe3e5fad62b84e4b616e9150650 (0xa3d7…/0xc02a…)
+📊 Storing token FLUX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xc17174fe2a4c7b9a8568c37b6afd601db0e8a813 (0x8a3c…/0xc02a…)
+📊 Storing token TARO with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x09e89e640d017ea9427003951dea94538b5a5680 (0xc02a…/0xc751…)
+📊 Storing token WOLF with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xfe0edf9e55e67020fe973cd0894462f8761a0831 (0xc02a…/0xc400…)
+📊 Storing token CAR FART with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x481989d89fc73701ae8d6ea42fbcee9278add967 (0xbfef…/0xc02a…)
+📊 Storing token BBLT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0899fc3c2a9c6404dccc1114d814bf08733230c8 (0x4125…/0xc02a…)
+📊 Storing token PRFN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xc02651eb6ace4c2264fabee025be438a931edee6 (0xc02a…/0xca7a…)
+📊 Storing token Deep Funding with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x3adfb9f0d4cb904c42cd424186c3679773903578 (0x0f7d…/0x1563…)
+📊 Storing token ZEUS with heartbeat: metrics (stale)
+📊 Storing token ADvt with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x02d42cc2f927e61eadcabb0fbea31b8f2001dda5 (0x6a14…/0xc02a…)
+📊 Storing token AIN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x86fd0320966da2460ed944959cbf99656c567d44 (0x460a…/0xc02a…)
+📊 Storing token ABFD with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x1fdf16244f269709aaf17b87215a69a30081823e (0x81e7…/0xc02a…)
+📊 Storing token PAPI with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x11133e2023b370167eed6384e11a027c5013e5a3 (0x514a…/0xc02a…)
+📊 Storing token GRC with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x46017bf97758015a8dca6e7a7f744685f9149a4a (0xc02a…/0xc452…)
+📊 Storing token E5000 with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xec1304d14b5b2c196cfccda54914a49536f6211f (0xc02a…/0xffcc…)
+🏦 Uniswap V2: discovered pair 0x1d1f204f3c95b8016941ed716fa075a3c63886c1 (0x99c7…/0xc02a…)
+📊 Storing token TermMax with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x929806180f8d2cb2ff29ad8c4251d0d4c10a5a93 (0x4272…/0xc02a…)
+📊 Storing token BATR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x380289e70c6b7be894b2459986cb6e1641a70c0a (0x5234…/0xc02a…)
+📊 Storing token $HOJ with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf608e7637bcee31b9c0b160755ad766bbfd7a872 (0x157e…/0xc02a…)
+📊 Storing token STSH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x7f006ed43a71e68f03c576fe35f6a71aef8d7789 (0xc02a…/0xdab9…)
+📊 Storing token TRUFL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x570d4913bc809ef09d16a0599b065c8efe01b7db (0xc02a…/0xf540…)
+📊 Storing token Phoenix with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x587694a0bdd8846650fd1541d9e891b0bc6f0443 (0x35cc…/0xc02a…)
+📊 Storing token $BLKCHK with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x530f60b5436f301698bbf08568575da20cb5d8f9 (0xa49c…/0xc02a…)
+📊 Storing token Kachina with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf78806c2545d88c35f9e7789753638ca1616db69 (0xb76e…/0xc02a…)
+📊 Storing token 🦊STFX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x84b976f73cceb66fab327e5145dfadb55ea7947f (0xc02a…/0xfae2…)
+📊 Storing token 🚨CDAN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x7191e34e646a41203bc9409281caa2e14a3fe1b7 (0xacd2…/0xc02a…)
+📊 Storing token BULG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xbfcc7ec4223cb06f2b528d93ed398b1a00c8c075 (0xb39f…/0xc02a…)
+📊 Storing token APXL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe9e2d1f6b72063098048e447292dfe72ca588d59 (0x1563…/0x7613…)
+📊 Storing token ADvt with heartbeat: metrics (stale)
+📊 Storing token PIRATE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd89882f682d3503adeb22d87e7c5696aa19bd20a (0xb8e5…/0xc02a…)
+📊 Storing token NEVER with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x55454f293fde30abda4a19504b35fd3f865288aa (0xc02a…/0xf504…)
+📊 Storing token RPX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x6a62bda37e92b49f68ede390acdab501d30f1238 (0xc02a…/0xdcbb…)
+📊 Storing token CREPE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd748fc60e8cc3b8e148d3c6c9a3c4ac4a08452bd (0x1563…/0x7d81…)
+📊 Storing token ADvt with heartbeat: metrics (stale)
+📊 Storing token BOB with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x9953167f286bb38cb9aa2112651c1d95c7af3e00 (0x1752…/0xc02a…)
+📊 Storing token XYN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x5cfe27af7b4bb4e9ac535dd05b40f22535b1a88c (0x6d61…/0xc02a…)
+📊 Storing token DON with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe9294f360144803de66f7e5cca3c33c164d1a767 (0x9d7b…/0xc02a…)
+📊 Storing token GNBO with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x83b49f5e750487248480ef06b001ae4b18d21d14 (0x26d9…/0xc02a…)
+📊 Storing token DNVL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf0c33bd081d45ca94bd6947c300360068a62ea9d (0x1f2f…/0xc02a…)
+📊 Storing token 🔺VTCH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xc7e2a2fdf355274a6de080ae7b52ec45920c70ff (0x4d76…/0xc02a…)
+📊 Storing token BMOD with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x1af58ca2b83c0dc322b190c64764f6b3a74d3164 (0x3445…/0xc02a…)
+📡 Broadcasting: 1 tokens, 1 pools, 0 oracles
+📡 First token: USDC active=true price=1 heartbeat={"status":"healthy","last_update":1762066812865,"provider":"stable"}
+📊 Storing token HYVER with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe9b49c1778accbe0cc142509def5b20b279c5327 (0x8797…/0xc02a…)
+📊 Storing token 💡HYTS with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x238fdf4fcab4ba5ad914a58f1cf2c42cb64b5dc0 (0x663d…/0xc02a…)
+📊 Storing token 🐵APXP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x5284b42ad154820b9d1fb5aa10c23d5b232a1aec (0xa1f3…/0xc02a…)
+📊 Storing token 🏦PMOD with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xcf60b8049eeb6f72ee248db64d9770a80e102767 (0x64b9…/0xc02a…)
+📊 Storing token VTMX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x169a19b8603102f1df095e3ee3b15e66629d5ba0 (0xacbf…/0xc02a…)
+📊 Storing token GORO with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xed4d1a456f8773b7454532741541e9bb69f17ef2 (0x6bd3…/0xc02a…)
+📊 Storing token KONDE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xc9f00a3ec0f0583844368b75a84541da315df410 (0xc02a…/0xfa7f…)
+📊 Storing token PRGW with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x8ded4608b3a2c3a97c4cc983b645e7e83b2229f5 (0x4ff9…/0xc02a…)
+📊 Storing token HOBBY with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x4fd56d5a1c308e36cf57032e8ee9e8edf2a2ee25 (0x4e91…/0xc02a…)
+📊 Storing token 𓆏UAU𓆏 with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe7ba805b507d3980f0f554d4bee2d3815b61ae08 (0x179c…/0x2260…)
+📊 Storing token CDBR with heartbeat: metrics (stale)
+📊 Storing token WBTC with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf8179e5b83ec7ecc6f3f74d57d7dea39acdeeac5 (0x56ac…/0xdac1…)
+📊 Storing token USDT1 with heartbeat: metrics (stale)
+📊 Storing token USDT with heartbeat: stable (healthy)
+🏦 Uniswap V2: discovered pair 0xe279da8160c4be1618fbfe8b1119025968006e45 (0x7149…/0xc02a…)
+📊 Storing token SKY with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x6940dab4d18cc3a99c5d304ee85b43e9f415dc8f (0x3119…/0xc02a…)
+📊 Storing token HYC with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x787c9f8edeea36fb170051bf86f621dab01941f8 (0xc02a…/0xd0bd…)
+📊 Storing token RIPCP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xabee90281a0bfd284f2fd2e0572f1696df1921ef (0x2f58…/0xc02a…)
+📊 Storing token Zen Flipmaster with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x06fb98dc70a079aeefb286264654292703a4cdb4 (0x4403…/0xc02a…)
+📊 Storing token DMG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x6e680252ade206e0699b0ce3b8a4ea088bb3abdc (0x0d41…/0xc02a…)
+📊 Storing token APEX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x7cc713e0a89702404a353897c6e687ea780a44bb (0x6359…/0xc02a…)
+📊 Storing token HYV with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xbf2eba807dd0ec1e05197a1f99be222666c9640d (0x70b8…/0xc02a…)
+📊 Storing token 👻GRDM with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x61221f41f5af23ed0537128ab2a24255a6bc6c0f (0xc02a…/0xd370…)
+📊 Storing token BRIV with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd21bbf2fb9b8f9afce8df72c6ac1f24eac75505a (0xb0ba…/0xc02a…)
+📊 Storing token DOGE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd47da3430251891626e1352a939eb7a5810db076 (0xc02a…/0xefb0…)
+📊 Storing token ONPUMP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x46de7f33fba811fdb6caeb190210f7da2a22f0ee (0xb92d…/0xc02a…)
+📊 Storing token KTSTR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x3bc8a929a69f07d4e95d9a26892ec07338bc78ba (0x753c…/0xc02a…)
+📊 Storing token DSYNC with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x126887a93b99b0e0e374f1d6b64bfd69d9d4b874 (0x3b39…/0xc02a…)
+📊 Storing token ARVE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x052ba578ea0308334f05d2c8167c902bff20de3d (0x5557…/0xc02a…)
+📊 Storing token FINU with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x3fdc6af9b67a4794929223fa013c59b66c74e273 (0xc02a…/0xf474…)
+📊 Storing token KRULL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0b6c705be7eeeb748f8de308b262bc1e75247623 (0x1e12…/0xc02a…)
+📊 Storing token TITAN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x3cdea08fc6642bc026a8d868f066f8ad0d7c6bed (0xa325…/0xc02a…)
+📊 Storing token MNSH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xffeeaae44d498bef6c9b7693541cf13c1077dd30 (0xc02a…/0xc898…)
+📊 Storing token DogWifCat with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xac98fd24d359ca5223ca928f6a8f96654ca45aaf (0xa39d…/0xc02a…)
+📊 Storing token VORGINIA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xabcfe426665401d256533fb5e48a9712e4e01872 (0x379c…/0xc02a…)
+📊 Storing token LIGER with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xeff8892dd321ed6696721ec154ff397fc4ad2332 (0xc02a…/0xe42f…)
+📊 Storing token BSRK with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x758351be2cc6b343229b8c8d1da3354bea6b007b (0xc02a…/0xef0e…)
+📊 Storing token HP100 with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xa9b99907fb9b71fc1469ba425498a9b3a0dd3136 (0x5f7c…/0xc02a…)
+📊 Storing token PALU with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xdb49900d84460ac818f875f2e8e02c39b69cb884 (0x830f…/0xc02a…)
+📊 Storing token CBR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xda9a6470af54c6f706eaf068169a42c9c0286b87 (0x0d74…/0xa0b8…)
+📊 Storing token OFIR with heartbeat: metrics (stale)
+📊 Storing token USDC with heartbeat: stable (healthy)
+🏦 Uniswap V2: discovered pair 0xbbd9cdfb389c7e3d1cf36ef16025c1dcde18029c (0x85ee…/0xc02a…)
+📊 Storing token CHONKI with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x792dc765e675456fefe8c3c4f48122406dbab7de (0x21df…/0xc02a…)
+📊 Storing token NBS with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd604e1c815892ce88a9570459aa06210d6118bd3 (0x548e…/0xc02a…)
+📊 Storing token RPR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0eb0215561b15346316057b753b45b5ae4b17d6f (0xc02a…/0xfd6f…)
+📊 Storing token TWB with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x8380d932dc579329cfb85c65cfc549b4fd199e2f (0xa71b…/0xc02a…)
+📊 Storing token FLSX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x7242c46bb9d475bd161fc53a8e4002a89b8bb7a9 (0x5269…/0xc02a…)
+📊 Storing token ATL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xb19e810c40e5c743db216cc01cba16c88cc0b031 (0x0a22…/0xc02a…)
+📊 Storing token ROLG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xedf89f7af0fcc1f818b88cf22093c458a59fde00 (0xb389…/0xc02a…)
+📊 Storing token PMPS with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xafe873cd971a2a2c70368624c2d8ac544e32532d (0x0e22…/0xc02a…)
+📊 Storing token 🏧BYOR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x84bfe36160373e0c42ee0d745798da99b0477408 (0xc02a…/0xef67…)
+📊 Storing token 🤑FOMD with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xdb9b57a692a4293703eb1b91709794a6e7c5c412 (0xc02a…/0xf593…)
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📊 Storing token GSGD with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x11aea54f3b32421f059718fcf3b7972907d9b7bb (0xb248…/0xc02a…)
+📊 Storing token SALAMI with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x83a2f3c9ec7cea62316987fdee3ef51b40831814 (0x1684…/0xc02a…)
+📊 Storing token PEPE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x09b08ca6bc0ccac60a91c8db0cc0eca5b58f43cf (0xa2ef…/0xc02a…)
+📊 Storing token 🏅ATFV with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x3d00f25ed9009dd46c0891e5f654716d8715c277 (0xc02a…/0xf0c6…)
+📊 Storing token LENDF with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe9da76adc7a0b4e54443e38c86842a2620bf993e (0x79fc…/0xc02a…)
+📊 Storing token MIDAS with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x71a8d0dea07c60c7832ecdf8ff8e25aaab617a49 (0xc02a…/0xda58…)
+📊 Storing token 🔥HYTR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x4d6da4a786aea24977484ade6540fc24f3ee8302 (0xa837…/0xc02a…)
+📊 Storing token SLRF with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xee5eaca14658ac5d57fe7e338515d5705cedddc8 (0x2900…/0xc02a…)
+📊 Storing token MINO with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd7a4d064747cd5580312b6368209b2d7317c516b (0x2a90…/0xc02a…)
+📊 Storing token BUM with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x191ca05b540842d94fcb0208bae9301963924a9d (0xc02a…/0xf3f9…)
+📊 Storing token SBK with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x5e38011fc97fee12155ea3519dda762a049f51da (0xc02a…/0xec3e…)
+📊 Storing token BBLT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xad443f96c7bf38d5c91c4d9eafea1048aeb3bcce (0xb55c…/0xc02a…)
+📊 Storing token RHRK with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x759af79faeb46f86ffb60b31bd4f099742f8b9ad (0x4328…/0xc02a…)
+📊 Storing token MINO with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x68ff2a20c6caaf4ceb894b936918f265a358eb18 (0x2b26…/0xc02a…)
+📊 Storing token 💣MNAV with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xed78ecf87d186e01ab2579364a1b4b434fce75df (0x59ac…/0xc02a…)
+📊 Storing token MINOSC with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x30307c75db00ca13ebc177f2d9060b6b23919e4e (0x6bc7…/0xc02a…)
+📊 Storing token DOX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x85246a9174d5e9885949dc1f5c8932a28ea76ce4 (0x2652…/0xc02a…)
+📊 Storing token MYTH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x45adfdffa448541c2294a2bf595930b48c9004e6 (0x74fe…/0xc02a…)
+📊 Storing token MINO with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xb74065cc88b697613268abf9fb4b53a0d943f51e (0x8ca4…/0xc02a…)
+📊 Storing token RatGirl with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x129f5dc7949c187c3d2aa3dce05bbe17a07906d2 (0x0327…/0xc02a…)
+📊 Storing token AAVE with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x2b9ded219e26a2c6c3460675472d54d017eacb0f (0xb3fe…/0xc02a…)
+📊 Storing token EBA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x2beb78a5b3c11d195df3653238dd12ba2c8ea95b (0x12a2…/0xc02a…)
+📊 Storing token ALTH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xc155a667902ccd9ee1394aa3d6f930064b5f3be2 (0x97c6…/0xc02a…)
+📊 Storing token DHB with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xcb2c7dfb453b7c6ff3ab3361b3d6e658d8f8ef9d (0x49f3…/0xc02a…)
+📊 Storing token ADX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x548910c05b81f33d648dc30e73c7ef0286e29513 (0x74c0…/0xc02a…)
+📊 Storing token ⭐STGT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf69a4182c7652c1c1029d6bccaf802c8e8d3eab3 (0x211f…/0xc02a…)
+📊 Storing token PAL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xdbb05308b8b86bea3c468fc5149033c266d3186c (0x8fe3…/0xc02a…)
+📊 Storing token ORBN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x7e9606cd31be9078913a859f13aa8e2e28fcc2b4 (0xc02a…/0xcc2f…)
+📊 Storing token 🐍BYAX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd415b67e9f0eae157288d5a6b1c99dfe03379544 (0x8ad8…/0xc02a…)
+📊 Storing token GRCT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x5d337b86444e371e78d482a335e9149afa51924a (0xb546…/0xc02a…)
+📊 Storing token 🐱LFVR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xae40ed529bee37e2a8b4b873bfe90ff03e53bdc4 (0x4693…/0xc02a…)
+📊 Storing token FROGBOY with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf8d6abfe9ed0d81ef4010858534f8a2fc1fe6071 (0xc02a…/0xde57…)
+📊 Storing token HYPGM with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x7f3505f00e5dd2a5ec128836590cb32dcf12ca1f (0x0aec…/0xc02a…)
+📊 Storing token SLVT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xb8e3a37840b93c4cab4dc55f2da0470be78d288c (0xc02a…/0xc7da…)
+📊 Storing token Casper with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x3d331f79ccb7bfb564be16c37510ed95d6eb759a (0xa84f…/0xc02a…)
+📊 Storing token WEHA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xd61ab0646b2cd1cbf6f119ef32e2ab072d1e38e0 (0x8076…/0xc02a…)
+📊 Storing token VBRM with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xc809f3071543df6a8e51ef186b77a52a955a9920 (0x23a4…/0xc02a…)
+📊 Storing token TEA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x2494e00605e48f2058f42b294ca8b8f9e8ce3501 (0x8285…/0xc02a…)
+📊 Storing token METEOR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x4fdf234315fefad086cf749e389ce27cc4aa5823 (0x3f90…/0xc02a…)
+📊 Storing token STAR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x09aef181d2526274180f5cd00dd237fca0ea86d0 (0x5903…/0xc02a…)
+📊 Storing token 🐼PANDA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x6307b53a2bda25321276ba48b008ed89325ba84c (0xc02a…/0xe8da…)
+📊 Storing token CROCK with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x1399cd32f6b675a9930880c9233cb10a6d33053c (0x648f…/0xc02a…)
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📊 Storing token RPG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xde821519db11075742f37a7b3c97615fe3621fe1 (0x181c…/0xc02a…)
+📊 Storing token PUMP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xe9e6099bc51482e3eaf7bd413796b04744bcaaec (0xc02a…/0xe361…)
+📊 Storing token ORB with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x1c4b8c8a0ec682a74a41b57f4a65121d9520ce24 (0x1f8b…/0xc02a…)
+📊 Storing token PXGD with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x77ee0b8d83ce9b68399b9508099e86a380ac8b98 (0x0275…/0xc02a…)
+📊 Storing token 🥇WLBCX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x080e596c1d7187c12dd13b43e557c92feba96117 (0x932c…/0xc02a…)
+📊 Storing token ATHV with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xbccc20ab6ca39a0de76c14208507ffdec5353688 (0x6c99…/0xc02a…)
+📊 Storing token BMOD with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xb74b721634e169ba8baf24de02471c32a225cef5 (0xc02a…/0xe828…)
+📊 Storing token APWB with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x4b37276deb7c70d0028fe5f6677fe977cc60c340 (0x38b6…/0xc02a…)
+📊 Storing token ASX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x4442f2d74136ca6c959236c0c728a2486a174826 (0x3a82…/0xc02a…)
+📊 Storing token ARM with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x2e312a2cb3724d516a8d417d57f9ef88f990be13 (0x1316…/0xc02a…)
+📊 Storing token DNVL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x30b5cb5f65ff05fc40a59107c2439db42a3ab2be (0x5591…/0xc02a…)
+📊 Storing token XBEN with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf794a9d7a99c877afa49c95e93282d58bbf9817e (0x81a0…/0xc02a…)
+📊 Storing token ASH with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x7a4c0e1c4b95c583af5013b419047bda349141a7 (0xaad0…/0xc02a…)
+📊 Storing token ANTIGRAV with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xec8796eb94266f984a85552fe54710145189cc3e (0x8836…/0xc02a…)
+📊 Storing token PHIX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x393bcba11730373f591dd3ff41d258485312a577 (0x8024…/0xc02a…)
+📊 Storing token SCALR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xfd31b8efe74bb3db991c77a9ae4de436363dfd97 (0xaa50…/0xc02a…)
+📊 Storing token 🐵APXP with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xbb79c072fc565d91e8fbd243860ca8411abccdb2 (0x8167…/0xc02a…)
+📊 Storing token ATMG with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x164dad2ffbf49df92b00694897de053ccba488d2 (0xa075…/0xc02a…)
+📊 Storing token CARLSON with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf3a624f12b2199444873f25ae66ff8e6289c1477 (0x0234…/0xc02a…)
+📊 Storing token 💻RKFZ with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x0535ffbb7f6fe5e21d0a4bd7342db617248d4e9d (0xafa5…/0xc02a…)
+📊 Storing token ⭐STEX with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x291b4008d63786bd0044bd221ac43cc03cccabd8 (0xc02a…/0xea11…)
+📊 Storing token ATRDR with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x39e189ac47c21f6d68e5bd9636b3f618bbe30653 (0x61dc…/0xc02a…)
+📊 Storing token GOLF with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x83d9e3842b1509c64a9ecf8337a70ee23a93b030 (0x2556…/0xc02a…)
+📊 Storing token CWZ with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x9b43504222443738173ff7ea7a28fb1702eaf459 (0x5831…/0xc02a…)
+📊 Storing token 🍌BABA with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x55053b7855a24da95fc7b2ba8027bd7d688260d4 (0x41c1…/0xc02a…)
+📊 Storing token GPT-5 with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xf4e75c607606d895af918e6279d09947cf8f225a (0x2c23…/0xc02a…)
+📊 Storing token Mog with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x8db14685c5cf8f9dcc3dfb9a49bf0ac5c38f5af9 (0x68ea…/0xc02a…)
+📊 Storing token LIT with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x18824c9bb51cffdeb30052c356d95326b59addc0 (0xc02a…/0xe52d…)
+📊 Storing token DeepSeek with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0xbc23ad8b6fc10e365eb9a530333a7090a1848d81 (0xc02a…/0xc18c…)
+📊 Storing token EQCL with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x54844498fe258d29bedf81a8b58b75dd805ade74 (0x4c8b…/0xc02a…)
+📊 Storing token HYPGM with heartbeat: metrics (stale)
+🏦 Uniswap V2: discovered pair 0x5c10ad6cc03c1f963107bc0de67ab8208bfd70b9 (0xc02a…/0xeeac…)
+📊 Storing token CRPX with heartbeat: metrics (stale)
+🏦 V2 backfill completed
+🏦 Backfilling swaps for 289 V2 pools from block 23702742 to 23709942
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+🏦 Processing 12721 swap logs for chunk 1/2
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+🏦 Processing 2922 swap logs for chunk 2/2
+🏦 V2 swap backfill completed
+🏦 Starting Uniswap V3 indexer...
+🏦 Starting Uniswap V3 indexer...
+🏦 ENABLE_AMM_UNIV3: true
+🏦 V3 factory address: 0x1F98431c8aD98523631AE4a59f267346ea31F984
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066813105,"provider":"stable"}
+📊 Storing token FINU with heartbeat: metrics (error)
+📊 Storing token RBH with heartbeat: metrics (error)
+📊 Storing token vwance with heartbeat: metrics (error)
+📊 Storing token ATB with heartbeat: metrics (error)
+📊 Storing token ZRC with heartbeat: metrics (error)
+📊 Storing token CREPE with heartbeat: metrics (error)
+📊 Storing token APX with heartbeat: metrics (error)
+📊 Storing token TITAN with heartbeat: metrics (error)
+📊 Storing token FNFN with heartbeat: metrics (error)
+📊 Storing token DMD with heartbeat: metrics (error)
+📊 Storing token 🪙PMMT with heartbeat: metrics (error)
+📊 Storing token MNRI with heartbeat: metrics (error)
+📊 Storing token ONPUMP with heartbeat: metrics (error)
+📊 Storing token BZIL with heartbeat: metrics (error)
+📊 Storing token METEOR with heartbeat: metrics (error)
+📊 Storing token SPX with heartbeat: metrics (error)
+📊 Storing token LENDF with heartbeat: metrics (error)
+📊 Storing token VARX with heartbeat: metrics (error)
+📊 Storing token MWG with heartbeat: metrics (error)
+📊 Storing token STMV with heartbeat: metrics (error)
+📊 Storing token CRVS with heartbeat: metrics (error)
+📊 Storing token TRX with heartbeat: metrics (error)
+📊 Storing token XRP with heartbeat: metrics (error)
+📊 Storing token MYTH with heartbeat: metrics (error)
+📊 Storing token 🐲ATTH with heartbeat: metrics (error)
+📊 Storing token APXM with heartbeat: metrics (error)
+📊 Storing token BIG CHUNGUS with heartbeat: metrics (error)
+📊 Storing token SLSH with heartbeat: metrics (error)
+📊 Storing token UNIVA with heartbeat: metrics (error)
+📊 Storing token TRICK with heartbeat: metrics (error)
+📊 Storing token FTMX with heartbeat: metrics (error)
+📊 Storing token ☁️NMBG with heartbeat: metrics (error)
+📊 Storing token BDWX with heartbeat: metrics (error)
+📊 Storing token HYPMG with heartbeat: metrics (error)
+📊 Storing token LOTR with heartbeat: metrics (error)
+📊 Storing token TRAX with heartbeat: metrics (error)
+📊 Storing token CST with heartbeat: metrics (error)
+📊 Storing token TREAT with heartbeat: metrics (error)
+📊 Storing token BLR with heartbeat: metrics (error)
+📊 Storing token ADG with heartbeat: metrics (error)
+📊 Storing token X444 with heartbeat: metrics (error)
+📊 Storing token ARM with heartbeat: metrics (error)
+📊 Storing token PENDLE with heartbeat: metrics (error)
+📊 Storing token CARLSON with heartbeat: metrics (error)
+📊 Storing token 🐱GROR with heartbeat: metrics (error)
+📊 Storing token VEXEL with heartbeat: metrics (error)
+📊 Storing token CRPX with heartbeat: metrics (error)
+📊 Storing token 🥝KTKW with heartbeat: metrics (error)
+📊 Storing token ELONGATED MUSKET with heartbeat: metrics (error)
+📊 Storing token COMET with heartbeat: metrics (error)
+📊 Storing token MHV with heartbeat: metrics (error)
+📊 Storing token VINT with heartbeat: metrics (error)
+📊 Storing token NWM with heartbeat: metrics (error)
+📊 Storing token NEKOT with heartbeat: metrics (error)
+📊 Storing token KITE with heartbeat: metrics (error)
+📊 Storing token HOBBY with heartbeat: metrics (error)
+📊 Storing token 👻FMOR with heartbeat: metrics (error)
+📊 Storing token ATL with heartbeat: metrics (error)
+📊 Storing token CLIFFORD with heartbeat: metrics (error)
+📊 Storing token 🦊BYIG with heartbeat: metrics (error)
+📊 Storing token puppies with heartbeat: metrics (error)
+📊 Storing token ELEF with heartbeat: metrics (error)
+📊 Storing token RPR with heartbeat: metrics (error)
+📊 Storing token MORDR with heartbeat: metrics (error)
+📊 Storing token MAN with heartbeat: metrics (error)
+📊 Storing token HP100 with heartbeat: metrics (error)
+📊 Storing token XRP with heartbeat: metrics (error)
+📊 Storing token AJET with heartbeat: metrics (error)
+📊 Storing token GOW with heartbeat: metrics (error)
+📊 Storing token MLNR with heartbeat: metrics (error)
+📊 Storing token 🐉PMRX with heartbeat: metrics (error)
+📊 Storing token PPAI with heartbeat: metrics (error)
+📊 Storing token OHTANI with heartbeat: metrics (error)
+📊 Storing token DNS with heartbeat: metrics (error)
+📊 Storing token VANCO with heartbeat: metrics (error)
+📊 Storing token 💵WLCM with heartbeat: metrics (error)
+📊 Storing token DDUMP with heartbeat: metrics (error)
+📊 Storing token ALOT with heartbeat: metrics (error)
+📊 Storing token BAY with heartbeat: metrics (error)
+📊 Storing token TSC with heartbeat: metrics (error)
+📊 Storing token BEAT with heartbeat: metrics (error)
+📊 Storing token PNKSTR with heartbeat: metrics (error)
+📊 Storing token APES with heartbeat: metrics (error)
+📊 Storing token Teal Wallpaper with heartbeat: metrics (error)
+📊 Storing token 🐋WhalesClub with heartbeat: metrics (error)
+📊 Storing token 🤑BYIG with heartbeat: metrics (error)
+📊 Storing token TIGER with heartbeat: metrics (error)
+📊 Storing token AAVE with heartbeat: metrics (error)
+📊 Storing token RPG with heartbeat: metrics (error)
+📊 Storing token NEO with heartbeat: metrics (error)
+📊 Storing token LMX with heartbeat: metrics (error)
+📊 Storing token TREVT with heartbeat: metrics (error)
+📊 Storing token CAMA with heartbeat: metrics (error)
+📊 Storing token ARCV with heartbeat: metrics (error)
+📊 Storing token SLVT with heartbeat: metrics (error)
+📊 Storing token TYP with heartbeat: metrics (error)
+📊 Storing token PLSX with heartbeat: metrics (error)
+📊 Storing token ULTI with heartbeat: metrics (error)
+📊 Storing token ABOET with heartbeat: metrics (error)
+📊 Storing token ROLG with heartbeat: metrics (error)
+📊 Storing token PPAI with heartbeat: metrics (error)
+📊 Storing token PEPE with heartbeat: metrics (error)
+📊 Storing token 💻FMSP with heartbeat: metrics (error)
+📊 Storing token ASH with heartbeat: metrics (error)
+📊 Storing token CRVSW with heartbeat: metrics (error)
+📊 Storing token JVX with heartbeat: metrics (error)
+📊 Storing token JUHDL with heartbeat: metrics (error)
+📊 Storing token 🐕WLAX with heartbeat: metrics (error)
+📊 Storing token HPV with heartbeat: metrics (error)
+📊 Storing token SOIL with heartbeat: metrics (error)
+📊 Storing token COGO with heartbeat: metrics (error)
+📊 Storing token 🐼PANDA with heartbeat: metrics (error)
+📊 Storing token SPCR with heartbeat: metrics (error)
+📊 Storing token LIRN with heartbeat: metrics (error)
+📊 Storing token SHHE with heartbeat: metrics (error)
+📊 Storing token ADvt with heartbeat: metrics (error)
+📊 Storing token BGB with heartbeat: metrics (error)
+📊 Storing token KITE with heartbeat: metrics (error)
+📊 Storing token CRYCE with heartbeat: metrics (error)
+📊 Storing token TOC with heartbeat: metrics (error)
+📊 Storing token Grayt with heartbeat: metrics (error)
+📊 Storing token USDC with heartbeat: stable (healthy)
+📊 Storing token BABYKITE with heartbeat: metrics (error)
+📊 Storing token ALIA with heartbeat: metrics (error)
+📊 Storing token VOG with heartbeat: metrics (error)
+📊 Storing token 🦾WLMX with heartbeat: metrics (error)
+📊 Storing token FOFG with heartbeat: metrics (error)
+📊 Storing token ATRDR with heartbeat: metrics (error)
+📊 Storing token AUFA with heartbeat: metrics (error)
+📊 Storing token Tucker with heartbeat: metrics (error)
+📊 Storing token ALPND with heartbeat: metrics (error)
+📊 Storing token ⭐STGT with heartbeat: metrics (error)
+📊 Storing token FLUX with heartbeat: metrics (error)
+📊 Storing token TARO with heartbeat: metrics (error)
+📊 Storing token WOLF with heartbeat: metrics (error)
+📊 Storing token CAR FART with heartbeat: metrics (error)
+📊 Storing token BBLT with heartbeat: metrics (error)
+📊 Storing token PRFN with heartbeat: metrics (error)
+📊 Storing token Deep Funding with heartbeat: metrics (error)
+📊 Storing token ZEUS with heartbeat: metrics (error)
+📊 Storing token AIN with heartbeat: metrics (error)
+📊 Storing token ABFD with heartbeat: metrics (error)
+📊 Storing token PAPI with heartbeat: metrics (error)
+📊 Storing token GRC with heartbeat: metrics (error)
+📊 Storing token E5000 with heartbeat: metrics (error)
+📊 Storing token TermMax with heartbeat: metrics (error)
+📊 Storing token BATR with heartbeat: metrics (error)
+📊 Storing token $HOJ with heartbeat: metrics (error)
+📊 Storing token STSH with heartbeat: metrics (error)
+📊 Storing token TRUFL with heartbeat: metrics (error)
+📊 Storing token Phoenix with heartbeat: metrics (error)
+📊 Storing token $BLKCHK with heartbeat: metrics (error)
+📊 Storing token Kachina with heartbeat: metrics (error)
+📊 Storing token 🦊STFX with heartbeat: metrics (error)
+📊 Storing token 🚨CDAN with heartbeat: metrics (error)
+📊 Storing token BULG with heartbeat: metrics (error)
+📊 Storing token APXL with heartbeat: metrics (error)
+📊 Storing token PIRATE with heartbeat: metrics (error)
+📊 Storing token NEVER with heartbeat: metrics (error)
+📊 Storing token RPX with heartbeat: metrics (error)
+📊 Storing token CREPE with heartbeat: metrics (error)
+📊 Storing token BOB with heartbeat: metrics (error)
+📊 Storing token XYN with heartbeat: metrics (error)
+📊 Storing token DON with heartbeat: metrics (error)
+📊 Storing token GNBO with heartbeat: metrics (error)
+📊 Storing token DNVL with heartbeat: metrics (error)
+📊 Storing token 🔺VTCH with heartbeat: metrics (error)
+📊 Storing token BMOD with heartbeat: metrics (error)
+📊 Storing token HYVER with heartbeat: metrics (error)
+📊 Storing token 💡HYTS with heartbeat: metrics (error)
+📊 Storing token 🐵APXP with heartbeat: metrics (error)
+📊 Storing token 🏦PMOD with heartbeat: metrics (error)
+📊 Storing token VTMX with heartbeat: metrics (error)
+📊 Storing token GORO with heartbeat: metrics (error)
+📊 Storing token KONDE with heartbeat: metrics (error)
+📊 Storing token PRGW with heartbeat: metrics (error)
+📊 Storing token HOBBY with heartbeat: metrics (error)
+📊 Storing token 𓆏UAU𓆏 with heartbeat: metrics (error)
+📊 Storing token CDBR with heartbeat: metrics (error)
+📊 Storing token WBTC with heartbeat: metrics (error)
+📊 Storing token USDT1 with heartbeat: metrics (error)
+📊 Storing token USDT with heartbeat: stable (healthy)
+📊 Storing token SKY with heartbeat: metrics (error)
+📊 Storing token HYC with heartbeat: metrics (error)
+📊 Storing token RIPCP with heartbeat: metrics (error)
+📊 Storing token Zen Flipmaster with heartbeat: metrics (error)
+📊 Storing token DMG with heartbeat: metrics (error)
+📊 Storing token APEX with heartbeat: metrics (error)
+📊 Storing token HYV with heartbeat: metrics (error)
+📊 Storing token 👻GRDM with heartbeat: metrics (error)
+📊 Storing token BRIV with heartbeat: metrics (error)
+📊 Storing token DOGE with heartbeat: metrics (error)
+📊 Storing token ONPUMP with heartbeat: metrics (error)
+📊 Storing token KTSTR with heartbeat: metrics (error)
+📊 Storing token DSYNC with heartbeat: metrics (error)
+📊 Storing token ARVE with heartbeat: metrics (error)
+📊 Storing token FINU with heartbeat: metrics (error)
+📊 Storing token KRULL with heartbeat: metrics (error)
+📊 Storing token TITAN with heartbeat: metrics (error)
+📊 Storing token MNSH with heartbeat: metrics (error)
+📊 Storing token DogWifCat with heartbeat: metrics (error)
+📊 Storing token VORGINIA with heartbeat: metrics (error)
+📊 Storing token LIGER with heartbeat: metrics (error)
+📊 Storing token BSRK with heartbeat: metrics (error)
+📊 Storing token HP100 with heartbeat: metrics (error)
+📊 Storing token PALU with heartbeat: metrics (error)
+📊 Storing token CBR with heartbeat: metrics (error)
+📊 Storing token OFIR with heartbeat: metrics (error)
+📊 Storing token CHONKI with heartbeat: metrics (error)
+📊 Storing token NBS with heartbeat: metrics (error)
+📊 Storing token RPR with heartbeat: metrics (error)
+📊 Storing token TWB with heartbeat: metrics (error)
+📊 Storing token FLSX with heartbeat: metrics (error)
+📊 Storing token ATL with heartbeat: metrics (error)
+📊 Storing token ROLG with heartbeat: metrics (error)
+📊 Storing token PMPS with heartbeat: metrics (error)
+📊 Storing token 🏧BYOR with heartbeat: metrics (error)
+📊 Storing token 🤑FOMD with heartbeat: metrics (error)
+📊 Storing token GSGD with heartbeat: metrics (error)
+📊 Storing token SALAMI with heartbeat: metrics (error)
+📊 Storing token PEPE with heartbeat: metrics (error)
+📊 Storing token 🏅ATFV with heartbeat: metrics (error)
+📊 Storing token LENDF with heartbeat: metrics (error)
+📊 Storing token MIDAS with heartbeat: metrics (error)
+📊 Storing token 🔥HYTR with heartbeat: metrics (error)
+📊 Storing token SLRF with heartbeat: metrics (error)
+📊 Storing token MINO with heartbeat: metrics (error)
+📊 Storing token BUM with heartbeat: metrics (error)
+📊 Storing token SBK with heartbeat: metrics (error)
+📊 Storing token BBLT with heartbeat: metrics (error)
+📊 Storing token RHRK with heartbeat: metrics (error)
+📊 Storing token MINO with heartbeat: metrics (error)
+📊 Storing token 💣MNAV with heartbeat: metrics (error)
+📊 Storing token MINOSC with heartbeat: metrics (error)
+📊 Storing token DOX with heartbeat: metrics (error)
+📊 Storing token MYTH with heartbeat: metrics (error)
+📊 Storing token MINO with heartbeat: metrics (error)
+📊 Storing token RatGirl with heartbeat: metrics (error)
+📊 Storing token AAVE with heartbeat: metrics (error)
+📊 Storing token EBA with heartbeat: metrics (error)
+📊 Storing token ALTH with heartbeat: metrics (error)
+📊 Storing token DHB with heartbeat: metrics (error)
+📊 Storing token ADX with heartbeat: metrics (error)
+📊 Storing token ⭐STGT with heartbeat: metrics (error)
+📊 Storing token PAL with heartbeat: metrics (error)
+📊 Storing token ORBN with heartbeat: metrics (error)
+📊 Storing token 🐍BYAX with heartbeat: metrics (error)
+📊 Storing token GRCT with heartbeat: metrics (error)
+📊 Storing token 🐱LFVR with heartbeat: metrics (error)
+📊 Storing token FROGBOY with heartbeat: metrics (error)
+📊 Storing token HYPGM with heartbeat: metrics (error)
+📊 Storing token SLVT with heartbeat: metrics (error)
+📊 Storing token Casper with heartbeat: metrics (error)
+📊 Storing token WEHA with heartbeat: metrics (error)
+📊 Storing token VBRM with heartbeat: metrics (error)
+📊 Storing token TEA with heartbeat: metrics (error)
+📊 Storing token METEOR with heartbeat: metrics (error)
+📊 Storing token STAR with heartbeat: metrics (error)
+📊 Storing token 🐼PANDA with heartbeat: metrics (error)
+📊 Storing token CROCK with heartbeat: metrics (error)
+📊 Storing token RPG with heartbeat: metrics (error)
+📊 Storing token PUMP with heartbeat: metrics (error)
+📊 Storing token ORB with heartbeat: metrics (error)
+📊 Storing token PXGD with heartbeat: metrics (error)
+📊 Storing token 🥇WLBCX with heartbeat: metrics (error)
+📊 Storing token ATHV with heartbeat: metrics (error)
+📊 Storing token BMOD with heartbeat: metrics (error)
+📊 Storing token APWB with heartbeat: metrics (error)
+📊 Storing token ASX with heartbeat: metrics (error)
+📊 Storing token ARM with heartbeat: metrics (error)
+📊 Storing token DNVL with heartbeat: metrics (error)
+📊 Storing token XBEN with heartbeat: metrics (error)
+📊 Storing token ASH with heartbeat: metrics (error)
+📊 Storing token ANTIGRAV with heartbeat: metrics (error)
+📊 Storing token PHIX with heartbeat: metrics (error)
+📊 Storing token SCALR with heartbeat: metrics (error)
+📊 Storing token 🐵APXP with heartbeat: metrics (error)
+📊 Storing token ATMG with heartbeat: metrics (error)
+📊 Storing token CARLSON with heartbeat: metrics (error)
+📊 Storing token 💻RKFZ with heartbeat: metrics (error)
+📊 Storing token ⭐STEX with heartbeat: metrics (error)
+📊 Storing token ATRDR with heartbeat: metrics (error)
+📊 Storing token GOLF with heartbeat: metrics (error)
+📊 Storing token CWZ with heartbeat: metrics (error)
+📊 Storing token 🍌BABA with heartbeat: metrics (error)
+📊 Storing token GPT-5 with heartbeat: metrics (error)
+📊 Storing token Mog with heartbeat: metrics (error)
+📊 Storing token LIT with heartbeat: metrics (error)
+📊 Storing token DeepSeek with heartbeat: metrics (error)
+📊 Storing token EQCL with heartbeat: metrics (error)
+📊 Storing token HYPGM with heartbeat: metrics (error)
+📊 Storing token CRPX with heartbeat: metrics (error)
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+🏦 V3 backfilling pools from block 23699942 to 23709942 in 20000 block steps
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+🏦 V3 parse error at block 23699956: data out-of-bounds (buffer=0x000000000000000000000000000000000000000000000000000000000000003c000000000000000000000000e1a65706c649d6f53deb8457329b7b09469a9c49, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23700037: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000742424953ceccbe12d47198ac1285e0878fb573e, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23700759: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000005d62f3a166b1018018696d140d45c444f90ff1e0, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23700985: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000b68d0074dae9a0e05fab1b59e88eba27817b5245, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23701831: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000adb6bb23688a5739e99dc720fd41b70cb74b929a, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23702738: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000c1783ae3ed7fa4360c322e0a4f818ad81e2a13f8, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23703988: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000008a10ae88c88f617dd201a5d7d2e177305a7c2a42, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23704110: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000003add98d2c1060feaadf3139e2ee46b4f653b6cab, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23704349: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000a6550f3fa6693c23e6b7450485883f4f2599d84a, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23704352: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000000e448edd02ce923f181adb422917b0d0ba07b73c, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23704366: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000110c6a169f89072fe83fe028c2768c9919193e54, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23704509: data out-of-bounds (buffer=0x000000000000000000000000000000000000000000000000000000000000003c000000000000000000000000f8d70ddc643e3b03adfff99ca537d2194ab41913, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23704780: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000000aada36f6f7265536486de0055a929347b6d7ada, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23705051: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000f913e734bca270e68e3fa3783cca12027704c148, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23705067: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000002fffe8d71112909b076262238d970a1f4005f744, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23705070: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000005e662ad2b68e078d860414bf00df397f93585aac, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23705072: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000b1a23247cd66b7899a646a7e27600576f106ed50, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23705199: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000005bfa96e3bc6dc625307309b13741d4f9add5b237, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23705264: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000ee9ad7497f4efd1658cafa2589591cacc4d17166, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23705372: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c800000000000000000000000058981659d55e91ebbb0ff15b7b7d03397a6be1ad, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23705396: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000e66cd2dcc968e8f09f42bf75afc36a1bab7a8e74, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23705461: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c800000000000000000000000090fdcb7856f068b75d2ceab7aa3193f8c4bad1df, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23706186: data out-of-bounds (buffer=0x000000000000000000000000000000000000000000000000000000000000003c000000000000000000000000678713b567ed7df7e65c51f659ee9c5d9aaa03f0, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23706192: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000005e992552f0c4a1794d910738fba5e9fee3465a5a, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23706231: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000b7d3e390a0e0548e630076e90b1ad9c9699448bc, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23706374: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000001edc5c0a8b5c85859d24685dcbb921fd9e53caa5, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23706466: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000006dfb9c37020b5ded530cb186c3adf0e4d0af56ae, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23706684: data out-of-bounds (buffer=0x000000000000000000000000000000000000000000000000000000000000003c00000000000000000000000083ced65e291d19c436a6f85aaa0a24e47f6e4368, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23706766: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000000ed5948c3ba8a7afe7ffc56e3abb86158fb49262, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23706888: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000f61f9bb4e0cd69a241e949bef21285deaf9b0eab, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23706970: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000450b748df0b395d132232124d81e7178ab56171a, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23707005: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000007c1910319fed964d6b1d8b9425c2593ef93c8bd2, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23707072: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000b4e5cecddddc5b5e00b96df966744fd9a754642e, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23707088: data out-of-bounds (buffer=0x000000000000000000000000000000000000000000000000000000000000003c000000000000000000000000169cf6070c44856c77011724bb1f716dfdc7c6e3, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23707449: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000009c14c441f7d1a20d237c42f0578f885231e6adff, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23707519: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000008002a3f76b6d13cc5b78a8edb2e05d2acb74ba84, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23707873: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000a65b51e6225a994a217adc87f9db45af325afed0, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23707939: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c800000000000000000000000081b392160c423e63ab375d59bc91cfb9760fbe9a, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23708180: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000003520b98086071ac89903fcdd7485f48518b5bcde, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23708837: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000256b79d07998f60abd67c41f678f688233acdff4, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23709266: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c8000000000000000000000000a59a87eaeff0e3f16a8e661cbc494cb0cab88eae, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23709269: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000008b30dc7c445b3f7b77c19e567358b44e302b0d0d, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23709749: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000009ecbe91590fce78675888c4a4b97277e8b6d1b83, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 V3 parse error at block 23709806: data out-of-bounds (buffer=0x00000000000000000000000000000000000000000000000000000000000000c80000000000000000000000007832a6ff20d15c6df2237390d5e3718027146ef8, length=64, offset=96, code=BUFFER_OVERRUN, version=6.15.0), skipping
+🏦 Starting Sushi V2 indexer...
+🏦 Starting SushiSwap V2 indexer...
+🏦 ENABLE_SUSHI: true
+🏦 Sushi factory address: 0xC0AEe478e3658e2610c5F7A4A2E1777Ce9e4f2Ac
+🏦 Sushi backfilling from block 23659942 to 23709942 (50000 blocks)
+🏦 Sushi backfill found 0 pair creation events
+🔒 Balancer indexer disabled (ENABLE_BALANCER=false)
+🔒 Curve indexer disabled (ENABLE_CURVE=false)
+✅ AMM indexers started
+📈 AMM metrics aggregation started (runs every 5 minutes)
+✅ AMM metrics aggregation started
+🔒 Holders backfill disabled (ENABLE_HOLDERS!=true)
+🔒 Token discovery disabled (ENABLE_TOKEN_DISCOVERY!=true)
+🔒 Token stats refresh disabled (ENABLE_TOKEN_STATS!=true)
+🔒 WebSocket broadcaster temporarily disabled for HTTP API testing
+🔧 About to start HTTP API...
+🔍 Finding free port starting from 3005...
+✅ Found free port: 3005
+🚀 Starting HTTP API server...
+✅ HTTP API listening on http://localhost:3005
+✅ HTTP API started successfully
+🎯 Server ready! WebSocket ingestion active.
+💻 Start Next.js UI with: NEXT_PUBLIC_UI_WS_URL=ws://localhost:3006 npm run dev
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📊 Aggregating metrics for 289 active pools...
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+✅ AMM metrics aggregation completed for 289 pools
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066832053,"provider":"stable"}
+📊 Storing token FINU with heartbeat: metrics (error)
+📊 Storing token RBH with heartbeat: metrics (error)
+📊 Storing token vwance with heartbeat: metrics (error)
+📊 Storing token ATB with heartbeat: metrics (error)
+📊 Storing token ZRC with heartbeat: metrics (error)
+📊 Storing token CREPE with heartbeat: metrics (error)
+📊 Storing token APX with heartbeat: metrics (error)
+📊 Storing token TITAN with heartbeat: metrics (error)
+📊 Storing token FNFN with heartbeat: metrics (error)
+📊 Storing token DMD with heartbeat: metrics (error)
+📊 Storing token 🪙PMMT with heartbeat: metrics (error)
+📊 Storing token MNRI with heartbeat: metrics (error)
+📊 Storing token ONPUMP with heartbeat: metrics (error)
+📊 Storing token BZIL with heartbeat: metrics (error)
+📊 Storing token METEOR with heartbeat: metrics (error)
+📊 Storing token SPX with heartbeat: metrics (error)
+📊 Storing token LENDF with heartbeat: metrics (error)
+📊 Storing token VARX with heartbeat: metrics (error)
+📊 Storing token MWG with heartbeat: metrics (error)
+📊 Storing token STMV with heartbeat: metrics (error)
+📊 Storing token CRVS with heartbeat: metrics (error)
+📊 Storing token TRX with heartbeat: metrics (error)
+📊 Storing token XRP with heartbeat: metrics (error)
+📊 Storing token MYTH with heartbeat: metrics (error)
+📊 Storing token 🐲ATTH with heartbeat: metrics (error)
+📊 Storing token APXM with heartbeat: metrics (error)
+📊 Storing token BIG CHUNGUS with heartbeat: metrics (error)
+📊 Storing token SLSH with heartbeat: metrics (error)
+📊 Storing token UNIVA with heartbeat: metrics (error)
+📊 Storing token TRICK with heartbeat: metrics (error)
+📊 Storing token FTMX with heartbeat: metrics (error)
+📊 Storing token ☁️NMBG with heartbeat: metrics (error)
+📊 Storing token BDWX with heartbeat: metrics (error)
+📊 Storing token HYPMG with heartbeat: metrics (error)
+📊 Storing token LOTR with heartbeat: metrics (error)
+📊 Storing token TRAX with heartbeat: metrics (error)
+📊 Storing token CST with heartbeat: metrics (error)
+📊 Storing token TREAT with heartbeat: metrics (error)
+📊 Storing token BLR with heartbeat: metrics (error)
+📊 Storing token ADG with heartbeat: metrics (error)
+📊 Storing token X444 with heartbeat: metrics (error)
+📊 Storing token ARM with heartbeat: metrics (error)
+📊 Storing token PENDLE with heartbeat: metrics (error)
+📊 Storing token CARLSON with heartbeat: metrics (error)
+📊 Storing token 🐱GROR with heartbeat: metrics (error)
+📊 Storing token VEXEL with heartbeat: metrics (error)
+📊 Storing token CRPX with heartbeat: metrics (error)
+📊 Storing token 🥝KTKW with heartbeat: metrics (error)
+📊 Storing token ELONGATED MUSKET with heartbeat: metrics (error)
+📊 Storing token COMET with heartbeat: metrics (error)
+📊 Storing token MHV with heartbeat: metrics (error)
+📊 Storing token VINT with heartbeat: metrics (error)
+📊 Storing token NWM with heartbeat: metrics (error)
+📊 Storing token NEKOT with heartbeat: metrics (error)
+📊 Storing token KITE with heartbeat: metrics (error)
+📊 Storing token HOBBY with heartbeat: metrics (error)
+📊 Storing token 👻FMOR with heartbeat: metrics (error)
+📊 Storing token ATL with heartbeat: metrics (error)
+📊 Storing token CLIFFORD with heartbeat: metrics (error)
+📊 Storing token 🦊BYIG with heartbeat: metrics (error)
+📊 Storing token puppies with heartbeat: metrics (error)
+📊 Storing token ELEF with heartbeat: metrics (error)
+📊 Storing token RPR with heartbeat: metrics (error)
+📊 Storing token MORDR with heartbeat: metrics (error)
+📊 Storing token MAN with heartbeat: metrics (error)
+📊 Storing token HP100 with heartbeat: metrics (error)
+📊 Storing token XRP with heartbeat: metrics (error)
+📊 Storing token AJET with heartbeat: metrics (error)
+📊 Storing token GOW with heartbeat: metrics (error)
+📊 Storing token MLNR with heartbeat: metrics (error)
+📊 Storing token 🐉PMRX with heartbeat: metrics (error)
+📊 Storing token PPAI with heartbeat: metrics (error)
+📊 Storing token OHTANI with heartbeat: metrics (error)
+📊 Storing token DNS with heartbeat: metrics (error)
+📊 Storing token VANCO with heartbeat: metrics (error)
+📊 Storing token 💵WLCM with heartbeat: metrics (error)
+📊 Storing token DDUMP with heartbeat: metrics (error)
+📊 Storing token ALOT with heartbeat: metrics (error)
+📊 Storing token BAY with heartbeat: metrics (error)
+📊 Storing token TSC with heartbeat: metrics (error)
+📊 Storing token BEAT with heartbeat: metrics (error)
+📊 Storing token PNKSTR with heartbeat: metrics (error)
+📊 Storing token APES with heartbeat: metrics (error)
+📊 Storing token Teal Wallpaper with heartbeat: metrics (error)
+📊 Storing token 🐋WhalesClub with heartbeat: metrics (error)
+📊 Storing token 🤑BYIG with heartbeat: metrics (error)
+📊 Storing token TIGER with heartbeat: metrics (error)
+📊 Storing token AAVE with heartbeat: metrics (error)
+📊 Storing token RPG with heartbeat: metrics (error)
+📊 Storing token NEO with heartbeat: metrics (error)
+📊 Storing token LMX with heartbeat: metrics (error)
+📊 Storing token TREVT with heartbeat: metrics (error)
+📊 Storing token CAMA with heartbeat: metrics (error)
+📊 Storing token ARCV with heartbeat: metrics (error)
+📊 Storing token SLVT with heartbeat: metrics (error)
+📊 Storing token TYP with heartbeat: metrics (error)
+📊 Storing token PLSX with heartbeat: metrics (error)
+📊 Storing token ULTI with heartbeat: metrics (error)
+📊 Storing token ABOET with heartbeat: metrics (error)
+📊 Storing token ROLG with heartbeat: metrics (error)
+📊 Storing token PPAI with heartbeat: metrics (error)
+📊 Storing token PEPE with heartbeat: metrics (error)
+📊 Storing token 💻FMSP with heartbeat: metrics (error)
+📊 Storing token ASH with heartbeat: metrics (error)
+📊 Storing token CRVSW with heartbeat: metrics (error)
+📊 Storing token JVX with heartbeat: metrics (error)
+📊 Storing token JUHDL with heartbeat: metrics (error)
+📊 Storing token 🐕WLAX with heartbeat: metrics (error)
+📊 Storing token HPV with heartbeat: metrics (error)
+📊 Storing token SOIL with heartbeat: metrics (error)
+📊 Storing token COGO with heartbeat: metrics (error)
+📊 Storing token 🐼PANDA with heartbeat: metrics (error)
+📊 Storing token SPCR with heartbeat: metrics (error)
+📊 Storing token LIRN with heartbeat: metrics (error)
+📊 Storing token SHHE with heartbeat: metrics (error)
+📊 Storing token ADvt with heartbeat: metrics (error)
+📊 Storing token BGB with heartbeat: metrics (error)
+📊 Storing token KITE with heartbeat: metrics (error)
+📊 Storing token CRYCE with heartbeat: metrics (error)
+📊 Storing token TOC with heartbeat: metrics (error)
+📊 Storing token Grayt with heartbeat: metrics (error)
+📊 Storing token USDC with heartbeat: stable (healthy)
+📊 Storing token BABYKITE with heartbeat: metrics (error)
+📊 Storing token ALIA with heartbeat: metrics (error)
+📊 Storing token VOG with heartbeat: metrics (error)
+📊 Storing token 🦾WLMX with heartbeat: metrics (error)
+📊 Storing token FOFG with heartbeat: metrics (error)
+📊 Storing token ATRDR with heartbeat: metrics (error)
+📊 Storing token AUFA with heartbeat: metrics (error)
+📊 Storing token Tucker with heartbeat: metrics (error)
+📊 Storing token ALPND with heartbeat: metrics (error)
+📊 Storing token ⭐STGT with heartbeat: metrics (error)
+📊 Storing token FLUX with heartbeat: metrics (error)
+📊 Storing token TARO with heartbeat: metrics (error)
+📊 Storing token WOLF with heartbeat: metrics (error)
+📊 Storing token CAR FART with heartbeat: metrics (error)
+📊 Storing token BBLT with heartbeat: metrics (error)
+📊 Storing token PRFN with heartbeat: metrics (error)
+📊 Storing token Deep Funding with heartbeat: metrics (error)
+📊 Storing token ZEUS with heartbeat: metrics (error)
+📊 Storing token AIN with heartbeat: metrics (error)
+📊 Storing token ABFD with heartbeat: metrics (error)
+📊 Storing token PAPI with heartbeat: metrics (error)
+📊 Storing token GRC with heartbeat: metrics (error)
+📊 Storing token E5000 with heartbeat: metrics (error)
+📊 Storing token TermMax with heartbeat: metrics (error)
+📊 Storing token BATR with heartbeat: metrics (error)
+📊 Storing token $HOJ with heartbeat: metrics (error)
+📊 Storing token STSH with heartbeat: metrics (error)
+📊 Storing token TRUFL with heartbeat: metrics (error)
+📊 Storing token Phoenix with heartbeat: metrics (error)
+📊 Storing token $BLKCHK with heartbeat: metrics (error)
+📊 Storing token Kachina with heartbeat: metrics (error)
+📊 Storing token 🦊STFX with heartbeat: metrics (error)
+📊 Storing token 🚨CDAN with heartbeat: metrics (error)
+📊 Storing token BULG with heartbeat: metrics (error)
+📊 Storing token APXL with heartbeat: metrics (error)
+📊 Storing token PIRATE with heartbeat: metrics (error)
+📊 Storing token NEVER with heartbeat: metrics (error)
+📊 Storing token RPX with heartbeat: metrics (error)
+📊 Storing token CREPE with heartbeat: metrics (error)
+📊 Storing token BOB with heartbeat: metrics (error)
+📊 Storing token XYN with heartbeat: metrics (error)
+📊 Storing token DON with heartbeat: metrics (error)
+📊 Storing token GNBO with heartbeat: metrics (error)
+📊 Storing token DNVL with heartbeat: metrics (error)
+📊 Storing token 🔺VTCH with heartbeat: metrics (error)
+📊 Storing token BMOD with heartbeat: metrics (error)
+📊 Storing token HYVER with heartbeat: metrics (error)
+📊 Storing token 💡HYTS with heartbeat: metrics (error)
+📊 Storing token 🐵APXP with heartbeat: metrics (error)
+📊 Storing token 🏦PMOD with heartbeat: metrics (error)
+📊 Storing token VTMX with heartbeat: metrics (error)
+📊 Storing token GORO with heartbeat: metrics (error)
+📊 Storing token KONDE with heartbeat: metrics (error)
+📊 Storing token PRGW with heartbeat: metrics (error)
+📊 Storing token HOBBY with heartbeat: metrics (error)
+📊 Storing token 𓆏UAU𓆏 with heartbeat: metrics (error)
+📊 Storing token CDBR with heartbeat: metrics (error)
+📊 Storing token WBTC with heartbeat: metrics (error)
+📊 Storing token USDT1 with heartbeat: metrics (error)
+📊 Storing token USDT with heartbeat: stable (healthy)
+📊 Storing token SKY with heartbeat: metrics (error)
+📊 Storing token HYC with heartbeat: metrics (error)
+📊 Storing token RIPCP with heartbeat: metrics (error)
+📊 Storing token Zen Flipmaster with heartbeat: metrics (error)
+📊 Storing token DMG with heartbeat: metrics (error)
+📊 Storing token APEX with heartbeat: metrics (error)
+📊 Storing token HYV with heartbeat: metrics (error)
+📊 Storing token 👻GRDM with heartbeat: metrics (error)
+📊 Storing token BRIV with heartbeat: metrics (error)
+📊 Storing token DOGE with heartbeat: metrics (error)
+📊 Storing token ONPUMP with heartbeat: metrics (error)
+📊 Storing token KTSTR with heartbeat: metrics (error)
+📊 Storing token DSYNC with heartbeat: metrics (error)
+📊 Storing token ARVE with heartbeat: metrics (error)
+📊 Storing token FINU with heartbeat: metrics (error)
+📊 Storing token KRULL with heartbeat: metrics (error)
+📊 Storing token TITAN with heartbeat: metrics (error)
+📊 Storing token MNSH with heartbeat: metrics (error)
+📊 Storing token DogWifCat with heartbeat: metrics (error)
+📊 Storing token VORGINIA with heartbeat: metrics (error)
+📊 Storing token LIGER with heartbeat: metrics (error)
+📊 Storing token BSRK with heartbeat: metrics (error)
+📊 Storing token HP100 with heartbeat: metrics (error)
+📊 Storing token PALU with heartbeat: metrics (error)
+📊 Storing token CBR with heartbeat: metrics (error)
+📊 Storing token OFIR with heartbeat: metrics (error)
+📊 Storing token CHONKI with heartbeat: metrics (error)
+📊 Storing token NBS with heartbeat: metrics (error)
+📊 Storing token RPR with heartbeat: metrics (error)
+📊 Storing token TWB with heartbeat: metrics (error)
+📊 Storing token FLSX with heartbeat: metrics (error)
+📊 Storing token ATL with heartbeat: metrics (error)
+📊 Storing token ROLG with heartbeat: metrics (error)
+📊 Storing token PMPS with heartbeat: metrics (error)
+📊 Storing token 🏧BYOR with heartbeat: metrics (error)
+📊 Storing token 🤑FOMD with heartbeat: metrics (error)
+📊 Storing token GSGD with heartbeat: metrics (error)
+📊 Storing token SALAMI with heartbeat: metrics (error)
+📊 Storing token PEPE with heartbeat: metrics (error)
+📊 Storing token 🏅ATFV with heartbeat: metrics (error)
+📊 Storing token LENDF with heartbeat: metrics (error)
+📊 Storing token MIDAS with heartbeat: metrics (error)
+📊 Storing token 🔥HYTR with heartbeat: metrics (error)
+📊 Storing token SLRF with heartbeat: metrics (error)
+📊 Storing token MINO with heartbeat: metrics (error)
+📊 Storing token BUM with heartbeat: metrics (error)
+📊 Storing token SBK with heartbeat: metrics (error)
+📊 Storing token BBLT with heartbeat: metrics (error)
+📊 Storing token RHRK with heartbeat: metrics (error)
+📊 Storing token MINO with heartbeat: metrics (error)
+📊 Storing token 💣MNAV with heartbeat: metrics (error)
+📊 Storing token MINOSC with heartbeat: metrics (error)
+📊 Storing token DOX with heartbeat: metrics (error)
+📊 Storing token MYTH with heartbeat: metrics (error)
+📊 Storing token MINO with heartbeat: metrics (error)
+📊 Storing token RatGirl with heartbeat: metrics (error)
+📊 Storing token AAVE with heartbeat: metrics (error)
+📊 Storing token EBA with heartbeat: metrics (error)
+📊 Storing token ALTH with heartbeat: metrics (error)
+📊 Storing token DHB with heartbeat: metrics (error)
+📊 Storing token ADX with heartbeat: metrics (error)
+📊 Storing token ⭐STGT with heartbeat: metrics (error)
+📊 Storing token PAL with heartbeat: metrics (error)
+📊 Storing token ORBN with heartbeat: metrics (error)
+📊 Storing token 🐍BYAX with heartbeat: metrics (error)
+📊 Storing token GRCT with heartbeat: metrics (error)
+📊 Storing token 🐱LFVR with heartbeat: metrics (error)
+📊 Storing token FROGBOY with heartbeat: metrics (error)
+📊 Storing token HYPGM with heartbeat: metrics (error)
+📊 Storing token SLVT with heartbeat: metrics (error)
+📊 Storing token Casper with heartbeat: metrics (error)
+📊 Storing token WEHA with heartbeat: metrics (error)
+📊 Storing token VBRM with heartbeat: metrics (error)
+📊 Storing token TEA with heartbeat: metrics (error)
+📊 Storing token METEOR with heartbeat: metrics (error)
+📊 Storing token STAR with heartbeat: metrics (error)
+📊 Storing token 🐼PANDA with heartbeat: metrics (error)
+📊 Storing token CROCK with heartbeat: metrics (error)
+📊 Storing token RPG with heartbeat: metrics (error)
+📊 Storing token PUMP with heartbeat: metrics (error)
+📊 Storing token ORB with heartbeat: metrics (error)
+📊 Storing token PXGD with heartbeat: metrics (error)
+📊 Storing token 🥇WLBCX with heartbeat: metrics (error)
+📊 Storing token ATHV with heartbeat: metrics (error)
+📊 Storing token BMOD with heartbeat: metrics (error)
+📊 Storing token APWB with heartbeat: metrics (error)
+📊 Storing token ASX with heartbeat: metrics (error)
+📊 Storing token ARM with heartbeat: metrics (error)
+📊 Storing token DNVL with heartbeat: metrics (error)
+📊 Storing token XBEN with heartbeat: metrics (error)
+📊 Storing token ASH with heartbeat: metrics (error)
+📊 Storing token ANTIGRAV with heartbeat: metrics (error)
+📊 Storing token PHIX with heartbeat: metrics (error)
+📊 Storing token SCALR with heartbeat: metrics (error)
+📊 Storing token 🐵APXP with heartbeat: metrics (error)
+📊 Storing token ATMG with heartbeat: metrics (error)
+📊 Storing token CARLSON with heartbeat: metrics (error)
+📊 Storing token 💻RKFZ with heartbeat: metrics (error)
+📊 Storing token ⭐STEX with heartbeat: metrics (error)
+📊 Storing token ATRDR with heartbeat: metrics (error)
+📊 Storing token GOLF with heartbeat: metrics (error)
+📊 Storing token CWZ with heartbeat: metrics (error)
+📊 Storing token 🍌BABA with heartbeat: metrics (error)
+📊 Storing token GPT-5 with heartbeat: metrics (error)
+📊 Storing token Mog with heartbeat: metrics (error)
+📊 Storing token LIT with heartbeat: metrics (error)
+📊 Storing token DeepSeek with heartbeat: metrics (error)
+📊 Storing token EQCL with heartbeat: metrics (error)
+📊 Storing token HYPGM with heartbeat: metrics (error)
+📊 Storing token CRPX with heartbeat: metrics (error)
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+📡 Broadcasting: 2 tokens, 3 pools, 0 oracles
+📡 First token: USDT active=true price=1 heartbeat={"status":"healthy","last_update":1762066852052,"provider":"stable"}
+🛑 Shutting down...

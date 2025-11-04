@@ -1,8 +1,17 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
 import Table from './Table';
+import BigNumber from 'bignumber.js';
+import _ from 'lodash';
+
+// Dynamically import Plotly to avoid SSR issues
+const Plot = dynamic(() => import('react-plotly.js'), {
+  ssr: false,
+  loading: () => <div className="text-center py-4 text-gray-500">Loading chart...</div>
+});
 
 function ago(ts?: number | null) {
   if (!ts) return '-';
@@ -245,12 +254,138 @@ export default function Oracles() {
             density="compact" 
           />
         ) : (
-          <Table 
-            data={rows} 
-            columns={listColumns} 
-            emptyMessage="[NO ORACLE DATA]" 
-            density="compact" 
+          <Table
+            data={rows}
+            columns={listColumns}
+            emptyMessage="[NO ORACLE DATA]"
+            density="compact"
           />
+        )}
+
+        {/* Price Comparison Chart */}
+        {viewMode === 'comparison' && feedsByPair.length > 0 && (
+          <div className="mt-4 bg-[#161B22] border border-[#30363D] rounded-lg p-4">
+            <h3 className="text-[#C9D1D9] font-mono text-[11px] font-bold uppercase tracking-wider mb-3">
+              📊 PRICE COMPARISON MATRIX
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {feedsByPair.slice(0, 6).map((pairGroup, index) => {
+                const providerData = providerOrder.map(provider => {
+                  const feed = pairGroup.feeds.find((f: any) => f.provider === provider);
+                  return {
+                    provider,
+                    price: feed?.price_usd || null,
+                    color: providerColors[provider] || '#8B949E'
+                  };
+                }).filter(d => d.price !== null);
+
+                if (providerData.length < 2) return null;
+
+                // Calculate price differences and volatility
+                const prices = providerData.map(d => d.price).filter(p => p !== null);
+                const avgPrice = _.mean(prices);
+                const maxPrice = _.max(prices);
+                const minPrice = _.min(prices);
+                const volatility = maxPrice && minPrice ? ((maxPrice - minPrice) / avgPrice) * 100 : 0;
+
+                return (
+                  <div key={index} className="bg-[#0D1117] border border-[#30363D] rounded p-3">
+                    <h4 className="text-[#58A6FF] font-mono text-[10px] font-bold mb-2">
+                      {pairGroup.pair}
+                    </h4>
+                    <div className="text-[9px] text-[#8B949E] mb-2">
+                      Volatility: {volatility.toFixed(2)}%
+                    </div>
+                    <div className="space-y-1">
+                      {providerData.map((data, idx) => {
+                        const deviation = ((data.price! - avgPrice) / avgPrice) * 100;
+                        return (
+                          <div key={idx} className="flex justify-between items-center">
+                            <span className="text-[8px] font-mono" style={{ color: data.color }}>
+                              {data.provider}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[8px] font-mono text-[#C9D1D9]">
+                                ${data.price!.toFixed(4)}
+                              </span>
+                              <span className={`text-[7px] font-mono ${
+                                Math.abs(deviation) < 0.1 ? 'text-[#00FF66]' :
+                                Math.abs(deviation) < 1 ? 'text-[#FFA657]' :
+                                'text-[#F85149]'
+                              }`}>
+                                {deviation > 0 ? '+' : ''}{deviation.toFixed(2)}%
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Price Spread Chart */}
+            <div className="mt-4">
+              <h4 className="text-[#C9D1D9] font-mono text-[10px] font-bold uppercase tracking-wider mb-3">
+                📈 PRICE SPREAD ANALYSIS
+              </h4>
+              <div style={{ height: '300px', width: '100%' }}>
+                <Plot
+                  data={feedsByPair.slice(0, 8).map((pairGroup, index) => {
+                    const prices = providerOrder.map(provider => {
+                      const feed = pairGroup.feeds.find((f: any) => f.provider === provider);
+                      return feed?.price_usd || null;
+                    }).filter(p => p !== null);
+
+                    if (prices.length < 2) return null;
+
+                    const avgPrice = _.mean(prices);
+                    const spread = _.max(prices)! - _.min(prices)!;
+                    const spreadPercent = (spread / avgPrice) * 100;
+
+                    return {
+                      x: [pairGroup.pair],
+                      y: [spreadPercent],
+                      type: 'bar' as const,
+                      name: pairGroup.pair,
+                      marker: {
+                        color: spreadPercent < 1 ? '#00FF66' :
+                               spreadPercent < 5 ? '#FFA657' : '#F85149'
+                      },
+                      showlegend: false
+                    };
+                  }).filter(Boolean)}
+                  layout={{
+                    width: undefined,
+                    height: 300,
+                    margin: { t: 20, r: 20, b: 60, l: 60 },
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: '#0D1117',
+                    font: { color: '#C9D1D9', size: 8 },
+                    xaxis: {
+                      tickangle: -45,
+                      tickfont: { size: 7 },
+                      gridcolor: '#30363D'
+                    },
+                    yaxis: {
+                      title: 'Price Spread %',
+                      tickfont: { size: 7 },
+                      gridcolor: '#30363D'
+                    },
+                    title: {
+                      text: 'Oracle Price Spread by Pair',
+                      font: { size: 10, color: '#C9D1D9' }
+                    }
+                  }}
+                  config={{
+                    displayModeBar: false,
+                    responsive: true
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

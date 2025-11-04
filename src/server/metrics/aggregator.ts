@@ -5,6 +5,8 @@ import { getWsClient } from '../rpc/wsClient';
 import { hexToBigInt } from '@/lib/util/hex';
 import { formatUnits } from 'ethers';
 import { logErrorWithConsole } from '../utils/errorLogger';
+import _ from 'lodash';
+import BigNumber from 'bignumber.js';
 
 // Metrics aggregator for real-time statistics
 export class MetricsAggregator {
@@ -21,42 +23,37 @@ export class MetricsAggregator {
       txpoolStatus = await getTxpoolStatus();
     }
 
-    // Count transactions by category
-    const byType: Record<string, number> = {};
-    let largeEthCount = 0;
+    // Use lodash for efficient counting and processing
+    const byType = _.countBy(txs, tx => tx.category_key || 'unknown');
 
-    for (const tx of txs) {
-      // Count by type
-      const type = tx.category_key || 'unknown';
-      byType[type] = (byType[type] || 0) + 1;
+    // Count large ETH transfers using lodash chain
+    const largeEthCount = _.chain(txs)
+      .filter(tx => tx.value && !tx.input)
+      .sumBy(tx => {
+        const value = hexToBigInt(tx.value!);
+        return value >= 1_000_000_000_000_000_000n ? 1 : 0;
+      })
+      .value();
 
-      // Count large ETH transfers
-      if (tx.value && !tx.input) {
-        const value = hexToBigInt(tx.value);
-        if (value >= 1_000_000_000_000_000_000n) { // >= 1 ETH
-          largeEthCount++;
+    // Use lodash for gas bucket calculations
+    const gasBuckets = _.chain(txs)
+      .filter(tx => tx.maxFeePerGas || tx.gasPrice)
+      .map(tx => {
+        try {
+          const wei = tx.maxFeePerGas || tx.gasPrice;
+          return Number(formatUnits(hexToBigInt(wei!), 9));
+        } catch {
+          return 0;
         }
-      }
-    }
-
-    // Gas buckets from effective fee (gwei)
-    const gasBuckets = {
-      gte_100: 0,
-      gte_150: 0,
-      gte_200: 0,
-      gte_300: 0,
-    };
-    for (const tx of txs) {
-      try {
-        const wei = tx.maxFeePerGas || tx.gasPrice;
-        if (!wei) continue;
-        const gwei = Number(formatUnits(hexToBigInt(wei), 9));
-        if (gwei >= 100) gasBuckets.gte_100++;
-        if (gwei >= 150) gasBuckets.gte_150++;
-        if (gwei >= 200) gasBuckets.gte_200++;
-        if (gwei >= 300) gasBuckets.gte_300++;
-      } catch {}
-    }
+      })
+      .filter(gwei => gwei > 0)
+      .reduce((buckets, gwei) => ({
+        gte_100: buckets.gte_100 + (gwei >= 100 ? 1 : 0),
+        gte_150: buckets.gte_150 + (gwei >= 150 ? 1 : 0),
+        gte_200: buckets.gte_200 + (gwei >= 200 ? 1 : 0),
+        gte_300: buckets.gte_300 + (gwei >= 300 ? 1 : 0),
+      }), { gte_100: 0, gte_150: 0, gte_200: 0, gte_300: 0 })
+      .value();
 
     // Parse txpool status
     let pending = 0;
@@ -89,23 +86,16 @@ export class MetricsAggregator {
     const egressPerSec = txs.filter(tx => (tx._inclusion_ts || 0) >= (nowSec - 1)).length;
     const droppedPerSec = txs.filter(tx => tx._state === 'DROPPED' && (tx._last_seen_ts || 0) >= (nowSec - 1)).length as number;
 
-    // Age percentiles (simplified)
-    const ages = txs
+    // Use lodash for age percentile calculations
+    const ages = _.chain(txs)
       .filter(tx => tx._first_seen_ts)
       .map(tx => Date.now() / 1000 - tx._first_seen_ts!)
-      .sort((a, b) => a - b);
+      .sortBy()
+      .value();
 
-    let ageP50: number | null = null;
-    let ageP90: number | null = null;
-    let ageMax: number | null = null;
-
-    if (ages.length > 0) {
-      const mid = Math.floor(ages.length / 2);
-      ageP50 = ages[mid];
-      const p90Index = Math.floor(ages.length * 0.9);
-      ageP90 = ages[Math.min(p90Index, ages.length - 1)];
-      ageMax = ages[ages.length - 1];
-    }
+    const ageP50 = ages.length > 0 ? ages[Math.floor(ages.length / 2)] : null;
+    const ageP90 = ages.length > 0 ? ages[Math.min(Math.floor(ages.length * 0.9), ages.length - 1)] : null;
+    const ageMax = ages.length > 0 ? _.last(ages) : null;
 
     // Update flow histories (truncate to maxPoints)
     this.pushHistory(this.ingressHistory, ingressPerSec);

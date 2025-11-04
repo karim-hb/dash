@@ -3,25 +3,55 @@
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
 import { useFilters } from '../hooks/useFilters';
 import { useState, useEffect } from 'react';
+import useSWR from 'swr';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Plotly to avoid SSR issues
+const Plot = dynamic(() => import('react-plotly.js'), {
+  ssr: false,
+  loading: () => <div style={{ height: '30px', width: '100%', backgroundColor: '#1F2937' }} />
+});
+import BigNumber from 'bignumber.js';
 import Table from './Table';
-import SparklineChart from './charts/SparklineChart';
-import BarChart from './charts/BarChart';
-import TimeSeriesChart from './charts/TimeSeriesChart';
-import PieChart from './charts/PieChart';
+
+// SWR fetcher for API calls
+const swrFetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function Dashboard() {
   const { snapshot } = useWsSnapshot();
   const filters = useFilters();
+
+  // Add SWR for cached API data (not real-time WebSocket data)
+  const { data: cachedStats } = useSWR('/api/dashboard/stats', swrFetcher, {
+    refreshInterval: 30000, // Cache for 30 seconds
+    revalidateOnFocus: false
+  });
 
   // Real-time data tracking
   const [gasPriceHistory, setGasPriceHistory] = useState<number[]>([]);
   const [ingressHistory, setIngressHistory] = useState<Array<{ time: string; ingress: number; egress: number }>>([]);
 
   useEffect(() => {
-    const baseGwei = snapshot?.gas?.oracle?.baseFeeGwei ?? (snapshot?.gas?.suggestions?.base_fee ? snapshot.gas.suggestions.base_fee / 1e9 : null);
-    if (baseGwei != null) {
+    // Use BigNumber for precise gas calculations
+    let baseGwei: number | null = null;
+    if (snapshot?.gas?.oracle?.baseFeeGwei != null) {
+      baseGwei = snapshot.gas.oracle.baseFeeGwei;
+    } else if (snapshot?.gas?.suggestions?.base_fee) {
+      try {
+        // Use BigNumber for precise division
+        const baseFeeWei = new BigNumber(snapshot.gas.suggestions.base_fee);
+        const gweiValue = baseFeeWei.div(new BigNumber(10).pow(9));
+        baseGwei = gweiValue.toNumber();
+      } catch (error) {
+        console.warn('Failed to calculate gas price with BigNumber:', error);
+        // Fallback to regular division
+        baseGwei = Number(snapshot.gas.suggestions.base_fee) / 1e9;
+      }
+    }
+
+    if (baseGwei != null && !isNaN(baseGwei)) {
       setGasPriceHistory(prev => {
-        const newHistory = [...prev, baseGwei];
+        const newHistory = [...prev, baseGwei!];
         return newHistory.slice(-60);
       });
     }
@@ -245,7 +275,40 @@ export default function Dashboard() {
                 <span className="text-cyan-400 font-mono text-[6px]">{baseFee}G</span>
               </div>
               {gasPriceHistory.length > 0 && (
-                <SparklineChart data={gasPriceHistory} color="#06b6d4" height={30} />
+                <div style={{ height: '30px', width: '100%' }}>
+                  <Plot
+                    data={[{
+                      x: gasPriceHistory.map((_, i) => i),
+                      y: gasPriceHistory,
+                      type: 'scatter',
+                      mode: 'lines',
+                      line: { color: '#06b6d4', width: 1 },
+                      showlegend: false
+                    }]}
+                    layout={{
+                      width: undefined,
+                      height: 30,
+                      margin: { t: 0, r: 0, b: 0, l: 0 },
+                      paper_bgcolor: 'transparent',
+                      plot_bgcolor: 'transparent',
+                      xaxis: {
+                        visible: false,
+                        showgrid: false,
+                        zeroline: false
+                      },
+                      yaxis: {
+                        visible: false,
+                        showgrid: false,
+                        zeroline: false
+                      }
+                    }}
+                    config={{
+                      displayModeBar: false,
+                      responsive: true,
+                      staticPlot: true
+                    }}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -348,14 +411,58 @@ export default function Dashboard() {
             {ingressHistory.length > 0 ? (
               <div className="space-y-2">
                 <div className="flex justify-center">
-                  <TimeSeriesChart
-                    data={ingressHistory.slice(-10)}
-                    lines={[
-                      { dataKey: 'ingress', color: '#10b981', name: 'Ingress' },
-                      { dataKey: 'egress', color: '#ef4444', name: 'Egress' }
-                    ]}
-                    height={100}
-                  />
+                  <div style={{ height: '100px', width: '100%' }}>
+                    <Plot
+                      data={[
+                        {
+                          x: ingressHistory.slice(-10).map(d => d.time),
+                          y: ingressHistory.slice(-10).map(d => d.ingress),
+                          type: 'scatter',
+                          mode: 'lines+markers',
+                          name: 'Ingress',
+                          line: { color: '#10b981', width: 2 },
+                          marker: { size: 3 }
+                        },
+                        {
+                          x: ingressHistory.slice(-10).map(d => d.time),
+                          y: ingressHistory.slice(-10).map(d => d.egress),
+                          type: 'scatter',
+                          mode: 'lines+markers',
+                          name: 'Egress',
+                          line: { color: '#ef4444', width: 2 },
+                          marker: { size: 3 }
+                        }
+                      ]}
+                      layout={{
+                        width: undefined,
+                        height: 100,
+                        margin: { t: 20, r: 20, b: 30, l: 40 },
+                        paper_bgcolor: 'transparent',
+                        plot_bgcolor: 'rgba(17, 24, 39, 0.3)',
+                        font: { color: '#d1d5db', size: 8 },
+                        xaxis: {
+                          tickangle: -45,
+                          tickfont: { size: 6 },
+                          gridcolor: '#374151'
+                        },
+                        yaxis: {
+                          tickfont: { size: 6 },
+                          gridcolor: '#374151'
+                        },
+                        showlegend: true,
+                        legend: {
+                          x: 0,
+                          y: 1,
+                          orientation: 'h',
+                          font: { size: 6 }
+                        }
+                      }}
+                      config={{
+                        displayModeBar: false,
+                        responsive: true
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Current Values */}
@@ -441,7 +548,32 @@ export default function Dashboard() {
               <div className="space-y-2">
                 {/* Mini Pie Chart */}
                 <div className="flex justify-center">
-                  <PieChart data={protocolData.slice(0, 5)} height={120} innerRadius={25} />
+                  <div style={{ height: '120px', width: '120px' }}>
+                    <Plot
+                      data={[{
+                        values: protocolData.slice(0, 5).map(d => d.value),
+                        labels: protocolData.slice(0, 5).map(d => d.name),
+                        type: 'pie',
+                        hole: 0.4,
+                        marker: {
+                          colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
+                        },
+                        textinfo: 'none',
+                        hoverinfo: 'label+percent+value'
+                      }]}
+                      layout={{
+                        width: 120,
+                        height: 120,
+                        margin: { t: 0, r: 0, b: 0, l: 0 },
+                        paper_bgcolor: 'transparent',
+                        showlegend: false
+                      }}
+                      config={{
+                        displayModeBar: false,
+                        responsive: true
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Protocol Legend */}

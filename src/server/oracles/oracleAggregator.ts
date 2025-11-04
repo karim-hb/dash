@@ -65,6 +65,12 @@ function isExecutionRevertedError(error: any): boolean {
     return true;
   }
   
+  // Check for expected "No feed found" errors (expected behavior, not an error)
+  if (message.includes('No feed found in registry') ||
+      message.includes('No feed data available')) {
+    return true;
+  }
+  
   return false;
 }
 

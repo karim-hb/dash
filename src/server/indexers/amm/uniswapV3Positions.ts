@@ -3,7 +3,7 @@ import amm from '../../catalog/amm.json';
 import { getProvider } from '../../modules/provider';
 import { updateV3PoolBalances, registerPool, type PoolMeta } from '../../market/ammEngine';
 import { computeAmountsForPosition, derivePriceRatio } from './uniswapV3Math';
-import { logErrorWithConsole, logWarningWithConsole } from '@/server/utils/errorLogger';
+import { logErrorWithConsole } from '@/server/utils/errorLogger';
 
 const POSITION_MANAGER_ADDRESS = (process.env.UNIV3_POSITION_MANAGER || '0xC36442b4a4522E871399CD717aBDD847Ab11FE88').toLowerCase();
 const rawFactory = (amm as any).uniswap_v3?.factory || process.env.UNIV3_FACTORY;
@@ -163,7 +163,7 @@ async function loadPosition(tokenId: bigint): Promise<PositionRecord | null> {
 async function refreshPosition(tokenId: bigint): Promise<void> {
   const position = await loadPosition(tokenId);
   const previousPool = removePosition(tokenId);
-  if (!position || position.liquidity === BigInt('0')) {
+  if (!position || position.liquidity === 0n) {
     if (previousPool) await schedulePoolRecompute(previousPool);
     return;
   }
@@ -184,9 +184,9 @@ async function recomputePool(poolAddr: string): Promise<void> {
   }
 
   const poolMap = positionsByPool.get(key);
-  let amount0 = BigInt('0');
-  let amount1 = BigInt('0');
-  let sqrtPriceX96 = BigInt('0');
+  let amount0 = 0n;
+  let amount1 = 0n;
+  let sqrtPriceX96 = 0n;
 
   try {
     const poolContract = getPoolContract(key);
@@ -195,7 +195,7 @@ async function recomputePool(poolAddr: string): Promise<void> {
 
     if (poolMap && poolMap.size > 0) {
       for (const position of poolMap.values()) {
-        if (position.liquidity === BigInt('0')) continue;
+        if (position.liquidity === 0n) continue;
         const { amount0: posAmount0, amount1: posAmount1 } = computeAmountsForPosition(
           sqrtPriceX96,
           position.tickLower,
@@ -267,7 +267,6 @@ export function getCachedPoolState(poolAddr: string): PoolState | undefined {
 async function processPositionLog(log: ethers.Log): Promise<void> {
   try {
     const parsed = positionManager.interface.parseLog(log);
-    if (!parsed) return;
     const tokenId = BigInt(parsed.args.tokenId ?? parsed.args[2]);
     switch (parsed.name) {
       case 'Mint':
@@ -290,18 +289,10 @@ async function processPositionLog(log: ethers.Log): Promise<void> {
 
 async function backfillPositions(): Promise<void> {
   const latest = await provider.getBlockNumber();
-  // Limit to last 2 million blocks maximum to avoid querying very old blocks
-  const MAX_LOOKBACK_BLOCKS = 2_000_000;
-  const envStartBlock = process.env.UNIV3_POSITIONS_START_BLOCK 
-    ? Number(process.env.UNIV3_POSITIONS_START_BLOCK) 
-    : null;
-  const minBlock = Math.max(0, latest - MAX_LOOKBACK_BLOCKS);
-  const startBlock = envStartBlock != null 
-    ? Math.max(minBlock, Math.min(envStartBlock, latest)) 
-    : minBlock;
+  const defaultStart = 12369621; // Uniswap V3 deployment block on mainnet
+  const maxBackfillBlocks = Number(process.env.UNIV3_POSITIONS_MAX_BACKFILL_BLOCKS || 10000);
+  const startBlock = Math.max(defaultStart, latest - maxBackfillBlocks);
   const step = Number(process.env.UNIV3_POSITIONS_BACKFILL_STEP || 5000);
-
-  console.log(`🔄 V3 positions backfilling from block ${startBlock} to ${latest} (max lookback: ${MAX_LOOKBACK_BLOCKS} blocks)`);
 
   for (let from = startBlock; from <= latest; from += step) {
     const to = Math.min(latest, from + step - 1);
@@ -316,12 +307,7 @@ async function backfillPositions(): Promise<void> {
       for (const log of logs) {
         await processPositionLog(log);
       }
-    } catch (err: any) {
-      // Skip logging expected "Receipt not available" errors for old blocks
-      const errMsg = err?.message || String(err);
-      if (errMsg.includes('Receipt not available') || errMsg.includes('-32001')) {
-        continue; // Skip old blocks that are no longer available
-      }
+    } catch (err) {
       logErrorWithConsole(err, `Failed to backfill positions for range [${from}, ${to}]`);
     }
   }

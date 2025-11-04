@@ -5,10 +5,40 @@ import { useFilters } from '../hooks/useFilters';
 import Card from './Card';
 import Table from './Table';
 import { ethers } from 'ethers';
+import useSWR from 'swr';
+import BigNumber from 'bignumber.js';
+import _ from 'lodash';
 
 function short(s: string, n = 10) { return s && s.length > n ? `${s.slice(0, n)}…` : (s || ''); }
-function fmtGwei(hex?: string) { try { return hex ? Number(ethers.formatUnits(hex, 9)).toFixed(1) : '-'; } catch { return '-'; } }
-function fmtAge(firstSeen?: number) { if (!firstSeen) return '-'; const age = Date.now() / 1000 - firstSeen; return `${age.toFixed(1)}s`; }
+
+// Enhanced BigNumber-based formatting functions
+function fmtGwei(hex?: string) {
+  if (!hex) return '-';
+  try {
+    const wei = new BigNumber(hex, 16);
+    const gwei = wei.div(new BigNumber(10).pow(9));
+    return gwei.toFixed(1);
+  } catch {
+    return '-';
+  }
+}
+
+function fmtValue(value?: string, decimals: number = 18) {
+  if (!value) return '-';
+  try {
+    const val = new BigNumber(value, 16);
+    const formatted = val.div(new BigNumber(10).pow(decimals));
+    return formatted.toFixed(4);
+  } catch {
+    return '-';
+  }
+}
+
+function fmtAge(firstSeen?: number) {
+  if (!firstSeen) return '-';
+  const age = Date.now() / 1000 - firstSeen;
+  return `${age.toFixed(1)}s`;
+}
 
 // Get protocol display name (same as app.py)
 function getProtocolDisplay(categoryKey: string): string {
@@ -35,33 +65,77 @@ function getProtocolDisplay(categoryKey: string): string {
 // Import shared amount decoding utilities
 import { calculateAmount } from '../utils/amountUtilsEthers';
 
+// Optimized event summarization with lodash
 function summarizeEvents(row: any): string {
   try {
     const events = row?._decoded_events;
     if (!Array.isArray(events) || events.length === 0) return '-';
-    const counts: Record<string, number> = {};
-    for (const e of events) {
-      const name = e?.event || 'Event';
-      counts[name] = (counts[name] || 0) + 1;
-    }
-    const parts = Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([name, c]) => (c > 1 ? `${name}×${c}` : name));
-    return parts.join(', ');
+
+    // Use lodash for efficient counting and sorting
+    const counts = _.countBy(events, e => e?.event || 'Event');
+    const topEvents = _.chain(counts)
+      .toPairs()
+      .sortBy(([_, count]) => -count)
+      .take(3)
+      .map(([name, count]) => count > 1 ? `${name}×${count}` : name)
+      .value();
+
+    return topEvents.join(', ');
   } catch {
     return '-';
   }
 }
 
 
+// SWR fetcher for additional live data
+const swrFetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function Live() {
   const { snapshot } = useWsSnapshot();
   const filters = useFilters();
   const rows = filters.applyFilters(snapshot?.live || []);
-  console.log(rows, 'rows')
+
+  // Add SWR caching for enhanced statistics
+  const { data: cachedStats } = useSWR('/api/dashboard/stats', swrFetcher, {
+    refreshInterval: 15000, // Refresh every 15 seconds
+    revalidateOnFocus: true,
+    dedupingInterval: 5000
+  });
+
   const pendingCount = rows.length;
   const gasGaugedCount = rows.filter(tx => tx._decoded_fn?.confidence > 0).length;
+
+  // Enhanced statistics with BigNumber precision
+  const totalValueETH = _.sumBy(rows, tx => {
+    try {
+      if (!tx.value) return 0;
+      const value = new BigNumber(tx.value, 16);
+      return value.div(new BigNumber(10).pow(18)).toNumber();
+    } catch {
+      return 0;
+    }
+  });
+
+  const avgGasPrice = _.meanBy(
+    rows.filter(tx => tx.gasPrice),
+    tx => {
+      try {
+        return new BigNumber(tx.gasPrice!, 16).div(new BigNumber(10).pow(9)).toNumber();
+      } catch {
+        return 0;
+      }
+    }
+  );
+
+  const highValueTxs = rows.filter(tx => {
+    try {
+      if (!tx.value) return false;
+      const value = new BigNumber(tx.value, 16);
+      return value.gte(new BigNumber(10).pow(18)); // >= 1 ETH
+    } catch {
+      return false;
+    }
+  }).length;
   const columns = [
     {
       key: '_first_seen_ts',

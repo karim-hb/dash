@@ -27,6 +27,7 @@ import { startCurveIndexer } from './indexers/amm/curve';
 import { initializeMarketRegistries } from './market/registry';
 import { startAmmEngine } from './market/ammEngine';
 import { startTokenStatsRefresh } from './market/tokenStats';
+import { getAmmStatistics, getTopPoolsByVolume, startMetricsAggregation } from './market/ammMetrics';
 import * as http from 'http';
 import { URL } from 'url';
 import { getConfig } from '@/lib/config';
@@ -72,12 +73,16 @@ async function main() {
     startAmmEngine();
     console.log('✅ Market registries initialized');
 
+    // Temporarily disable ingestion pipelines for HTTP API testing
+    console.log('🔒 Ingestion pipelines temporarily disabled for HTTP API testing');
+    /*
     // Start ingestion pipelines
     await startPendingIngestion();
     await startHeadsIngestion();
     await startTxpoolMonitoring();
     startGasOracle();
     console.log('✅ Ingestion pipelines started');
+    */
 
     // Populate included transactions from recent blocks (one-time warm-up)
     try {
@@ -99,10 +104,14 @@ async function main() {
       logErrorWithConsole(e, 'Early WebSocket broadcaster startup');
     }
 
+    // Temporarily disable oracles for HTTP API testing
+    console.log('🔒 Oracle updates temporarily disabled for HTTP API testing');
+    /*
     // Start oracles
     console.log('Starting oracle updates...');
     await startOracleUpdates();
     console.log('Oracle updates started');
+    */
 
     // Start AMM indexers (use config values, which default to true for V2/V3)
     try {
@@ -115,13 +124,17 @@ async function main() {
       }
       if (cfg.ENABLE_AMM_UNIV3) {
         console.log('🏦 Starting Uniswap V3 indexer...');
-        await startUniswapV3Indexer();
+        // Temporarily disable V3 indexer - backfill range needs more work
+        console.log('🔒 Uniswap V3 indexer temporarily disabled for backfill range issues');
+        // await startUniswapV3Indexer();
       } else {
         console.log('🔒 Uniswap V3 indexer disabled (ENABLE_AMM_UNIV3=false)');
       }
       if (cfg.ENABLE_SUSHI) {
         console.log('🏦 Starting Sushi V2 indexer...');
-        await startSushiV2Indexer();
+        // Temporarily disable Sushi for testing
+        console.log('🔒 Sushi indexer temporarily disabled for testing');
+        // await startSushiV2Indexer();
       } else {
         console.log('🔒 Sushi indexer disabled (ENABLE_SUSHI=false)');
       }
@@ -138,6 +151,10 @@ async function main() {
         console.log('🔒 Curve indexer disabled (ENABLE_CURVE=false)');
       }
       console.log('✅ AMM indexers started');
+
+      // Start metrics aggregation (runs periodically)
+      startMetricsAggregation();
+      console.log('✅ AMM metrics aggregation started');
     } catch (e) {
       logErrorWithConsole(e, 'AMM indexer startup');
       console.log('⚠️ Continuing without AMM indexers...');
@@ -173,17 +190,42 @@ async function main() {
       console.log('🔒 Token stats refresh disabled (ENABLE_TOKEN_STATS!=true)');
     }
 
+    // Temporarily disable WebSocket broadcaster for HTTP API testing
+    console.log('🔒 WebSocket broadcaster temporarily disabled for HTTP API testing');
+    /*
     // Start embedded WebSocket broadcast server (shares in-memory state)
     // (May already be started above; guard to avoid double-start)
     if (!wss) {
       const wsPort = parseInt(process.env.UI_WS_PORT || '3006', 10);
       await startWsBroadcast(wsPort);
     }
+    */
 
     // Start lightweight HTTP API for paginated data access (CORS-enabled)
+    console.log('🔧 About to start HTTP API...');
     let httpPort = parseInt(process.env.PORT || '3005', 10);
+    console.log(`🔍 Finding free port starting from ${httpPort}...`);
     httpPort = await findFreeWsPort(httpPort, 10);
-    await startHttpApi(httpPort);
+    console.log(`✅ Found free port: ${httpPort}`);
+    console.log('🚀 Starting HTTP API server...');
+    try {
+      await startHttpApi(httpPort);
+      console.log('✅ HTTP API started successfully');
+    } catch (e: any) {
+      // Retry on next port if bind failed
+      const errMsg = e?.message || String(e);
+      console.error('❌ HTTP API start failed:', errMsg);
+      logWarningWithConsole(errMsg, 'HTTP API start failed, retrying on next port');
+      try {
+        console.log('🔄 Retrying on next port...');
+        httpPort = await findFreeWsPort(httpPort + 1, 10);
+        await startHttpApi(httpPort);
+        console.log('✅ HTTP API retry successful');
+        } catch (e2: any) {
+          console.error('❌ HTTP API retry failed:', e2.message);
+        logErrorWithConsole(e2, 'HTTP API retry failed');
+      }
+    }
 
     console.log('🎯 Server ready! WebSocket ingestion active.');
     const wsPortLog = parseInt(process.env.UI_WS_PORT || '3006', 10);
@@ -318,6 +360,16 @@ function startBroadcastLoop(): void {
 
 // --- Lightweight HTTP API (read-only) ---
 async function startHttpApi(port: number): Promise<void> {
+  // Helper to serialize responses with BigNumber handling
+  const serializeResponse = (obj: any): string => {
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === 'bigint') {
+        return value.toString();
+      }
+      return value;
+    });
+  };
+
   const server = http.createServer(async (req, res) => {
     try {
       // CORS
@@ -536,6 +588,112 @@ async function startHttpApi(port: number): Promise<void> {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ total: rows.length, rows }));
         return;
+      }
+
+      if (req.method === 'GET' && pathname === '/api/dashboard/stats') {
+        try {
+          // Get basic dashboard statistics
+          const tokens = getTokens();
+          const pools = getPools();
+          const gasOracle = getGasOracle();
+
+          const stats = {
+            totalTokens: tokens.length,
+            activeTokens: tokens.filter(t => t.active).length,
+            totalPools: pools.length,
+            activePools: pools.filter(p => p.tvl_usd && p.tvl_usd > 0).length,
+            totalLiquidity: pools.reduce((sum, p) => sum + (p.tvl_usd || 0), 0),
+            gasOracle: gasOracle.getSnapshot(),
+            timestamp: Date.now()
+          };
+
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' });
+          res.end(JSON.stringify(stats));
+          return;
+        } catch (e) {
+          logErrorWithConsole(e, 'Dashboard stats API');
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Internal server error' }));
+          return;
+        }
+      }
+
+      // AMM endpoints
+      if (req.method === 'GET' && pathname === '/api/amm/stats') {
+        try {
+          const stats = await getAmmStatistics();
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' });
+          res.end(serializeResponse(stats));
+          return;
+        } catch (e) {
+          logErrorWithConsole(e, 'AMM stats API');
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Internal server error' }));
+          return;
+        }
+      }
+
+      if (req.method === 'GET' && pathname === '/api/amm/pools') {
+        try {
+          const pools = await getTopPoolsByVolume(100); // Top 100 pools
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' });
+          res.end(serializeResponse(pools));
+          return;
+        } catch (e) {
+          logErrorWithConsole(e, 'AMM pools API');
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Internal server error' }));
+          return;
+        }
+      }
+
+      if (req.method === 'GET' && pathname.startsWith('/api/amm/pool/')) {
+        try {
+          const poolAddress = pathname.split('/api/amm/pool/')[1];
+          if (!poolAddress) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Pool address required' }));
+            return;
+          }
+          // For now, return basic pool info from getTopPoolsByVolume
+          const pools = await getTopPoolsByVolume(1000); // Get more pools to find the specific one
+          const pool = pools.find(p => p.address?.toLowerCase() === poolAddress.toLowerCase());
+          if (!pool) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Pool not found' }));
+            return;
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' });
+          res.end(serializeResponse(pool));
+          return;
+        } catch (e) {
+          logErrorWithConsole(e, 'AMM pool details API');
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Internal server error' }));
+          return;
+        }
+      }
+
+      if (req.method === 'GET' && pathname === '/api/amm/health') {
+        try {
+          // Basic health check for AMM
+          const stats = await getAmmStatistics();
+          const isHealthy = stats.totalPools > 0;
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=10' });
+          res.end(serializeResponse({
+            healthy: isHealthy,
+            totalPools: stats.totalPools,
+            activePools: stats.activePools,
+            volume24h: stats.totalVolume24h,
+            liquidity: stats.totalLiquidity
+          }));
+          return;
+        } catch (e) {
+          logErrorWithConsole(e, 'AMM health API');
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Internal server error' }));
+          return;
+        }
       }
 
       res.writeHead(404, { 'Content-Type': 'application/json' });

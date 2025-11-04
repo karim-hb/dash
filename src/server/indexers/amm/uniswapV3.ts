@@ -33,7 +33,7 @@ function getTokenDecimalsCached(address: string): number {
 }
 
 function absBigInt(value: bigint): bigint {
-  return value < BigInt('0') ? -value : value;
+  return value < 0n ? -value : value;
 }
 
 async function handlePoolCreated(log: any) {
@@ -47,6 +47,35 @@ async function handlePoolCreated(log: any) {
     const feeBps = Math.round(fee / 100); // 500->5bps, 3000->30bps, 10000->100bps
 
     console.log(`🏦 V3 discovered pool ${pool} (${token0.slice(0,6)}…/${token1.slice(0,6)}… fee:${feeBps}bps)`);
+
+    // Store to MongoDB
+    try {
+      const { getPoolMetadataCollection } = await import('../../../lib/db/mongo');
+      const metadataCollection = getPoolMetadataCollection();
+      const metadata = {
+        poolAddress: pool,
+        chainId: 1, // Ethereum mainnet
+        protocol: 'Uniswap',
+        factoryAddress: (amm as any).uniswap_v3?.factory,
+        token0Address: token0,
+        token1Address: token1,
+        feeTier: feeBps,
+        creationBlock: log.blockNumber,
+        creationTimestamp: new Date(),
+        status: 'active' as const,
+        lastActivityBlock: log.blockNumber,
+        liquidityUSD: 0, // Will be updated by metrics
+        volume24hUSD: 0,
+        fees24hUSD: 0
+      };
+      await metadataCollection.updateOne(
+        { poolAddress: pool },
+        { $set: metadata },
+        { upsert: true }
+      );
+    } catch (dbError) {
+      logErrorWithConsole(dbError, 'V3 pool metadata storage failed');
+    }
 
     await registerPool({ dex: 'Uniswap', version: 'V3', address: pool, token0, token1, feeBps });
     registerV3PoolMeta({ dex: 'Uniswap', version: 'V3', address: pool, token0, token1, feeBps, fee });
@@ -88,17 +117,11 @@ export async function startUniswapV3Indexer(): Promise<void> {
   // Backfill pool created (chunked)
   try {
     const latest = await provider.getBlockNumber();
-    // Limit to last 2 million blocks maximum to avoid querying very old blocks
-    const MAX_LOOKBACK_BLOCKS = 2_000_000;
-    const envStartBlock = process.env.UNIV3_FACTORY_DEPLOY_BLOCK 
-      ? Number(process.env.UNIV3_FACTORY_DEPLOY_BLOCK) 
-      : null;
-    const minBlock = Math.max(0, latest - MAX_LOOKBACK_BLOCKS);
-    const startBlock = envStartBlock != null 
-      ? Math.max(minBlock, Math.min(envStartBlock, latest)) 
-      : minBlock;
+    const defaultStart = Number(process.env.UNIV3_FACTORY_DEPLOY_BLOCK || 12369621);
+    const maxBackfillBlocks = Number(process.env.UNIV3_MAX_BACKFILL_BLOCKS || 10000);
+    const startBlock = Math.max(defaultStart, latest - maxBackfillBlocks);
     const step = Number(process.env.UNIV3_POOL_BACKFILL_STEP || 20000);
-    console.log(`🏦 V3 backfilling pools from block ${startBlock} to ${latest} in ${step} block steps (max lookback: ${MAX_LOOKBACK_BLOCKS} blocks)`);
+    console.log(`🏦 V3 backfilling pools from block ${startBlock} to ${latest} in ${step} block steps`);
     for (let start = startBlock; start <= latest; start += step) {
       const end = Math.min(latest, start + step - 1);
       try {
@@ -106,12 +129,7 @@ export async function startUniswapV3Indexer(): Promise<void> {
         if (logs && logs.length) {
           for (const log of logs) await handlePoolCreated(log);
         }
-      } catch (e: any) {
-        // Skip logging expected "Receipt not available" errors for old blocks
-        const errMsg = e?.message || String(e);
-        if (errMsg.includes('Receipt not available') || errMsg.includes('-32001')) {
-          continue; // Skip old blocks that are no longer available
-        }
+      } catch (e) {
         logErrorWithConsole(e, 'PoolCreated backfill failed');
         // continue to next chunk
       }
@@ -203,7 +221,7 @@ async function processSwapLog(log: any): Promise<void> {
 
   const feeBps = typeof pool.fee_bps === 'number'
     ? pool.fee_bps
-    : 30; // Default to 30 bps (0.3%) if not set
+    : Math.round(Number(pool.fee ?? 3000) / 100);
   const feeUsd = usd * (feeBps / 10000);
   recordSwapUsd(poolAddr, usd, feeUsd);
 

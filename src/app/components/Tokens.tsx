@@ -5,6 +5,8 @@ import React from 'react';
 import Table from './Table';
 import { ethers } from 'ethers';
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
+import BigNumber from 'bignumber.js';
+import _ from 'lodash';
 
 function fmt(num?: number | null, digits = 2): string {
   if (num === null || num === undefined || !Number.isFinite(num)) return '-';
@@ -41,54 +43,62 @@ export default function Tokens() {
 
   const derived = React.useMemo(() => {
     const countsByVersion: Record<'V1' | 'V2' | 'V3' | 'V4', number> = { V1: 0, V2: 0, V3: 0, V4: 0 };
-    const versionMap = new Map<string, Set<string>>();
 
-    for (const pool of deferredPools) {
-      if (!pool) continue;
-      const version = (pool.version || '').toUpperCase();
-      if (!version) continue;
-      const token0 = (pool.token0 || '').toLowerCase();
-      const token1 = (pool.token1 || '').toLowerCase();
-      if (token0) {
-        const set = versionMap.get(token0) ?? new Set<string>();
-        set.add(version);
-        versionMap.set(token0, set);
-      }
-      if (token1) {
-        const set = versionMap.get(token1) ?? new Set<string>();
-        set.add(version);
-        versionMap.set(token1, set);
-      }
-    }
+    // Use lodash for efficient version map creation
+    const versionMap = _.chain(deferredPools)
+      .filter(pool => pool && pool.version)
+      .flatMap(pool => {
+        const version = pool.version!.toUpperCase();
+        const token0 = (pool.token0 || '').toLowerCase();
+        const token1 = (pool.token1 || '').toLowerCase();
+        return [
+          token0 ? { token: token0, version } : null,
+          token1 ? { token: token1, version } : null
+        ].filter(Boolean);
+      })
+      .filter(Boolean)
+      .groupBy('token')
+      .mapValues(tokenVersions => new Set(_.map(tokenVersions, 'version')))
+      .value();
 
-    const enriched = deferredTokens.map(token => {
+    // Use lodash for efficient token enrichment
+    const enriched = _.map(deferredTokens, token => {
       const addrLower = (token.address || '').toLowerCase();
-      const versionSet = versionMap.get(addrLower) ?? new Set<string>();
-      const versionKeys = Array.from(versionSet).map(v => v.toUpperCase());
-      const uniqueVersionKeys = Array.from(new Set(versionKeys));
-      uniqueVersionKeys.forEach(key => {
-        if (key === 'V1' || key === 'V2' || key === 'V3' || key === 'V4') countsByVersion[key] += 1;
+      const versionSet = versionMap[addrLower] || new Set<string>();
+      const versionKeys = Array.from(versionSet);
+
+      // Update version counts using lodash
+      _.forEach(versionKeys, key => {
+        if (_.includes(['V1', 'V2', 'V3', 'V4'], key)) {
+          countsByVersion[key as keyof typeof countsByVersion]++;
+        }
       });
 
-      const versionLabel = uniqueVersionKeys.length ? uniqueVersionKeys.join('/') : '—';
-      const liq = token.liquidity_usd ?? 0;
-      const vol = token.volume_24h_usd ?? 0;
-      const mcap = token.mcap_onchain_usd ?? 0;
-      const score = liq * 0.6 + vol * 0.3 + mcap * 0.1;
+      const versionLabel = versionKeys.length ? versionKeys.join('/') : '—';
 
-      return {
-        ...token,
+      // Use BigNumber for precise score calculations
+      const liqBN = new BigNumber(token.liquidity_usd || 0);
+      const volBN = new BigNumber(token.volume_24h_usd || 0);
+      const mcapBN = new BigNumber(token.mcap_onchain_usd || 0);
+
+      const score = liqBN.multipliedBy(0.6)
+        .plus(volBN.multipliedBy(0.3))
+        .plus(mcapBN.multipliedBy(0.1))
+        .toNumber();
+
+      return _.assign({}, token, {
         score,
-        versionKeys: uniqueVersionKeys,
+        versionKeys,
         versionLabel,
         active: Boolean((token as any).active || token.heartbeat?.status === 'healthy'),
-      };
+      });
     });
 
-    const pricedCount = enriched.reduce((acc, row) => {
+    // Use lodash for priced count calculation
+    const pricedCount = _.sumBy(enriched, row => {
       const price = row.price_usd;
-      return acc + (price !== null && price !== undefined && Number.isFinite(price) ? 1 : 0);
-    }, 0);
+      return (price !== null && price !== undefined && _.isFinite(price)) ? 1 : 0;
+    });
 
     const totalTokens = deferredTokens.length;
     const searchLower = deferredSearch.trim().toLowerCase();

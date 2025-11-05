@@ -2,21 +2,9 @@ import { Transaction, MetricsResult, StateMetrics, FeeHistoryPercentile, GasSugg
 import { getTrackerState } from '../state/state';
 import { getTxpoolStatus } from '../ingest/txpool';
 import { getWsClient } from '../rpc/wsClient';
-import { hexToNumber } from '@/lib/util/hex';
-
-// Score transaction based on amount, gas, and age (similar to ranking.py)
-function scoreTx(tx: Transaction, nowTs: number = Date.now() / 1000): number {
-  const amountEth = parseInt(tx.value || '0x0', 16) / 1e18;
-  const gasGwei = (parseInt(tx.maxFeePerGas || tx.gasPrice || '0x0', 16) / 1e9);
-  const age = tx._first_seen_ts ? Math.max(0, nowTs - tx._first_seen_ts) : 0;
-
-  // Base weights (same as ranking.py)
-  const wAmount = 2.0;
-  const wGas = 1.0;
-  const wAge = 0.2;
-
-  return wAmount * (amountEth <= 0 ? 0 : (1.0 + amountEth) ** 0.3) + wGas * gasGwei - wAge * age;
-}
+import { hexToBigInt } from '@/lib/util/hex';
+import { formatUnits } from 'ethers';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 // Metrics aggregator for real-time statistics
 export class MetricsAggregator {
@@ -44,8 +32,8 @@ export class MetricsAggregator {
 
       // Count large ETH transfers
       if (tx.value && !tx.input) {
-        const value = hexToNumber(tx.value);
-        if (value >= 1e18) { // >= 1 ETH
+        const value = hexToBigInt(tx.value);
+        if (value >= 1_000_000_000_000_000_000n) { // >= 1 ETH
           largeEthCount++;
         }
       }
@@ -62,8 +50,7 @@ export class MetricsAggregator {
       try {
         const wei = tx.maxFeePerGas || tx.gasPrice;
         if (!wei) continue;
-        const val = hexToNumber(wei);
-        const gwei = val / 1e9;
+        const gwei = Number(formatUnits(hexToBigInt(wei), 9));
         if (gwei >= 100) gasBuckets.gte_100++;
         if (gwei >= 150) gasBuckets.gte_150++;
         if (gwei >= 200) gasBuckets.gte_200++;
@@ -78,13 +65,14 @@ export class MetricsAggregator {
     if (txpoolStatus) {
       try {
         if (typeof txpoolStatus.pending === 'string') {
-          pending = hexToNumber(txpoolStatus.pending);
+          pending = Number(hexToBigInt(txpoolStatus.pending));
         }
         if (typeof txpoolStatus.queued === 'string') {
-          queued = hexToNumber(txpoolStatus.queued);
+          queued = Number(hexToBigInt(txpoolStatus.queued));
         }
       } catch (error) {
-        console.error('Failed to parse txpool status:', error);
+        logErrorWithConsole(error, 'Failed to parse txpool status');
+
       }
     }
 
@@ -196,7 +184,7 @@ export async function getFeeHistoryAnalytics(blocks: number = 20): Promise<FeeHi
 
     // Get latest block number
     const latestBlock = await wsClient.rpc('eth_blockNumber', []);
-    const latestBlockNum = hexToNumber(latestBlock);
+    const latestBlockNum = Number(hexToBigInt(latestBlock));
 
     // Get fee history
     const { numberToHex } = await import('@/lib/util/hex');
@@ -213,12 +201,12 @@ export async function getFeeHistoryAnalytics(blocks: number = 20): Promise<FeeHi
     }
 
     // Extract base fee (latest)
-    const baseFees = feeHistory.baseFeePerGas.map((fee: string) => hexToNumber(fee));
+    const baseFees = feeHistory.baseFeePerGas.map((fee: string) => Number(hexToBigInt(fee)));
     const baseFee = baseFees.length > 0 ? baseFees[baseFees.length - 1] : null;
 
     // Calculate suggestions based on percentiles
     const priorityFees = feeHistory.reward?.map((rewards: string[]) =>
-      rewards.map((r: string) => hexToNumber(r))
+      rewards.map((r: string) => Number(hexToBigInt(r)))
     ) || [];
 
     // Simple suggestion logic
@@ -240,7 +228,7 @@ export async function getFeeHistoryAnalytics(blocks: number = 20): Promise<FeeHi
       },
     };
   } catch (error) {
-    console.error('Failed to get fee history analytics:', error);
+    logErrorWithConsole(error, 'Failed to get fee history analytics');
     return {
       base_fee: null,
       suggested_gas_price: null,

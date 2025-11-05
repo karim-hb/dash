@@ -88,20 +88,20 @@ export default function Table<T extends Record<string, any>>({
     <div className={className}>
       <div className="overflow-x-auto">
         <table className={`min-w-full ${rowText} border-collapse`}>
-          <thead className="bg-gray-900 border-b border-gray-700">
+          <thead className="bg-[#161B22] border-b-2 border-[#0066FF]">
             <tr>
               {columns.map((column, index) => (
                 <th
                   key={String(column.key) + index}
-                  className={`text-left font-mono ${headText} text-gray-400 uppercase tracking-widest ${headerPad} border-r border-gray-800 last:border-r-0 ${
-                    column.sortable ? 'cursor-pointer hover:bg-gray-800 select-none' : ''
+                  className={`text-left font-mono ${headText} text-[#0066FF] uppercase tracking-widest font-bold ${headerPad} border-r border-[#21262D] last:border-r-0 ${
+                    column.sortable ? 'cursor-pointer hover:bg-[#21262D] select-none' : ''
                   } ${column.className || ''}`}
                   onClick={() => column.sortable && handleSort(String(column.key))}
                 >
                   <div className="flex items-center gap-1">
                     <span>{column.header}</span>
                     {column.sortable && sortColumn === column.key && (
-                      <span className={`${sortDirection === 'desc' ? 'text-red-400' : 'text-green-400'} text-[7px]`}>
+                      <span className={`${sortDirection === 'desc' ? 'text-[#F85149]' : 'text-[#00FF66]'} text-[7px]`}>
                         {sortDirection === 'desc' ? '▼' : '▲'}
                       </span>
                     )}
@@ -113,7 +113,7 @@ export default function Table<T extends Record<string, any>>({
           <tbody>
             {sortedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className={`px-4 py-6 text-center text-gray-600 font-mono ${rowText} bg-black`}>
+                <td colSpan={columns.length} className={`px-4 py-6 text-center text-[#8B949E] font-mono ${rowText} bg-[#0D1117]`}>
                   <div>{emptyMessage}</div>
                 </td>
               </tr>
@@ -121,7 +121,7 @@ export default function Table<T extends Record<string, any>>({
               sortedData.map((row, index) => (
                 <tr
                   key={index}
-                  className={`font-mono ${rowText} border-b border-gray-900 hover:bg-gray-900 ${
+                  className={`font-mono ${rowText} border-b border-[#21262D] hover:bg-[#161B22]/50 transition-colors ${
                     onRowClick ? 'cursor-pointer' : ''
                   }`}
                   onClick={() => onRowClick?.(row, index)}
@@ -149,16 +149,16 @@ export default function Table<T extends Record<string, any>>({
       </div>
 
       {sortedData.length > 0 && (
-        <div className={`border-t border-gray-800 px-2 py-1 bg-gray-900`}>
-          <div className={`flex items-center justify-between text-gray-400 font-mono ${rowText}`}>
+        <div className={`border-t border-[#21262D] px-3 py-2 bg-[#161B22]`}>
+          <div className={`flex items-center justify-between text-[#8B949E] font-mono ${rowText}`}>
             <div className="flex items-center gap-3">
-              <span className="text-gray-500">{sortedData.length} entries</span>
+              <span className="text-[#C9D1D9]">{sortedData.length} entries</span>
               {sortColumn && (
-                <span className="text-green-400">
+                <span className="text-[#0066FF]">
                   sorted by {columns.find(col => col.key === sortColumn)?.header}
                   <button
                     onClick={() => setSortColumn(null)}
-                    className="ml-1 text-gray-600 hover:text-gray-400 text-[8px]"
+                    className="ml-1 text-[#8B949E] hover:text-[#C9D1D9] text-[8px] transition-colors"
                   >
                     [clear]
                   </button>

@@ -1,6 +1,7 @@
 import { TxState } from '@/lib/types';
 import { getWsClient } from '../rpc/wsClient';
 import { getTrackerState } from '../state/state';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 // Txpool status and content monitoring
 export interface TxpoolStatus {
@@ -28,7 +29,7 @@ export async function getTxpoolStatus(): Promise<TxpoolStatus | null> {
 
     return null;
   } catch (error) {
-    console.error('Failed to get txpool status:', error);
+    logErrorWithConsole(error, 'Failed to get txpool status');
     return null;
   }
 }
@@ -48,7 +49,7 @@ export async function getTxpoolContent(): Promise<TxpoolContent | null> {
 
     return null;
   } catch (error) {
-    console.error('Failed to get txpool content:', error);
+    logErrorWithConsole(error, 'Failed to get txpool content');
     return null;
   }
 }
@@ -104,7 +105,7 @@ export async function processTxpoolContent(): Promise<void> {
               await state.upsert(transaction);
               updated++;
             } catch (error) {
-              console.error(`Failed to add txpool tx ${tx.hash}:`, error);
+              logErrorWithConsole(error, `Failed to add txpool tx ${tx.hash}`);
             }
           }
 
@@ -161,7 +162,7 @@ export async function processTxpoolContent(): Promise<void> {
     }
 
   } catch (error) {
-    console.error('Failed to process txpool content:', error);
+    logErrorWithConsole(error, 'Failed to process txpool content');
   }
 }
 
@@ -204,7 +205,7 @@ export async function cleanupDroppedTransactions(): Promise<void> {
     }
 
   } catch (error) {
-    console.error('Failed to cleanup dropped transactions:', error);
+    logErrorWithConsole(error, 'Failed to cleanup dropped transactions');
   }
 }
 
@@ -220,7 +221,7 @@ export function startTxpoolMonitoring(): void {
       await processTxpoolContent();
       await cleanupDroppedTransactions();
     } catch (error) {
-      console.error('Txpool monitoring error:', error);
+      logErrorWithConsole(error, 'Txpool monitoring error');
     }
   }, 30000);
 

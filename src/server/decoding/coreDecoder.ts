@@ -1,9 +1,104 @@
 import { Transaction, DecodedCall, DecodedEvent, SwapDetails } from '@/lib/types';
-import { selector, wordAt, hexToNumber, decodeAddressArray } from '@/lib/util/hex';
+import { selector, wordAt, hexToBigInt, decodeAddressArray } from '@/lib/util/hex';
 import { getAbiRegistry } from './abiRegistry';
 import { getAbiCache } from './abiCache';
 import { decodeEventLogs, getProtocolFromAddress } from './eventDecoder';
-import { Interface } from 'ethers';
+import { Interface, getAddress, toBigInt } from 'ethers';
+import { logErrorWithConsole, logWarningWithConsole } from '../utils/errorLogger';
+
+const SWAP_FUNCTION_SIGNATURES = [
+  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+  'function swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)',
+  'function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+  'function swapETHForExactTokens(uint256 amountOut, address[] path, address to, uint256 deadline)',
+  'function swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+  'function swapTokensForExactETH(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)',
+  'function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+  'function swapExactTokensForETHSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+  'function swapExactETHForTokensSupportingFeeOnTransferTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+  'function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 deadline,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96) params)',
+  'function exactOutputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 deadline,uint256 amountOut,uint256 amountInMaximum,uint160 sqrtPriceLimitX96) params)',
+  'function exactInput((bytes path,address recipient,uint256 deadline,uint256 amountIn,uint256 amountOutMinimum) params)',
+  'function exactOutput((bytes path,address recipient,uint256 deadline,uint256 amountOut,uint256 amountInMaximum) params)'
+];
+
+const SWAP_INTERFACE = new Interface(SWAP_FUNCTION_SIGNATURES);
+
+const V2_FUNCTION_NAMES = new Set([
+  'swapExactTokensForTokens',
+  'swapTokensForExactTokens',
+  'swapExactETHForTokens',
+  'swapETHForExactTokens',
+  'swapExactTokensForETH',
+  'swapTokensForExactETH',
+  'swapExactTokensForTokensSupportingFeeOnTransferTokens',
+  'swapExactTokensForETHSupportingFeeOnTransferTokens',
+  'swapExactETHForTokensSupportingFeeOnTransferTokens'
+]);
+
+const V3_FUNCTION_NAMES = new Set([
+  'exactInputSingle',
+  'exactOutputSingle',
+  'exactInput',
+  'exactOutput'
+]);
+
+function normalizeAddressLower(value: any): string | null {
+  if (!value) return null;
+  try {
+    return getAddress(value).toLowerCase();
+  } catch {
+    try {
+      if (typeof value === 'string') {
+        return `0x${value.replace(/^0x/, '')}`.toLowerCase();
+      }
+    } catch (e) { logErrorWithConsole(e, 'Failed to normalize address'); }
+    return null;
+  }
+}
+
+function normalizeAddressArray(values: any): string[] {
+  if (!values) return [];
+  const arr = Array.isArray(values) ? values : Array.from(values);
+  const out: string[] = [];
+  for (const value of arr) {
+    const addr = normalizeAddressLower(value);
+    if (addr) out.push(addr);
+  }
+  return out;
+}
+
+function decodeUniswapV3Path(path: string): string[] {
+  if (!path) return [];
+  const hex = path.startsWith('0x') ? path.slice(2) : path;
+  const ADDR_LEN = 40; // 20 bytes in hex
+  const FEE_LEN = 6;   // 3 bytes in hex
+  const tokens: string[] = [];
+  let offset = 0;
+
+  while (offset + ADDR_LEN <= hex.length) {
+    const tokenHex = hex.slice(offset, offset + ADDR_LEN);
+    const addr = normalizeAddressLower(`0x${tokenHex}`);
+    if (addr) tokens.push(addr);
+    offset += ADDR_LEN;
+    if (offset + FEE_LEN > hex.length) break;
+    offset += FEE_LEN;
+  }
+
+  return tokens;
+}
+
+function toBigIntOrNull(value: any): bigint | null {
+  if (value === undefined || value === null) return null;
+  try {
+    return toBigInt(value);
+  } catch {
+    try {
+      return toBigInt(value.toString());
+    } catch (e) { logErrorWithConsole(e, 'Failed to convert value to bigint'); }  
+    return null;
+  }
+}
 
 // Decoded call result
 export interface DecodeResult {
@@ -58,8 +153,8 @@ export class CoreDecoder {
           if (enriched) {
             decodedFunction = enriched;
           }
-        } catch (e) {
-          console.warn(`Multicall sub-decode failed for ${hash.slice(0,8)}:`, e);
+        } catch (e: any) {
+          logWarningWithConsole(e, `Multicall sub-decode failed for ${hash.slice(0,8)}`);
         }
       }
 
@@ -82,7 +177,7 @@ export class CoreDecoder {
             console.log(`✅ TX ${hash.slice(0,8)}: Decoded ${decodedEvents.length} events`);
           }
         } catch (error) {
-          console.error(`❌ TX ${hash.slice(0,8)}: Event decoding failed:`, error);
+          logErrorWithConsole(error, `TX ${hash.slice(0,8)}: Event decoding failed`);
         }
       }
 
@@ -93,7 +188,7 @@ export class CoreDecoder {
       };
 
     } catch (error) {
-      console.error(`❌ TX decode error:`, error);
+      logErrorWithConsole(error, 'TX decode error');
       return {
         decoded: false,
         error: `Decode error: ${error instanceof Error ? error.message : 'Unknown'}`
@@ -111,58 +206,7 @@ export class CoreDecoder {
       signature = await this.registry.resolveSignatureRemote(sel) || null;
       if (!signature) return null;
     }
-
-    try {
-      // Parse signature to extract function name and parameter types
-      const sigMatch = signature.match(/^([^(]+)\(([^)]*)\)$/);
-      if (!sigMatch) return null;
-
-      const functionName = sigMatch[1];
-      const paramTypes = sigMatch[2].split(',').filter(p => p.trim());
-
-      // Decode parameters (simplified - would need full ABI decoder for complex types)
-      const args: any[] = [];
-      const data = input.startsWith('0x') ? input.slice(2) : input;
-
-      for (let i = 0; i < paramTypes.length; i++) {
-        const paramType = paramTypes[i].trim();
-
-        if (paramType === 'address') {
-          const word = wordAt(`0x${data}`, i + 1);
-          if (word.length >= 40) {
-            args.push(`0x${word.slice(-40).toLowerCase()}`);
-          } else {
-            args.push('0x0000000000000000000000000000000000000000');
-          }
-        } else if (paramType.startsWith('uint') || paramType.startsWith('int')) {
-          const word = wordAt(`0x${data}`, i + 1);
-          const num = hexToNumber(word);
-          args.push(num);
-        } else if (paramType === 'bool') {
-          const word = wordAt(`0x${data}`, i + 1);
-          const num = hexToNumber(word);
-          args.push(num !== 0);
-        } else {
-          // Unknown type - include raw data
-          const word = wordAt(`0x${data}`, i + 1);
-          args.push(word || '0x0');
-        }
-      }
-
-      return {
-        function: functionName,
-        args: args.map((value, index) => ({
-          name: `arg${index}`,
-          type: paramTypes[index] || 'unknown',
-          value
-        })),
-        confidence: 0.9
-      };
-
-    } catch (error) {
-      console.error('ABI decode error:', error);
-      return null;
-    }
+    return this.decodeWithSignature(input, signature) ?? null;
   }
 
   // Decode using on-chain contract ABI via Etherscan + ethers Interface
@@ -181,7 +225,7 @@ export class CoreDecoder {
       const iface = new Interface(abi as any);
       const parsed = iface.parseTransaction({ data });
       if (!parsed) return null;
-      const args = parsed.functionFragment.inputs.map((inp, idx) => ({
+      const args = parsed.fragment.inputs.map((inp: any, idx: number) => ({
         name: inp.name || `arg${idx}`,
         type: inp.format(),
         value: parsed.args?.[idx]
@@ -193,6 +237,7 @@ export class CoreDecoder {
         decoded: true
       };
     } catch (err) {
+      logErrorWithConsole(err, 'Failed to decode with contract ABI');
       return null;
     }
   }
@@ -207,7 +252,7 @@ export class CoreDecoder {
     if (sel === 'a9059cbb' && dataLen >= 8 + 64 * 2) {
       try {
         const to = `0x${data.slice(8 + 24, 8 + 64)}`;
-        const amount = hexToNumber(`0x${data.slice(8 + 64, 8 + 128)}`);
+        const amount = hexToBigInt(`0x${data.slice(8 + 64, 8 + 128)}`);
         return {
           function: 'transfer',
           args: [
@@ -216,7 +261,8 @@ export class CoreDecoder {
           ],
           confidence: 0.8
         };
-      } catch {
+      } catch (e) {
+        logErrorWithConsole(e, 'Failed to decode with ERC-20 transfer');
         return null;
       }
     }
@@ -225,7 +271,7 @@ export class CoreDecoder {
     if (sel === '095ea7b3' && dataLen >= 8 + 64 * 2) {
       try {
         const spender = `0x${data.slice(8 + 24, 8 + 64)}`;
-        const amount = hexToNumber(`0x${data.slice(8 + 64, 8 + 128)}`);
+        const amount = hexToBigInt(`0x${data.slice(8 + 64, 8 + 128)}`);
         this.registry.cacheDiscoveredSignature(sel, 'approve(address,uint256)');
         return {
           function: 'approve',
@@ -235,7 +281,8 @@ export class CoreDecoder {
           ],
           confidence: 0.7
         };
-      } catch {
+      } catch (e) {
+        logErrorWithConsole(e, 'Failed to decode with ERC-20 approve');
         return null;
       }
     }
@@ -245,7 +292,7 @@ export class CoreDecoder {
       try {
         const from = `0x${data.slice(8 + 24, 8 + 64)}`;
         const to = `0x${data.slice(8 + 64 + 24, 8 + 64 * 2)}`;
-        const amount = hexToNumber(`0x${data.slice(8 + 64 * 2, 8 + 64 * 3)}`);
+        const amount = hexToBigInt(`0x${data.slice(8 + 64 * 2, 8 + 64 * 3)}`);
         this.registry.cacheDiscoveredSignature(sel, 'transferFrom(address,address,uint256)');
         return {
           function: 'transferFrom',
@@ -256,7 +303,8 @@ export class CoreDecoder {
           ],
           confidence: 0.7
         };
-      } catch {
+      } catch (e) {
+        logErrorWithConsole(e, 'Failed to decode with ERC-20 transferFrom');
         return null;
       }
     }
@@ -267,7 +315,7 @@ export class CoreDecoder {
         const offsetWord = data.slice(8, 8 + 64);
         if (offsetWord === '0000000000000000000000000000000000000000000000000000000000000020') {
           const lengthWord = data.slice(8 + 64, 8 + 128);
-          const arrayLen = hexToNumber(`0x${lengthWord}`);
+          const arrayLen = Number(hexToBigInt(`0x${lengthWord}`));
           if (1 <= arrayLen && arrayLen <= 50) {
             this.registry.cacheDiscoveredSignature(sel, 'multicall(bytes[])');
             return {
@@ -279,8 +327,9 @@ export class CoreDecoder {
             };
           }
         }
-      } catch {
-        // Ignore multicall detection errors
+      } catch (e) {
+        logErrorWithConsole(e, 'Failed to decode with multicall');
+        return null;
       }
     }
 
@@ -294,10 +343,10 @@ export class CoreDecoder {
 
         // Uniswap V2 style: amountIn, amountOutMin, path[], deadline
         if (param1.match(/^[0-9a-f]{64}$/) && param2.match(/^[0-9a-f]{64}$/)) {
-          const amountIn = hexToNumber(`0x${param1}`);
-          const amountOutMin = hexToNumber(`0x${param2}`);
+          const amountIn = hexToBigInt(`0x${param1}`);
+          const amountOutMin = hexToBigInt(`0x${param2}`);
 
-          if (amountIn > 0 && amountOutMin > 0) {
+          if (amountIn > BigInt(0) && amountOutMin > BigInt(0)) {
             // Look for path array (common in DEX swaps)
             if (dataLen >= 8 + 64 * 6) {
               const pathOffset = data.slice(8 + 192, 8 + 256);
@@ -330,10 +379,10 @@ export class CoreDecoder {
         const params: any[] = [];
         for (let i = 0; i < Math.min(4, Math.floor((dataLen - 8) / 64)); i++) {
           const paramData = data.slice(8 + i * 64, 8 + (i + 1) * 64);
-          const value = hexToNumber(`0x${paramData}`);
+          const value = hexToBigInt(`0x${paramData}`);
 
           // If we find a large value (> 1 ETH in wei), assume it's an amount
-          if (value > 1e18) {
+          if (value > BigInt('1000000000000000000')) {
             params.push({ name: `amount${i}`, type: 'uint256', value });
           } else if (paramData.match(/^000000000000000000000000[0-9a-f]{40}$/)) {
             // Looks like an address
@@ -398,7 +447,7 @@ export class CoreDecoder {
             addr2.startsWith('0x') && addr2.length === 42) {
 
           if (dataLen >= 8 + 64 * 4) {
-            const tokenId = hexToNumber(`0x${data.slice(8 + 192, 8 + 256)}`);
+            const tokenId = hexToBigInt(`0x${data.slice(8 + 192, 8 + 256)}`);
             return {
               function: 'transferFrom',
               args: [
@@ -676,7 +725,7 @@ export class CoreDecoder {
       '70a082': { function: 'balanceOf', argCount: 1 }, // ERC-20 balanceOf
       '18160d': { function: 'totalSupply', argCount: 0 }, // ERC-20 totalSupply
       'dd62ed': { function: 'allowance', argCount: 2 }, // ERC-20 allowance
-      '095ea7': { function: 'permit', argCount: 4 }, // ERC-20 permit (overlapping with approve)
+      // '095ea7' already mapped above for approve
       '022c0d': { function: 'swap', argCount: 4 }, // Generic swap
       '7ff36a': { function: 'swapExactETHForTokens', argCount: 4 }, // Uniswap style
       '18cbafe': { function: 'swapExactETHForTokensSupportingFeeOnTransfer', argCount: 4 },
@@ -1024,7 +1073,7 @@ export class CoreDecoder {
         const callData = calls[i];
         try {
           // Try enhanced signatures first
-          const decoded = await this.decodeWithEnhancedSignatures(callData, to);
+          const decoded = await this.decodeWithEnhancedSignatures(callData, tx.to || '');
           if (decoded) {
             subcalls.push({ index: i, function: decoded.function, args: decoded.args, confidence: decoded.confidence || 0.8 });
             continue;
@@ -1051,7 +1100,7 @@ export class CoreDecoder {
           ...decodedCall.args, // Keep original args
           { name: 'subcalls', type: 'DecodedCall[]', value: subcalls }
         ],
-        confidence: decodedCall.confidence + 0.1, // Slightly higher confidence
+        confidence: (decodedCall.confidence || 0) + 0.1, // Slightly higher confidence
         decoded: true
       };
     } catch {
@@ -1143,7 +1192,7 @@ export class CoreDecoder {
 
       return null;
     } catch (error) {
-      console.error('Enhanced signature decoding failed:', error);
+      logErrorWithConsole(error, 'Enhanced signature decoding failed');
       return null;
     }
   }
@@ -1227,7 +1276,7 @@ export class CoreDecoder {
 
   // Decode swap details for DEX transactions
   decodeSwapDetails(tx: Transaction): SwapDetails {
-    const result: SwapDetails = {
+    const base: SwapDetails = {
       is_swap: false,
       dex_version: '-',
       swap_type: '-',
@@ -1238,72 +1287,164 @@ export class CoreDecoder {
       path: []
     };
 
-    const toAddr = tx.to?.toLowerCase();
-    const sel = selector(tx.input);
-
-    if (!sel || !toAddr) return result;
-
-    // Check router registries (simplified)
-    // In real implementation, load from router_registry.json
-
-    // DEX selector detection
-    const dexSelectors = [
-      '38ed1739', '18cbafe5', '7ff36ab5', '5c11d795', '8803dbee', '4a25d94a', '791ac947', '022c0d9f',
-      '414bf389', 'db3e2198', 'c04b8d59', '04e45aaf',
-      'e449022e', '5ae401dc', '4bb278f3', '252dba42'
-    ];
-
-    if (dexSelectors.includes(sel)) {
-      result.is_swap = true;
-
-      // DEX version detection
-      if (['38ed1739', '18cbafe5', '7ff36ab5', '5c11d795', '8803dbee', '4a25d94a', '791ac947'].includes(sel)) {
-        result.dex_version = 'v2';
-      } else if (['414bf389', 'db3e2198', 'c04b8d59', '04e45aaf'].includes(sel)) {
-        result.dex_version = 'v3';
-      } else {
-        result.dex_version = 'agg';
-      }
-
-      // Decode amounts and tokens based on selector
-      const input = tx.input.startsWith('0x') ? tx.input.slice(2) : tx.input;
-
-      try {
-        switch (sel) {
-          case '38ed1739': // exactTokensForTokens
-            result.swap_type = 'exactTokensForTokens';
-            result.amount_in = hexToNumber(wordAt(tx.input, 1));
-            result.amount_out = hexToNumber(wordAt(tx.input, 2));
-            result.path = decodeAddressArray(input, 3);
-            if (result.path.length >= 2) {
-              result.token_in = result.path[0];
-              result.token_out = result.path[result.path.length - 1];
-            }
-            break;
-
-          case '414bf389': // exactInputSingle
-            result.swap_type = 'exactInputSingle';
-            result.amount_in = hexToNumber(wordAt(tx.input, 4));
-            result.amount_out = hexToNumber(wordAt(tx.input, 5));
-            // Token addresses from input data
-            const tokenInWord = wordAt(tx.input, 2);
-            const tokenOutWord = wordAt(tx.input, 3);
-            if (tokenInWord.length >= 40) {
-              result.token_in = `0x${tokenInWord.slice(-40)}`.toLowerCase();
-            }
-            if (tokenOutWord.length >= 40) {
-              result.token_out = `0x${tokenOutWord.slice(-40)}`.toLowerCase();
-            }
-            break;
-
-          // Add more cases as needed...
-        }
-      } catch (error) {
-        console.error('Swap decode error:', error);
-      }
+    if (!tx.input || tx.input === '0x') {
+      return base;
     }
 
-    return result;
+    try {
+      const parsed = SWAP_INTERFACE.parseTransaction({ data: tx.input });
+      if (!parsed) {
+        return base;
+      }
+      
+      const path: string[] = [];
+      let amountIn: bigint | null = null;
+      let amountOut: bigint | null = null;
+      let tokenIn: string | null = null;
+      let tokenOut: string | null = null;
+      const txValue = toBigIntOrNull(tx.value);
+
+      switch (parsed.name) {
+        case 'swapExactTokensForTokens':
+        case 'swapExactTokensForTokensSupportingFeeOnTransferTokens':
+          amountIn = toBigIntOrNull(parsed.args.amountIn);
+          amountOut = toBigIntOrNull(parsed.args.amountOutMin);
+          path.push(...normalizeAddressArray(parsed.args.path));
+          break;
+        case 'swapTokensForExactTokens':
+          amountIn = toBigIntOrNull(parsed.args.amountInMax);
+          amountOut = toBigIntOrNull(parsed.args.amountOut);
+          path.push(...normalizeAddressArray(parsed.args.path));
+          break;
+        case 'swapExactETHForTokens':
+        case 'swapExactETHForTokensSupportingFeeOnTransferTokens':
+          amountIn = txValue;
+          amountOut = toBigIntOrNull(parsed.args.amountOutMin);
+          path.push(...normalizeAddressArray(parsed.args.path));
+          break;
+        case 'swapETHForExactTokens':
+          amountIn = txValue;
+          amountOut = toBigIntOrNull(parsed.args.amountOut);
+          path.push(...normalizeAddressArray(parsed.args.path));
+          break;
+        case 'swapExactTokensForETH':
+        case 'swapExactTokensForETHSupportingFeeOnTransferTokens':
+          amountIn = toBigIntOrNull(parsed.args.amountIn);
+          amountOut = toBigIntOrNull(parsed.args.amountOutMin);
+          path.push(...normalizeAddressArray(parsed.args.path));
+          break;
+        case 'swapTokensForExactETH':
+          amountIn = toBigIntOrNull(parsed.args.amountInMax);
+          amountOut = toBigIntOrNull(parsed.args.amountOut);
+          path.push(...normalizeAddressArray(parsed.args.path));
+          break;
+        case 'exactInputSingle': {
+          const params = parsed.args[0];
+          amountIn = toBigIntOrNull(params.amountIn);
+          amountOut = toBigIntOrNull(params.amountOutMinimum);
+          tokenIn = normalizeAddressLower(params.tokenIn);
+          tokenOut = normalizeAddressLower(params.tokenOut);
+          if (tokenIn) path.push(tokenIn);
+          if (tokenOut) path.push(tokenOut);
+          break;
+        }
+        case 'exactOutputSingle': {
+          const params = parsed.args[0];
+          amountIn = toBigIntOrNull(params.amountInMaximum);
+          amountOut = toBigIntOrNull(params.amountOut);
+          tokenIn = normalizeAddressLower(params.tokenIn);
+          tokenOut = normalizeAddressLower(params.tokenOut);
+          if (tokenIn) path.push(tokenIn);
+          if (tokenOut) path.push(tokenOut);
+          break;
+        }
+        case 'exactInput': {
+          const params = parsed.args[0];
+          amountIn = toBigIntOrNull(params.amountIn);
+          amountOut = toBigIntOrNull(params.amountOutMinimum);
+          const v3Path = decodeUniswapV3Path(params.path);
+          if (v3Path.length) path.push(...v3Path);
+          break;
+        }
+        case 'exactOutput': {
+          const params = parsed.args[0];
+          amountIn = toBigIntOrNull(params.amountInMaximum);
+          amountOut = toBigIntOrNull(params.amountOut);
+          const v3Path = decodeUniswapV3Path(params.path);
+          if (v3Path.length) path.push(...v3Path);
+          break;
+        }
+      }
+
+      if (!tokenIn && path.length >= 1) tokenIn = path[0];
+      if (!tokenOut && path.length >= 2) tokenOut = path[path.length - 1];
+
+      return {
+        is_swap: true,
+        dex_version: V3_FUNCTION_NAMES.has(parsed.name) ? 'V3' : (V2_FUNCTION_NAMES.has(parsed.name) ? 'V2' : 'agg'),
+        swap_type: parsed.name,
+        amount_in: amountIn ? amountIn.toString() : null,
+        amount_out: amountOut ? amountOut.toString() : null,
+        token_in: tokenIn,
+        token_out: tokenOut,
+        path: path.length ? path : base.path,
+      };
+    } catch (error) {
+      // Fall back to legacy heuristic decoding for unknown selectors
+    }
+
+    const sel = selector(tx.input);
+    if (!sel) {
+      return base;
+    }
+
+    const fallback = { ...base };
+    const input = tx.input.startsWith('0x') ? tx.input.slice(2) : tx.input;
+
+    try {
+      switch (sel) {
+        case '38ed1739': {
+          const amountIn = hexToBigInt(wordAt(tx.input, 1));
+          const amountOut = hexToBigInt(wordAt(tx.input, 2));
+          const path = decodeAddressArray(input, 3);
+          fallback.is_swap = true;
+          fallback.dex_version = 'V2';
+          fallback.swap_type = 'swapExactTokensForTokens';
+          fallback.amount_in = amountIn ? amountIn.toString() : null;
+          fallback.amount_out = amountOut ? amountOut.toString() : null;
+          fallback.path = path;
+          if (path.length >= 2) {
+            fallback.token_in = path[0];
+            fallback.token_out = path[path.length - 1];
+          }
+          break;
+        }
+        case '414bf389': {
+          const amountIn = hexToBigInt(wordAt(tx.input, 4));
+          const amountOut = hexToBigInt(wordAt(tx.input, 5));
+          const tokenInWord = wordAt(tx.input, 2);
+          const tokenOutWord = wordAt(tx.input, 3);
+          fallback.is_swap = true;
+          fallback.dex_version = 'V3';
+          fallback.swap_type = 'exactInputSingle';
+          fallback.amount_in = amountIn ? amountIn.toString() : null;
+          fallback.amount_out = amountOut ? amountOut.toString() : null;
+          if (tokenInWord.length >= 40) {
+            fallback.token_in = normalizeAddressLower(`0x${tokenInWord.slice(-40)}`);
+            if (fallback.token_in) fallback.path.push(fallback.token_in);
+          }
+          if (tokenOutWord.length >= 40) {
+            fallback.token_out = normalizeAddressLower(`0x${tokenOutWord.slice(-40)}`);
+            if (fallback.token_out) fallback.path.push(fallback.token_out);
+          }
+          break;
+        }
+      }
+    } catch (err) {
+      logErrorWithConsole(err, 'Swap decode fallback error');
+    }
+
+    return fallback;
   }
 }
 

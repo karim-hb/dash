@@ -9,13 +9,13 @@ import * as WebSocket from 'ws';
 import { getTrackerState } from './state/state';
 import { getMetricsAggregator, getFeeHistoryAnalytics, feeHistoryToSuggestions } from './metrics/aggregator';
 import { getTxpoolStatus } from './ingest/txpool';
-import { UiSnapshot } from '@/lib/types';
+import { UiSnapshot, Transaction } from '@/lib/types';
 import { startPendingIngestion } from './ingest/pending';
-import { startHeadsIngestion } from './ingest/heads';
+import { startHeadsIngestion, initializeIncludedFromBlocks } from './ingest/heads';
 import { startTxpoolMonitoring } from './ingest/txpool';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getTokens, getPools, getOracleFeeds } from './market/registry';
+import { getTokens, getPools, getOracleFeeds, getOracleFeedsByPair } from './market/registry';
 import { startOracleUpdates } from './oracles/registry';
 import { startUniswapV2Indexer } from './indexers/amm/uniswapV2';
 import { startUniswapV3Indexer } from './indexers/amm/uniswapV3';
@@ -25,9 +25,17 @@ import { startTokenDiscovery } from './market/tokenDiscovery';
 import { startBalancerV2Indexer } from './indexers/amm/balancerV2';
 import { startCurveIndexer } from './indexers/amm/curve';
 import { initializeMarketRegistries } from './market/registry';
+import { startAmmEngine } from './market/ammEngine';
 import { startTokenStatsRefresh } from './market/tokenStats';
 import * as http from 'http';
 import { URL } from 'url';
+import { getConfig } from '@/lib/config';
+import { applyOpportunityScoring } from './market/opportunityScoring';
+import { startGasOracle, getGasOracle } from './gas/gasOracle';
+import { logErrorWithConsole, logWarningWithConsole } from './utils/errorLogger';
+
+const MIN_TOKEN_USD = Number(process.env.UI_TOKEN_MIN_USD || '1000');
+const MIN_POOL_USD = Number(process.env.UI_POOL_MIN_USD || '100'); // Lower threshold to show more pools
 
 // Server startup script
 async function main() {
@@ -49,7 +57,7 @@ async function main() {
         }
         console.log(`🗄️ Hydrated ${docs.length} tokens from Mongo into registry`);
       } catch (e) {
-        console.warn('🗄️ Hydration from Mongo failed:', e);
+        logWarningWithConsole(e, 'MongoDB hydration');
       }
     } catch {
       console.log('ℹ️ MongoDB not available, continuing without persistence');
@@ -61,29 +69,87 @@ async function main() {
 
     // Initialize market registries (pre-populate tokens from catalog)
     initializeMarketRegistries();
+    startAmmEngine();
     console.log('✅ Market registries initialized');
 
     // Start ingestion pipelines
     await startPendingIngestion();
     await startHeadsIngestion();
     await startTxpoolMonitoring();
+    startGasOracle();
     console.log('✅ Ingestion pipelines started');
+
+    // Populate included transactions from recent blocks (one-time warm-up)
+    try {
+      // Skip for now due to Nethermind eth_call issues
+      // await initializeIncludedFromBlocks();
+      console.log('⏭️ Skipped initializing included transactions from recent blocks (Nethermind issues)');
+    } catch (e) {
+      logWarningWithConsole(e, 'Initialize included transactions');
+    }
+
+    // Start embedded WebSocket broadcast server ASAP (before heavy indexers)
+    // Bind to the exact requested port to avoid UI/WS mismatches
+    try {
+      if (!wss) {
+        const wsPortEarly = parseInt(process.env.UI_WS_PORT || '3006', 10);
+        await startWsBroadcast(wsPortEarly);
+      }
+    } catch (e) {
+      logErrorWithConsole(e, 'Early WebSocket broadcaster startup');
+    }
 
     // Start oracles
     console.log('Starting oracle updates...');
-    startOracleUpdates();
+    await startOracleUpdates();
     console.log('Oracle updates started');
 
-    // Start AMM indexers
-    await startUniswapV2Indexer();
-    await startUniswapV3Indexer();
-    await startSushiV2Indexer();
-    await startBalancerV2Indexer();
-    await startCurveIndexer();
+    // Start AMM indexers (use config values, which default to true for V2/V3)
+    try {
+      const cfg = getConfig();
+      if (cfg.ENABLE_AMM_UNIV2) {
+        console.log('🏦 Starting Uniswap V2 indexer...');
+        await startUniswapV2Indexer();
+      } else {
+        console.log('🔒 Uniswap V2 indexer disabled (ENABLE_AMM_UNIV2=false)');
+      }
+      if (cfg.ENABLE_AMM_UNIV3) {
+        console.log('🏦 Starting Uniswap V3 indexer...');
+        await startUniswapV3Indexer();
+      } else {
+        console.log('🔒 Uniswap V3 indexer disabled (ENABLE_AMM_UNIV3=false)');
+      }
+      if (cfg.ENABLE_SUSHI) {
+        console.log('🏦 Starting Sushi V2 indexer...');
+        await startSushiV2Indexer();
+      } else {
+        console.log('🔒 Sushi indexer disabled (ENABLE_SUSHI=false)');
+      }
+      if (cfg.ENABLE_BALANCER) {
+        console.log('🏦 Starting Balancer V2 indexer...');
+        await startBalancerV2Indexer();
+      } else {
+        console.log('🔒 Balancer indexer disabled (ENABLE_BALANCER=false)');
+      }
+      if (cfg.ENABLE_CURVE) {
+        console.log('🏦 Starting Curve indexer...');
+        await startCurveIndexer();
+      } else {
+        console.log('🔒 Curve indexer disabled (ENABLE_CURVE=false)');
+      }
+      console.log('✅ AMM indexers started');
+    } catch (e) {
+      logErrorWithConsole(e, 'AMM indexer startup');
+      console.log('⚠️ Continuing without AMM indexers...');
+    }
 
     // Start holders estimator (approximate)
-    console.log('Starting holders backfill...');
-    startHoldersBackfillAndPolling();
+    if ((process.env.ENABLE_HOLDERS || 'false') === 'true') {
+      console.log('Starting holders backfill...');
+      startHoldersBackfillAndPolling();
+    } else {
+      console.log('🔒 Holders backfill disabled (ENABLE_HOLDERS!=true)');
+    }
 
     // Start ERC-20 token discovery (from Transfer logs) if enabled
     if ((process.env.ENABLE_TOKEN_DISCOVERY || 'false') === 'true') {
@@ -93,20 +159,26 @@ async function main() {
         await startTokenDiscovery();
         console.log('startTokenDiscovery() returned successfully');
       } catch (e) {
-        console.error('startTokenDiscovery() failed:', e);
+        logErrorWithConsole(e, 'startTokenDiscovery');
       }
     } else {
       console.log('🔒 Token discovery disabled (ENABLE_TOKEN_DISCOVERY!=true)');
     }
 
     // Start token stats refresher (onchain supply, liquidity, 24h vol, mcap)
-    console.log('Starting token stats refresh...');
-    startTokenStatsRefresh();
+    if ((process.env.ENABLE_TOKEN_STATS || 'false') === 'true') {
+      console.log('Starting token stats refresh...');
+      startTokenStatsRefresh();
+    } else {
+      console.log('🔒 Token stats refresh disabled (ENABLE_TOKEN_STATS!=true)');
+    }
 
     // Start embedded WebSocket broadcast server (shares in-memory state)
-    let wsPort = parseInt(process.env.UI_WS_PORT || '3006', 10);
-    wsPort = await findFreeWsPort(wsPort, 10);
-    await startWsBroadcast(wsPort);
+    // (May already be started above; guard to avoid double-start)
+    if (!wss) {
+      const wsPort = parseInt(process.env.UI_WS_PORT || '3006', 10);
+      await startWsBroadcast(wsPort);
+    }
 
     // Start lightweight HTTP API for paginated data access (CORS-enabled)
     let httpPort = parseInt(process.env.PORT || '3005', 10);
@@ -114,10 +186,11 @@ async function main() {
     await startHttpApi(httpPort);
 
     console.log('🎯 Server ready! WebSocket ingestion active.');
-    console.log(`💻 Start Next.js UI with: npm run dev (WS at ws://localhost:${wsPort})`);
+    const wsPortLog = parseInt(process.env.UI_WS_PORT || '3006', 10);
+    console.log(`💻 Start Next.js UI with: NEXT_PUBLIC_UI_WS_URL=ws://localhost:${wsPortLog} npm run dev`);
     try {
       const runtimePath = path.join(process.cwd(), '.runtime-ports.json');
-      fs.writeFileSync(runtimePath, JSON.stringify({ ws_port: wsPort, http_port: httpPort }, null, 2));
+      fs.writeFileSync(runtimePath, JSON.stringify({ ws_port: wsPortLog, http_port: httpPort }, null, 2));
     } catch {}
 
     // Keep server running
@@ -135,12 +208,15 @@ async function main() {
     await new Promise(() => {}); // Never resolves
 
   } catch (error) {
-    console.error('❌ Server startup failed:', error);
+    logErrorWithConsole(error, 'Server startup');
     process.exit(1);
   }
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  logErrorWithConsole(error, 'Main process');
+  process.exit(1);
+});
 
 // --- Embedded WS Broadcast Server ---
 let wss: any = null as any;
@@ -165,15 +241,19 @@ async function startWsBroadcast(port: number): Promise<void> {
       });
 
       // @ts-ignore
-      wss.on('error', (err: any) => {
-        console.error('WS server error:', err);
+      wss.on('listening', () => {
+        console.log(`✅ WebSocket broadcaster listening on ws://localhost:${port}`);
+        // Start broadcast loop immediately
+        console.log('📡 Starting WebSocket broadcast loop...');
+        startBroadcastLoop();
+        resolve();
       });
 
-      console.log(`✅ WebSocket broadcaster listening on ws://localhost:${port}`);
-      // Start broadcast loop immediately
-      console.log('📡 Starting WebSocket broadcast loop...');
-      startBroadcastLoop();
-      resolve();
+      // @ts-ignore
+      wss.on('error', (err: any) => {
+        logErrorWithConsole(err, 'WS server');
+        reject(err);
+      });
     } catch (e) {
       reject(e);
     }
@@ -231,7 +311,7 @@ function startBroadcastLoop(): void {
         try { c.close(); } catch {}
       }
     } catch (err) {
-      console.error('Broadcast error:', err);
+      logErrorWithConsole(err, 'Broadcast');
     }
   }, 200);
 }
@@ -310,12 +390,28 @@ async function startHttpApi(port: number): Promise<void> {
 
         const pricedCount = allTokens.filter(t => t.price_usd != null).length;
 
+        const pinnedSymbols = new Set(['ETH', 'WETH', 'WBTC', 'USDT', 'USDC', 'DAI']);
+
         // Filter tokens by search
         let filtered = allTokens.filter(t => {
           if (!q) return true;
           const sym = (t.symbol || '').toLowerCase();
           const addr = (t.address || '').toLowerCase();
           return sym.includes(q) || addr.includes(q);
+        });
+
+        // Drop obviously bad tokens (no price, zero, or absurd) unless pinned
+        filtered = filtered.filter(t => {
+          const symbol = (t.symbol || '').toUpperCase();
+          const pinned = pinnedSymbols.has(symbol);
+          const price = typeof t.price_usd === 'number' ? t.price_usd : null;
+          if (pinned) return true;
+          if (price == null || !Number.isFinite(price)) return false;
+          if (price <= 0) return false;
+          if (price > 1_000_000) return false;
+          const status = t.heartbeat?.status?.toLowerCase();
+          if (!t.active && status && status !== 'healthy' && status !== 'warm') return false;
+          return true;
         });
 
         // Filter by version tab
@@ -421,6 +517,12 @@ async function startHttpApi(port: number): Promise<void> {
         return;
       }
 
+      if (req.method === 'GET' && pathname === '/api/gas') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(getGasOracle().getSnapshot()));
+        return;
+      }
+
       if (req.method === 'GET' && pathname === '/api/pools') {
         const token = (fullUrl.searchParams.get('token') || '').toLowerCase();
         const allPools = getPools();
@@ -443,7 +545,7 @@ async function startHttpApi(port: number): Promise<void> {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Internal error' }));
       } catch {}
-      console.error('HTTP API error:', error);
+      logErrorWithConsole(error, 'HTTP API');
     }
   });
 
@@ -467,16 +569,21 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
   const t0 = Date.now();
   const feeHistory = await getFeeHistoryAnalytics(20);
   const rpcLatency = Date.now() - t0;
-  const gas = feeHistoryToSuggestions(feeHistory);
+  const gasSuggestions = feeHistoryToSuggestions(feeHistory);
+  const gasOracleSnapshot = getGasOracle().getSnapshot();
 
   const included = await state.snapshotIncluded(200);
 
   // Calculate scores for all transactions
   const nowTs = Date.now() / 1000;
-  const scoredTxs = snap.txs.map(tx => ({
-    ...tx,
-    _score: scoreTx(tx, nowTs),
-  }));
+  const scoredTxs = snap.txs.map(tx => {
+    if (typeof tx.composite_score !== 'number' || Number.isNaN(tx.composite_score)) {
+      const clone = { ...tx } as Transaction;
+      applyOpportunityScoring(clone, nowTs);
+      return clone;
+    }
+    return tx;
+  });
 
   // Build sender stats (best-effort)
   const senderStats = new Map<string, { address: string; tx_count: number; included: number; dropped: number; total_value: bigint }>();
@@ -500,19 +607,52 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
     .sort((a, b) => b.tx_count - a.tx_count)
     .slice(0, 50);
 
-  const tokens = getTokens().map(t => ({ ...t, heartbeat: t.heartbeat ?? undefined }));
-  const pools = getPools();
+  const rawTokens = getTokens().map(t => ({ ...t, heartbeat: t.heartbeat ?? undefined }));
+  // Show all tokens with price OR liquidity OR mcap, or if they're active
+  const tokens = rawTokens.filter(t => {
+    const hasPrice = typeof t.price_usd === 'number' && Number.isFinite(t.price_usd) && t.price_usd > 0;
+    const hasLiquidity = typeof t.liquidity_usd === 'number' && t.liquidity_usd >= MIN_TOKEN_USD;
+    const hasMcap = typeof t.mcap_onchain_usd === 'number' && t.mcap_onchain_usd >= MIN_TOKEN_USD;
+    const isActive = t.active === true;
+    // Show if it has any meaningful data or is active
+    return hasPrice || hasLiquidity || hasMcap || isActive;
+  });
+
+  const rawPools = getPools();
+  // Show pools with TVL/reserves above threshold, volume, or just discovered (less aggressive filtering)
+  const pools = rawPools.filter(p => {
+    // Always show if TVL is above threshold
+    const tvl = typeof p.tvl_usd === 'number' ? p.tvl_usd : null;
+    if (tvl != null && tvl >= MIN_POOL_USD) return true;
+    
+    // Show if reserves are above threshold
+    const partial = (typeof p.pool0_usd === 'number' ? p.pool0_usd : 0) + (typeof p.pool1_usd === 'number' ? p.pool1_usd : 0);
+    if (partial >= MIN_POOL_USD) return true;
+    
+    // Show if it has volume (even if TVL is low)
+    const hasVolume = typeof p.volume_24h_usd === 'number' && p.volume_24h_usd > 0;
+    if (hasVolume) return true;
+    
+    // Show V3 pools even if TVL not yet calculated (position indexer might be delayed)
+    if (p.version === 'V3') {
+      // Show if pool has been registered (address exists)
+      return !!p.address;
+    }
+    
+    // Show V2 pools if they have reserves (even if below threshold)
+    if (p.version === 'V2') {
+      const hasReserves = (typeof p.pool0_usd === 'number' && p.pool0_usd > 0) || 
+                         (typeof p.pool1_usd === 'number' && p.pool1_usd > 0);
+      return hasReserves;
+    }
+    
+    return false;
+  });
   const oracles = getOracleFeeds();
 
   console.log(`📡 Broadcasting: ${tokens.length} tokens, ${pools.length} pools, ${oracles.length} oracles`);
   if (tokens.length > 0) {
     console.log(`📡 First token: ${tokens[0].symbol} active=${tokens[0].active} price=${tokens[0].price_usd} heartbeat=${JSON.stringify(tokens[0].heartbeat)}`);
-    // Check a few more tokens
-    for (let i = 1; i < Math.min(5, tokens.length); i++) {
-      if (tokens[i].price_usd || tokens[i].active) {
-        console.log(`📡 Token ${i}: ${tokens[i].symbol} active=${tokens[i].active} price=${tokens[i].price_usd} heartbeat=${JSON.stringify(tokens[i].heartbeat)}`);
-      }
-    }
   }
 
 
@@ -527,20 +667,36 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
       flow_spark: flowSparklines,
     },
     opportunities: scoredTxs
-      .filter(tx => (tx._score || 0) > 0) // Lower threshold since we want opportunities
-      .sort((a, b) => (b._score || 0) - (a._score || 0))
+      .filter(tx => (tx.composite_score ?? tx._score ?? 0) > 0) // Lower threshold since we want opportunities
+      .sort((a, b) => (b.composite_score ?? b._score ?? 0) - (a.composite_score ?? a._score ?? 0))
       .slice(0, 50) // More opportunities
       .map((tx, index) => ({
         hash: tx.hash,
         rank: index + 1,
-        score: tx._score || 0,
+        score: tx.composite_score ?? tx._score ?? 0,
         category_key: tx.category_key,
         decoded_fn: tx._decoded_fn,
+        value_score: tx.value_score ?? null,
+        gas_score: tx.gas_score ?? null,
+        mev_score: tx.mev_score ?? null,
+        smart_money_score: tx.smart_money_score ?? null,
+        urgency_score: tx.urgency_score ?? null,
+        composite_score: tx.composite_score ?? tx._score ?? 0,
+        score_breakdown: tx.score_breakdown ?? null,
+        smart_money_flag: tx.smart_money_flag ?? false,
+        state_history: tx.state_history ?? [],
+        replacement_tx: tx.replacement_tx ?? null,
+        replaced_by: tx.replaced_by ?? null,
+        drop_reason: tx.drop_reason ?? null,
+        sender_pending_nonce: tx.sender_pending_nonce ?? null,
+        sender_confirmed_nonce: tx.sender_confirmed_nonce ?? null,
+        nonce_gap: tx.nonce_gap ?? null,
+        nonce_warning: tx.nonce_warning ?? null,
       })),
     live: scoredTxs.slice(0, 200), // Show more in live view
     included,
     senders,
-    gas,
+    gas: ({ suggestions: gasSuggestions, oracle: gasOracleSnapshot } as any),
     tokens,
     pools,
     oracles,
@@ -551,18 +707,4 @@ async function generateUiSnapshot(aggregator = getMetricsAggregator()): Promise<
       errors: [],
     },
   };
-}
-
-// Score transaction based on amount, gas, and age (same as ranking.py)
-function scoreTx(tx: any, nowTs: number = Date.now() / 1000): number {
-  const amountEth = parseInt(tx.value || '0x0', 16) / 1e18;
-  const gasGwei = (parseInt(tx.maxFeePerGas || tx.gasPrice || '0x0', 16) / 1e9);
-  const age = tx._first_seen_ts ? Math.max(0, nowTs - tx._first_seen_ts) : 0;
-
-  // Base weights (same as ranking.py)
-  const wAmount = 2.0;
-  const wGas = 1.0;
-  const wAge = 0.2;
-
-  return wAmount * (amountEth <= 0 ? 0 : (1.0 + amountEth) ** 0.3) + wGas * gasGwei - wAge * age;
 }

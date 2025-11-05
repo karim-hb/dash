@@ -1,10 +1,11 @@
 import { Transaction } from '@/lib/types';
-import { selector, wordAt, hexToNumber } from '@/lib/util/hex';
+import { selector, wordAt, hexToBigInt } from '@/lib/util/hex';
 import { getUsdPriceForToken, getEthUsdPrice } from '../market/priceEngine';
 import { getCoreDecoder } from '../decoding/coreDecoder';
 import tokensCatalog from '../catalog/tokens.json';
 import fs from 'fs';
 import path from 'path';
+import { formatUnits } from 'ethers';
 
 // Minimal high-liquidity token whitelist with USD thresholds
 const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'.toLowerCase();
@@ -61,6 +62,10 @@ export type FilterResult = { keep: boolean; usdValue?: number };
 
 // Main mempool filter pipeline
 export async function shouldKeepMempoolTx(tx: Transaction): Promise<FilterResult> {
+  // Temporary bypass for debugging: set BYPASS_FILTERS=true to allow all txs through
+  if ((process.env.BYPASS_FILTERS || '').toLowerCase() === 'true') {
+    return { keep: true };
+  }
   try {
     const to = (tx.to || '').toLowerCase();
     const sel = selector(tx.input || '') || '';
@@ -77,6 +82,14 @@ export async function shouldKeepMempoolTx(tx: Transaction): Promise<FilterResult
       return { keep: false };
     }
 
+    // Relaxed fallback: keep router txs with allowed selectors even if we cannot price them
+    if (isRouter && ALLOWED_SELECTORS.has(sel)) {
+      // If strict mode requested, skip this and continue pricing path
+      if ((process.env.FILTER_STRICT_PRICING || '').toLowerCase() !== 'true') {
+        return { keep: true };
+      }
+    }
+
     // Stage 3: Token whitelist + minUSD
     // Compute USD value cheaply
     let usd: number | null = null;
@@ -84,16 +97,20 @@ export async function shouldKeepMempoolTx(tx: Transaction): Promise<FilterResult
     if (isTokenTransfer) {
       // ERC20 transfer: amount is arg1 (uint256)
       try {
-        const amount = hexToNumber(wordAt(tx.input, 2));
+        const amountRaw = hexToBigInt(wordAt(tx.input, 2));
         const info = TOKEN_WHITELIST[to];
         const meta: any = (tokensCatalog as any)[to] || { decimals: 18 };
         if (info) {
           const price = await getUsdPriceForToken(to);
           if (price != null) {
-            const qty = amount / Math.pow(10, meta.decimals || 18);
+            const qty = Number(formatUnits(amountRaw, meta.decimals || 18));
             usd = qty * price;
           }
           if (usd != null && usd >= info.minUSD) return { keep: true, usdValue: usd };
+          // Relaxed fallback: if pricing unavailable, keep whitelisted token transfers
+          if ((process.env.FILTER_STRICT_PRICING || '').toLowerCase() !== 'true') {
+            return { keep: true };
+          }
           return { keep: false };
         }
       } catch {}
@@ -105,22 +122,22 @@ export async function shouldKeepMempoolTx(tx: Transaction): Promise<FilterResult
       const decoder = getCoreDecoder();
       const details = decoder.decodeSwapDetails(tx);
       // Prefer amount_in and token_in; fallback to ETH value when swapping exact ETH
-      let amount = details.amount_in || null;
+      const amountRaw = details.amount_in ? (() => { try { return BigInt(details.amount_in); } catch { return null; } })() : null;
       let token = details.token_in || null;
 
-      if (!amount && sel === '7ff36ab5') { // swapExactETHForTokens
+      if (!amountRaw && sel === '7ff36ab5') { // swapExactETHForTokens
         try {
-          const ethVal = Number(BigInt(tx.value || '0x0')) / 1e18;
+          const ethVal = Number(formatUnits(hexToBigInt(tx.value || '0x0'), 18));
           const ethUsd = getEthUsdPrice();
           if (ethUsd != null) usd = ethVal * ethUsd;
         } catch {}
-      } else if (amount && token) {
+      } else if (amountRaw != null && token) {
         const t = token.toLowerCase();
         const info = TOKEN_WHITELIST[t];
         const price = await getUsdPriceForToken(t);
         const meta: any = (tokensCatalog as any)[t] || { decimals: 18 };
         if (price != null) {
-          const qty = amount / Math.pow(10, meta.decimals || 18);
+          const qty = Number(formatUnits(amountRaw, meta.decimals || 18));
           usd = qty * price;
         }
         if (info) {
@@ -136,7 +153,10 @@ export async function shouldKeepMempoolTx(tx: Transaction): Promise<FilterResult
       return { keep: false };
     }
 
-    // Unknown amount/price: drop
+    // Unknown amount/price: in relaxed mode, keep; in strict mode, drop
+    if ((process.env.FILTER_STRICT_PRICING || '').toLowerCase() !== 'true') {
+      return { keep: true };
+    }
     return { keep: false };
   } catch {
     return { keep: false };

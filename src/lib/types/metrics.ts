@@ -89,7 +89,13 @@ export const UiSnapshotSchema = z.object({
   })).optional(),
   live: z.array(z.any()).optional(), // Recent transactions
   included: z.array(z.any()).optional(), // Included transactions
-  gas: GasSuggestionsSchema.optional(),
+  gas: z.union([
+    GasSuggestionsSchema, // legacy shape: { base_fee, tips }
+    z.object({
+      suggestions: GasSuggestionsSchema,
+      oracle: z.any().optional(),
+    })
+  ]).optional(),
   contracts: z.array(z.object({
     address: z.string(),
     name: z.string(),

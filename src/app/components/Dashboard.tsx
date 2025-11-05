@@ -18,10 +18,10 @@ export default function Dashboard() {
   const [ingressHistory, setIngressHistory] = useState<Array<{ time: string; ingress: number; egress: number }>>([]);
 
   useEffect(() => {
-    if (snapshot?.gas?.base_fee) {
-      const gasPrice = snapshot.gas.base_fee / 1e9;
+    const baseGwei = snapshot?.gas?.oracle?.baseFeeGwei ?? (snapshot?.gas?.suggestions?.base_fee ? snapshot.gas.suggestions.base_fee / 1e9 : null);
+    if (baseGwei != null) {
       setGasPriceHistory(prev => {
-        const newHistory = [...prev, gasPrice];
+        const newHistory = [...prev, baseGwei];
         return newHistory.slice(-60);
       });
     }
@@ -110,16 +110,29 @@ export default function Dashboard() {
   ];
 
   // Gas oracle data
-  const baseFee = gas?.base_fee ? (gas.base_fee / 1e9).toFixed(2) : '—';
+  const gasOracleData = gas?.oracle;
+  const gasSuggestions = gas?.suggestions;
+  const baseFee = gasOracleData?.baseFeeGwei != null
+    ? gasOracleData.baseFeeGwei.toFixed(2)
+    : gasSuggestions?.base_fee
+      ? (gasSuggestions.base_fee / 1e9).toFixed(2)
+      : '—';
+
+  const fallbackTip = (value?: number | null) => (value != null ? value / 1e9 : null);
+  const slowTipValue = gasOracleData?.suggestions?.slow ?? fallbackTip(gasSuggestions?.tips?.['5_blocks'] ?? null);
+  const averageTipValue = gasOracleData?.suggestions?.average ?? fallbackTip(gasSuggestions?.tips?.['3_blocks'] ?? null);
+  const fastTipValue = gasOracleData?.suggestions?.fast ?? fallbackTip(gasSuggestions?.tips?.['1_block'] ?? null);
+  const formatPriority = (value: number | null) => (value != null && Number.isFinite(value) ? value.toFixed(2) : '—');
   const priorityFees = {
-    rapid: gas?.tips?.['1_block'] || 0,
-    fast: gas?.tips?.['3_blocks'] || 0,
-    standard: gas?.tips?.['5_blocks'] || 0
+    rapid: formatPriority(fastTipValue),
+    fast: formatPriority(averageTipValue),
+    standard: formatPriority(slowTipValue),
   };
 
   // Mempool health indicators
-  const congestionLevel = summary.total_pending > 150 ? 'HIGH' :
-                          summary.total_pending > 75 ? 'MEDIUM' : 'LOW';
+  const mempoolSize = gasOracleData?.mempoolCount ?? summary.total_pending;
+  const congestionLevel = mempoolSize > 1500 ? 'HIGH' :
+                          mempoolSize > 800 ? 'MEDIUM' : 'LOW';
   const congestionColor = congestionLevel === 'HIGH' ? 'text-red-400' :
                           congestionLevel === 'MEDIUM' ? 'text-yellow-400' : 'text-green-400';
   const avgWaitTime = summary.age_p50?.toFixed(1) || '—';

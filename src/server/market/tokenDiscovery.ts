@@ -1,13 +1,15 @@
 import { ethers } from 'ethers';
 import { getWsClient } from '../rpc/wsClient';
 import ERC20 from '../abi/ERC20.json';
-import { upsertToken, getTokens, getPools } from './registry';
+import { upsertToken, getTokens, getPools, upsertPool } from './registry';
 import { getConfig } from '@/lib/config';
 import amm from '../catalog/amm.json';
+import { logErrorWithConsole, logWarningWithConsole } from '../utils/errorLogger';
 
 // Note: Token list loading disabled for now - focus on DEX discovery
 
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+const POOL_CREATED_TOPIC = '0x783cca1c0412dd0d695e784568c96da2e9c22ff989357a2e8b1d9b2b4e6b711'; // Uniswap V3
 
 let provider: ethers.Provider | null = null;
 function getProvider(): ethers.Provider {
@@ -31,7 +33,7 @@ function loadDiscoveredTokens(): void {
     if (fs.existsSync(TOKEN_CACHE_FILE)) {
       const data = JSON.parse(fs.readFileSync(TOKEN_CACHE_FILE, 'utf8'));
       let loadedCount = 0;
-      for (const [addr, meta] of Object.entries(data as any)) {
+      for (const [addr, meta] of Object.entries(data as Record<string, { symbol: string; decimals: number }>)) {
         const lowerAddr = addr.toLowerCase();
         if (!known.has(lowerAddr)) {
           upsertToken({
@@ -48,8 +50,8 @@ function loadDiscoveredTokens(): void {
       }
       console.log(`🔍 Loaded ${loadedCount} previously discovered tokens (${Object.keys(data).length} total in file)`);
     }
-  } catch (e) {
-    console.warn('🔍 Failed to load discovered tokens:', e.message);
+  } catch (e: any) {
+    logWarningWithConsole(e, 'Failed to load discovered tokens');
   }
 }
 
@@ -79,8 +81,8 @@ function saveDiscoveredTokens(): void {
 
     fs.writeFileSync(TOKEN_CACHE_FILE, JSON.stringify(discovered, null, 2));
     console.log(`💾 Saved ${Object.keys(discovered).length} discovered tokens to cache`);
-  } catch (e) {
-    console.warn('💾 Failed to save discovered tokens:', e.message);
+  } catch (e: any) {
+    logWarningWithConsole(e, 'Failed to save discovered tokens');
   }
 }
 
@@ -141,7 +143,7 @@ async function fetchErc20Meta(addr: string): Promise<{ symbol: string; decimals:
         'function getImplementation() view returns (address)',
         'function masterCopy() view returns (address)',
         'function logic() view returns (address)',
-      ], pv);
+      ], pv) as any;
 
       const impl = await proxyContract.implementation().catch(() => null) ||
                    await proxyContract.proxy().catch(() => null) ||
@@ -158,7 +160,7 @@ async function fetchErc20Meta(addr: string): Promise<{ symbol: string; decimals:
       // Not a proxy, continue with original address
     }
 
-    const c = new ethers.Contract(targetAddr, ERC20 as any, pv);
+    const c = new ethers.Contract(targetAddr, ERC20 as any, pv) as any;
     let symbol = '';
     let decimals = 18;
 
@@ -371,7 +373,8 @@ async function fetchErc20Meta(addr: string): Promise<{ symbol: string; decimals:
     return { symbol, decimals };
 
   } catch (e) {
-    console.log(`❌ Failed to decode ${addr}: ${e.message}`);
+    
+    logErrorWithConsole(e, `Failed to decode ${addr}`);
     return null;
   }
 }
@@ -412,7 +415,7 @@ async function reDecodeUnknownTokens(): Promise<void> {
           }
         }
       } catch (e) {
-        console.log(`❌ Failed to re-decode ${token.address}: ${e.message}`);
+        logErrorWithConsole(e, `Failed to re-decode ${token.address}`);
       }
 
       // Rate limit to avoid overwhelming RPC
@@ -567,7 +570,7 @@ async function discoverTokensFromExistingPools(ws: any): Promise<void> {
           }
         }
       } catch (e) {
-        console.log(`❌ Error processing ${addr}: ${e.message}`);
+        logErrorWithConsole(e, `Error processing ${addr}`);
       }
     });
 
@@ -642,11 +645,11 @@ async function discoverTokensFromDEXConservative(ws: any): Promise<void> {
               }
             }
           } catch (e) {
-            // Continue with other tokens
+            // Continue with other tokens - errors are expected for non-existent exchanges
           }
         }
       } catch (e) {
-        console.warn('🔍 V1 factory query failed:', e);
+        logErrorWithConsole(e, 'V1 factory query failed');
       }
     }
 
@@ -732,7 +735,7 @@ async function discoverTokensFromDEXConservative(ws: any): Promise<void> {
           }
         }
       } catch (e) {
-        console.warn('🔍 V2 factory query failed:', e);
+        logWarningWithConsole(e, 'V2 factory query failed');
       }
     }
 
@@ -744,8 +747,9 @@ async function discoverTokensFromDEXConservative(ws: any): Promise<void> {
       // Get the latest block
       const latestHex = await ws.rpc('eth_blockNumber', []);
       const latest = parseInt(latestHex, 16);
-      // Go back far enough to cover V3 history (V3 launched ~block 12M)
-      const fromBlock = Math.max(0, latest - 12000000); // 12M blocks back
+      // Limit to last 2 million blocks maximum to avoid querying very old blocks
+      const MAX_LOOKBACK_BLOCKS = 2_000_000;
+      const fromBlock = Math.max(0, latest - MAX_LOOKBACK_BLOCKS);
 
       const poolLogs = await ws.rpc('eth_getLogs', [{
         address: v3Factory,
@@ -857,7 +861,6 @@ async function discoverTokensFromDEX(ws: any): Promise<void> {
     ].filter(Boolean);
 
   const PAIR_CREATED_TOPIC = '0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9';
-  const POOL_CREATED_TOPIC = '0x783cca1c0412dd0d695e784568c96da2e9c22ff989357a2e8b1d9b2b4e6b711'; // Uniswap V3
 
   let discoveredTokens = 0;
   const batchSize = 1000; // Process in batches to avoid overwhelming
@@ -935,7 +938,7 @@ async function discoverTokensFromDEX(ws: any): Promise<void> {
         }]);
 
         console.log(`🔍 Found ${pairLogs?.length || 0} PairCreated events for ${factory}`);
-        pairAddresses = (pairLogs || []).map(log => log.address).filter(Boolean);
+        pairAddresses = (pairLogs || []).map((log: any) => log.address).filter(Boolean);
       }
 
       // Extract token addresses from pairs
@@ -944,7 +947,7 @@ async function discoverTokensFromDEX(ws: any): Promise<void> {
 
       for (let i = 0; i < pairAddresses.length; i += 50) {
         const batch = pairAddresses.slice(i, i + 50);
-        const batchPromises = batch.map(async (pairAddr) => {
+        const batchPromises = batch.map(async (pairAddr: string) => {
           try {
             // Query token0 and token1 from the pair contract
             const [token0Result, token1Result] = await Promise.all([
@@ -983,7 +986,7 @@ async function discoverTokensFromDEX(ws: any): Promise<void> {
 
           console.log(`🔍 Found ${poolLogs?.length || 0} PoolCreated events for V3 factory`);
 
-          for (const log of poolLogs || []) {
+          for (const log of (poolLogs || []) as any[]) {
             if (log.data && log.data.length >= 128) {
               // PoolCreated(address indexed token0, address indexed token1, uint24 fee, int24 tickSpacing, address pool)
               const token0 = '0x' + log.data.slice(26, 66).toLowerCase();
@@ -993,7 +996,7 @@ async function discoverTokensFromDEX(ws: any): Promise<void> {
             }
           }
         } catch (e) {
-          console.warn('🔍 V3 pool discovery failed:', e.message);
+          logWarningWithConsole(e, 'V3 pool discovery failed');
         }
       }
 
@@ -1033,11 +1036,11 @@ async function discoverTokensFromDEX(ws: any): Promise<void> {
       }
 
     } catch (e) {
-      console.error(`🔍 Error querying factory ${factory}:`, e);
+      logErrorWithConsole(e, `Error querying factory ${factory}`);
     }
   }
 
-    console.log(`🔍 DEX discovery complete: added ${discoveredTokens} new tokens from ${addresses.length} total addresses`);
+    console.log(`🔍 DEX discovery complete: added ${discoveredTokens} new tokens`);
   } finally {
     clearTimeout(timeout);
   }
@@ -1059,7 +1062,7 @@ export async function startTokenDiscovery(): Promise<void> {
     try {
       await reDecodeUnknownTokens();
     } catch (e) {
-      console.log('❌ Re-decoding failed:', e.message);
+      logErrorWithConsole(e, 'Re-decoding failed');
     }
   }, 10000); // Start after 10 seconds to let system stabilize
 
@@ -1088,11 +1091,11 @@ export async function startTokenDiscovery(): Promise<void> {
         console.log('🔍 DEX discovery complete, saving tokens...');
         saveDiscoveredTokens();
       }).catch(e => {
-        console.error('🔍 V2 DEX discovery failed:', e);
+        logErrorWithConsole(e, 'V2 DEX discovery failed');
       });
 
     } catch (e) {
-      console.error('🔍 DEX discovery failed:', e);
+      logErrorWithConsole(e, 'DEX discovery failed');
     }
   }, 15000); // Start 15 seconds after server startup
 
@@ -1133,7 +1136,7 @@ export async function startTokenDiscovery(): Promise<void> {
         }
       }
     } catch (e) {
-      console.error('🔍 Live discovery error:', e);
+        logErrorWithConsole(e, 'Live discovery error');
     }
   });
 

@@ -27,7 +27,8 @@
     "recharts": "^3.3.0",
     "ws": "^8.18.3",
     "zod": "^4.1.12",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "web3-proxy": "^4.0.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

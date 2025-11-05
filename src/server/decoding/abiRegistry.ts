@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { getSignaturesCacheCollection } from '@/lib/db/mongo';
 import { getConfig } from '@/lib/config';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 // ABI Registry for managing function signatures and caching
 export class AbiRegistry {
@@ -45,7 +46,7 @@ export class AbiRegistry {
       console.log(`✅ Loaded ${this.signatures.size} signatures (main + 4byte cache)`);
       this.loaded = true;
     } catch (error) {
-      console.error('Failed to load signatures:', error);
+      logErrorWithConsole(error, 'Failed to load signatures');
     }
   }
 
@@ -75,7 +76,8 @@ export class AbiRegistry {
         }
       }
       return null;
-    } catch {
+    } catch (e) {
+      logErrorWithConsole(e, 'Failed to resolve signature remotely');
       return null;
     }
   }
@@ -113,7 +115,7 @@ export class AbiRegistry {
       // Optionally save to JSON file as backup
       this.saveToJsonFile(sel, sig);
     } catch (error) {
-      console.error('Failed to cache signature:', error);
+      logErrorWithConsole(error, 'Failed to cache signature');
     }
   }
 
@@ -140,7 +142,7 @@ export class AbiRegistry {
 
       console.log(`✅ Loaded ${cached.length} cached signatures from MongoDB`);
     } catch (error) {
-      console.error('Failed to load cached signatures:', error);
+      logErrorWithConsole(error, 'Failed to load cached signatures');
     }
   }
 
@@ -157,7 +159,7 @@ export class AbiRegistry {
       cache[selector] = signature;
       fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
     } catch (error) {
-      // Ignore file write errors
+        logErrorWithConsole(error, 'Failed to save signature to JSON file');
     }
   }
 

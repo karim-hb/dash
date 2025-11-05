@@ -1,9 +1,8 @@
+import { logErrorWithConsole } from '../utils/errorLogger';
 import { getTrackerState } from './state';
 import { TxState, Transaction } from '@/lib/types';
 
 export class BlockMonitor {
-  // Track per-address last confirmed nonce (best-effort from included txs)
-  private confirmedNonceByAddress: Map<string, number> = new Map();
 
   async onBlock(block: any): Promise<void> {
     try {
@@ -17,9 +16,7 @@ export class BlockMonitor {
         try {
           const nonceNum = typeof tx.nonce === 'string' ? parseInt(tx.nonce, 16) : Number(tx.nonce);
           if (!isNaN(nonceNum)) {
-            const key = tx.from.toLowerCase();
-            const prev = this.confirmedNonceByAddress.get(key) ?? -1;
-            if (nonceNum > prev) this.confirmedNonceByAddress.set(key, nonceNum);
+            await state.recordConfirmedNonce(tx.from, nonceNum);
           }
         } catch {}
 
@@ -30,7 +27,7 @@ export class BlockMonitor {
         }
       }
     } catch (error) {
-      console.error('BlockMonitor.onBlock error:', error);
+      logErrorWithConsole(error, 'BlockMonitor.onBlock');
     }
   }
 
@@ -49,21 +46,24 @@ export class BlockMonitor {
         if (tx.nonce !== nonceHex) continue;
 
         // Prefer REPLACED when a definitive on-chain inclusion happens
-        tx._state = TxState.REPLACED;
-        tx.replaced_by = includedTx.hash;
-        tx.drop_reason = 'replaced_onchain';
-        if (!tx.state_history) tx.state_history = [];
-        tx.state_history.push({ state: TxState.REPLACED, timestamp: Math.floor(Date.now() / 1000), reason: 'replaced_onchain' });
-        await state.upsert(tx);
+        const updated: Transaction = {
+          ...tx,
+          _state: TxState.REPLACED,
+          replaced_by: includedTx.hash,
+          drop_reason: 'replaced_onchain',
+        };
+
+        updated.replacement_chain = Array.isArray(tx.replacement_chain)
+          ? [...tx.replacement_chain, includedTx.hash]
+          : [includedTx.hash];
+
+        await state.upsert(updated);
       }
     } catch (error) {
-      console.error('BlockMonitor.markCompetingPendingAsReplaced error:', error);
+      logErrorWithConsole(error, 'BlockMonitor.markCompetingPendingAsReplaced');
     }
   }
 
-  getAddressConfirmedNonce(address: string): number | undefined {
-    return this.confirmedNonceByAddress.get(address.toLowerCase());
-  }
 }
 
 let monitor: BlockMonitor | null = null;

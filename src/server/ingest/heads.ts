@@ -2,6 +2,7 @@ import { TxState } from '@/lib/types';
 import { getWsClient } from '../rpc/wsClient';
 import { getTrackerState } from '../state/state';
 import { getBlockMonitor } from '../state/blockMonitor';
+import { logErrorWithConsole } from '../utils/errorLogger';
 
 let subscriptionId: string | null = null;
 let isRunning = false;
@@ -20,7 +21,7 @@ export async function startHeadsIngestion(): Promise<void> {
     console.log('✅ Started heads ingestion');
 
   } catch (error) {
-    console.error('❌ Failed to start heads ingestion:', error);
+    logErrorWithConsole(error, 'Start heads ingestion');
     isRunning = false;
     throw error;
   }
@@ -38,7 +39,7 @@ export async function stopHeadsIngestion(): Promise<void> {
     isRunning = false;
     console.log('✅ Stopped heads ingestion');
   } catch (error) {
-    console.error('Failed to stop heads ingestion:', error);
+    logErrorWithConsole(error, 'Stop heads ingestion');
   }
 }
 
@@ -64,7 +65,7 @@ async function handleNewHead(head: any): Promise<void> {
     }
 
   } catch (error) {
-    console.error('Failed to handle new head:', error);
+    logErrorWithConsole(error, 'Handle new head');
   }
 }
 
@@ -137,13 +138,13 @@ async function processBlock(blockHash: string, blockNumber: string): Promise<voi
             // ignore receipt fetch errors
           }
         } catch (error) {
-          console.error(`Failed to process tx ${tx.hash} in block:`, error);
+          logErrorWithConsole(error, `Process tx ${tx.hash} in block`);
         }
       }
     }
 
   } catch (error) {
-    console.error(`Failed to process block ${blockHash}:`, error);
+    logErrorWithConsole(error, `Process block ${blockHash}`);
   }
 }
 
@@ -159,7 +160,7 @@ export async function getCurrentBlockNumber(): Promise<number | null> {
 
     return null;
   } catch (error) {
-    console.error('Failed to get current block number:', error);
+    logErrorWithConsole(error, 'Get current block number');
     return null;
   }
 }
@@ -240,19 +241,19 @@ export async function initializeIncludedFromBlocks(): Promise<void> {
 
                 totalTxs++;
               } catch (error) {
-                console.error(`Failed to process tx ${tx.hash}:`, error);
+                logErrorWithConsole(error, `Process tx ${tx.hash}`);
               }
             }
           }
         }
       } catch (error) {
-        console.error(`Failed to process block ${blockNumber}:`, error);
+        logErrorWithConsole(error, `Process block ${blockNumber}`);
       }
     }
 
     console.log(`✅ Initialized ${totalTxs} included transactions from ${blocksToProcess} recent blocks`);
 
   } catch (error) {
-    console.error('Failed to initialize included transactions:', error);
+    logErrorWithConsole(error, 'Initialize included transactions');
   }
 }

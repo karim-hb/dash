@@ -2,6 +2,7 @@ import WebSocket from 'ws';
 import { EventEmitter } from 'events';
 import { config } from '@/lib/config';
 import { sleep } from '@/lib/util/time';
+import { logErrorWithConsole, logWarningWithConsole } from '../utils/errorLogger';
 
 interface RpcRequest {
   jsonrpc: '2.0';
@@ -53,7 +54,7 @@ export class WsJsonRpc extends EventEmitter {
           this.jwtSecret = j.slice(2);
         }
       } catch (error) {
-        console.warn('Failed to load JWT:', error);
+        logWarningWithConsole(error, 'JWT load');
       }
     }
   }
@@ -101,7 +102,7 @@ export class WsJsonRpc extends EventEmitter {
         this.ws.on('error', (error) => {
           clearTimeout(timeout);
           this.connecting = false;
-          console.error('WebSocket error:', error);
+          logErrorWithConsole(error, 'WebSocket connection');
           reject(error);
         });
 
@@ -220,7 +221,7 @@ export class WsJsonRpc extends EventEmitter {
       // Emit for external listeners
       this.emit('message', message);
     } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
+      logErrorWithConsole(error, 'WebSocket message parsing');
     }
   }
 

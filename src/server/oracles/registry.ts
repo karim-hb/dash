@@ -1,39 +1,18 @@
 import { getConfig } from '@/lib/config';
-import { fetchChainlinkPrice } from './chainlink';
-import { fetchCoinGeckoSimplePrice } from './coingecko';
 import { getTokens, upsertToken } from '../market/registry';
 import { getUsdPriceForToken } from '../market/priceEngine';
+import { startOracleAggregator } from './oracleAggregator';
 
 // Kick off periodic oracle updates
 let started = false;
-export function startOracleUpdates() {
+export async function startOracleUpdates() {
   if (started) return; started = true;
   console.log('🛰️ Starting oracle updates...');
   const cfg = getConfig();
   console.log(`🛰️ Config loaded: ENABLE_ORACLES=${cfg.ENABLE_ORACLES}, ENABLE_CHAINLINK=${cfg.ENABLE_CHAINLINK}`);
   if (cfg.ENABLE_ORACLES) {
     console.log('🛰️ Oracles enabled');
-    // Chainlink feeds (multiple)
-    if (cfg.ENABLE_CHAINLINK) {
-      console.log('🟡 Chainlink enabled, loading feeds...');
-      try {
-        const feeds = require('./feeds.json');
-        const entries = Object.entries(feeds) as [string, string][];
-        console.log(`🟡 Loaded ${entries.length} Chainlink feeds: ${entries.slice(0, 3).map(([p]) => p).join(', ')}...`);
-
-        const poll = async () => {
-          console.log('🟡 Polling Chainlink feeds...');
-          await Promise.all(entries.map(([pair, addr]) => fetchChainlinkPrice(addr, pair)));
-        };
-        poll();
-        setInterval(poll, 30_000);
-      } catch (e) {
-        console.log(`❌ Failed to load Chainlink feeds: ${e.message}`);
-      }
-    } else {
-      console.log('🟡 Chainlink disabled');
-    }
-    // DISABLED: No external API fallbacks - only on-chain data
+    await startOracleAggregator();
 
     // Nethermind on-chain price discovery (DEX-based)
     console.log('🔗 Starting Nethermind DEX price discovery...');
@@ -44,17 +23,18 @@ export function startOracleUpdates() {
           console.log(`🔗 Checking DEX prices for ${tokens.length} tokens without prices`);
           // The price engine will automatically check DEX prices when called
         }
-      } catch (e) {
-        console.log(`🔗 DEX price discovery error: ${e.message}`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.log(`🔗 DEX price discovery error: ${message}`);
       }
     }, 45_000);
 
     // Periodically refresh token USD prices for discovered tokens
-    const refreshTokens = () => {
+    const refreshTokens = async () => {
       const toks = getTokens();
       let updated = 0;
       for (const t of toks) {
-        const p = getUsdPriceForToken(t.address);
+        const p = await getUsdPriceForToken(t.address);
         upsertToken({
           address: t.address,
           symbol: t.symbol,
@@ -74,8 +54,16 @@ export function startOracleUpdates() {
         console.log(`💰 Updated ${updated}/${toks.length} token prices`);
       }
     };
-    refreshTokens();
-    setInterval(refreshTokens, 30_000);
+    refreshTokens().catch(err => {
+      const message = err instanceof Error ? err.message : String(err);
+      console.log(`💰 Token price refresh error: ${message}`);
+    });
+    setInterval(() => {
+      refreshTokens().catch(err => {
+        const message = err instanceof Error ? err.message : String(err);
+        console.log(`💰 Token price refresh error: ${message}`);
+      });
+    }, 30_000);
   } else {
     console.log('🛰️ Oracles disabled in config');
   }

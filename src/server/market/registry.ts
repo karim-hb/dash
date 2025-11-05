@@ -1,5 +1,7 @@
 // In-memory registries for tokens, pools, and oracle feeds
 
+import { logErrorWithConsole } from '../utils/errorLogger';
+
 type TokenEntry = {
   address: string;
   symbol: string;
@@ -49,6 +51,12 @@ type OracleFeed = {
   heartbeat_sec?: number | null;
   status?: 'healthy' | 'stale' | 'error';
   deviation_vs_spot_pct?: number | null;
+  // Enhanced Nethermind heartbeat data
+  authenticity_score?: number; // 0-100 confidence score
+  verification_flags?: string; // comma-separated verification flags
+  oracle_count?: number; // number of oracles in the feed
+  round_id?: number; // current round ID
+  aggregator_phase?: number; // proxy phase ID
 };
 
 const tokens: Map<string, TokenEntry> = new Map();
@@ -105,6 +113,18 @@ export function getTokens(): TokenEntry[] { return Array.from(tokens.values()); 
 export function getPools(): PoolEntry[] { return Array.from(pools.values()); }
 export function getOracleFeeds(): OracleFeed[] { return Array.from(oracleFeeds.values()); }
 
+// Group oracle feeds by pair for comparison view
+export function getOracleFeedsByPair(): Map<string, OracleFeed[]> {
+  const byPair = new Map<string, OracleFeed[]>();
+  for (const feed of oracleFeeds.values()) {
+    const pair = feed.pair || 'UNKNOWN';
+    const existing = byPair.get(pair) || [];
+    existing.push(feed);
+    byPair.set(pair, existing);
+  }
+  return byPair;
+}
+
 // Initialize with empty defaults to avoid undefined in UI
 export function initializeMarketRegistries() {
   // Pre-populate with known tokens from catalog
@@ -133,7 +153,7 @@ export function initializeMarketRegistries() {
     }
     console.log(`✅ Initialized ${count} tokens from catalog`);
   } catch (e) {
-    console.warn('Failed to initialize token catalog:', e);
+    logErrorWithConsole(e, 'Failed to initialize token catalog');
   }
 }
 

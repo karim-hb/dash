@@ -1,15 +1,36 @@
 'use client';
 
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
-import { useFilters } from '../hooks/useFilters';
 import Card from './Card';
 
 export default function Gas() {
   const { snapshot } = useWsSnapshot();
-  const filters = useFilters();
-  const gas = snapshot?.gas;
+  const gasData = snapshot?.gas;
+  const oracle = gasData?.oracle;
+  const rawSuggestions = gasData?.suggestions;
   const buckets = snapshot?.summary?.gas_buckets || { gte_100: 0, gte_150: 0, gte_200: 0, gte_300: 0 };
-  const baseFee = gas?.base_fee ? (gas.base_fee / 1e9).toFixed(2) : '—';
+
+  const formatGwei = (value?: number | null, digits = 2) =>
+    value != null && Number.isFinite(value) ? value.toFixed(digits) : '—';
+
+  const baseFeeGwei = oracle?.baseFeeGwei ?? (rawSuggestions?.base_fee ? rawSuggestions.base_fee / 1e9 : null);
+  const predictedBaseFeeGwei = oracle?.predictedBaseFeeGwei ?? null;
+  const predictedPriorityGwei = oracle?.predictedPriorityFeeGwei ?? null;
+
+  const oracleSuggestions = oracle?.suggestions ?? { slow: null, average: null, fast: null };
+
+  const baseFee = formatGwei(baseFeeGwei);
+  const predictedBase = formatGwei(predictedBaseFeeGwei);
+  const predictedPriority = formatGwei(predictedPriorityGwei);
+  const slowTarget = formatGwei(oracleSuggestions.slow);
+  const averageTarget = formatGwei(oracleSuggestions.average);
+  const fastTarget = formatGwei(oracleSuggestions.fast);
+
+  const latestHistory = oracle?.blockHistory ?? [];
+  const previousBase = latestHistory.length > 1 ? latestHistory[latestHistory.length - 2].baseFeeGwei : null;
+  const baseTrend = baseFeeGwei != null && previousBase != null
+    ? (baseFeeGwei > previousBase ? 'RISING' : baseFeeGwei < previousBase ? 'FALLING' : 'STABLE')
+    : 'UNKNOWN';
 
   const gasMetrics = [
     {
@@ -21,30 +42,37 @@ export default function Gas() {
       description: 'Current network base fee'
     },
     {
-      label: 'TIP 1 BLOCK',
-      value: gas?.tips?.['1_block'] || 0,
+      label: 'PREDICTED BASE',
+      value: predictedBase,
+      unit: 'GWEI',
+      icon: '🔮',
+      color: 'text-green-400',
+      description: 'Forward-looking base fee estimate'
+    },
+    {
+      label: 'PRIORITY (FAST)',
+      value: predictedPriority,
       unit: 'GWEI',
       icon: '⚡',
-      color: 'text-green-400',
-      description: 'Priority fee for 1 block'
+      color: 'text-yellow-400',
+      description: 'Estimated priority fee for next block'
     },
     {
-      label: 'TIP 3 BLOCKS',
-      value: gas?.tips?.['3_blocks'] || 0,
+      label: 'FAST TARGET',
+      value: fastTarget,
       unit: 'GWEI',
       icon: '🚀',
-      color: 'text-blue-400',
-      description: 'Priority fee for 3 blocks'
-    },
-    {
-      label: 'TIP 5 BLOCKS',
-      value: gas?.tips?.['5_blocks'] || 0,
-      unit: 'GWEI',
-      icon: '💎',
       color: 'text-purple-400',
-      description: 'Priority fee for 5 blocks'
-    }
+      description: 'High priority inclusion target'
+    },
   ];
+
+  const mempoolCount = oracle?.mempoolCount ?? 0;
+  const congestionLevel = mempoolCount > 1500 ? 'HIGH' : mempoolCount > 800 ? 'MODERATE' : 'LOW';
+  const congestionColor = mempoolCount > 1500 ? 'text-red-400' : mempoolCount > 800 ? 'text-yellow-400' : 'text-green-400';
+  const confidencePct = oracle ? Math.round((oracle.confidence ?? 0) * 100) : 0;
+  const priorityP50 = formatGwei(oracle?.priorityPercentiles?.p50);
+  const priorityP90 = formatGwei(oracle?.priorityPercentiles?.p90);
 
   // Calculate total for percentages
   const totalBuckets = Object.values(buckets).reduce((sum, val) => sum + (val as number), 0) || 1;
@@ -202,16 +230,28 @@ export default function Gas() {
               </div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
+                  <span className="text-slate-400 font-mono">Pending Transactions:</span>
+                  <span className="text-slate-300 font-mono font-semibold">{mempoolCount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-slate-400 font-mono">Congestion Level:</span>
-                  <span className="text-green-400 font-mono font-semibold">LOW</span>
+                  <span className={`${congestionColor} font-mono font-semibold`}>{congestionLevel}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-mono">Network Health:</span>
-                  <span className="text-green-400 font-mono font-semibold">NORMAL</span>
+                  <span className="text-slate-400 font-mono">Oracle Confidence:</span>
+                  <span className="text-slate-300 font-mono font-semibold">{confidencePct}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-mono">Peak Hours:</span>
-                  <span className="text-blue-400 font-mono font-semibold">UTC 14:00-16:00</span>
+                  <span className="text-slate-400 font-mono">Median Priority:</span>
+                  <span className="text-blue-400 font-mono font-semibold">{priorityP50} gwei</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 font-mono">90th Percentile:</span>
+                  <span className="text-purple-400 font-mono font-semibold">{priorityP90} gwei</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 font-mono">Base Fee Trend:</span>
+                  <span className="text-slate-300 font-mono font-semibold">{baseTrend}</span>
                 </div>
               </div>
             </div>
@@ -223,15 +263,18 @@ export default function Gas() {
                   Trading Recommendations
                 </h3>
               </div>
-              <div className="space-y-3 text-sm">
-                <div className="text-blue-400 font-mono">
-                  • Use 1-3 block priority fee for optimal inclusion
+              <div className="space-y-3 text-sm font-mono">
+                <div className="text-blue-400">
+                  • Target <span className="font-semibold">{averageTarget} gwei</span> for balanced inclusion.
                 </div>
-                <div className="text-cyan-400 font-mono">
-                  • Monitor base fee trends for large transactions
+                <div className="text-cyan-400">
+                  • Slow lane: bids near <span className="font-semibold">{slowTarget} gwei</span> while network is {congestionLevel.toLowerCase()}.
                 </div>
-                <div className="text-green-400 font-mono">
-                  • Current conditions favor high-value trades
+                <div className="text-purple-400">
+                  • Fast lane: bids above <span className="font-semibold">{fastTarget} gwei</span> for immediate confirmation.
+                </div>
+                <div className="text-green-400">
+                  • Base fee trend is <span className="font-semibold">{baseTrend}</span>; adjust automation accordingly.
                 </div>
               </div>
             </div>

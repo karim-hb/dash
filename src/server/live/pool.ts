@@ -1,14 +1,9 @@
 import { ethers } from "ethers";
 import { getOraclePrice } from "./oracle";
 import tokenList from "./abi/sample.json" assert { type: "json" };
-import {
-  getGasPredictionService,
-  initializeGasPredictionService,
-} from "./gas/gasPredictionService";
-import type { InclusionMapping } from "./gas/txInclusionPredictor";
 
 const provider = new ethers.WebSocketProvider("ws://127.0.0.1:8545");
-const MAX_TXS = 100;
+const MAX_TXS = 50;
 const MIN_VALUE_USD = 1000; // Minimum transaction value in USD to display
 let txs = [];
 let ethPrice = 0;
@@ -24,15 +19,9 @@ interface TrackedTx {
   timeToConfirm?: number; // seconds
   receipt?: ethers.TransactionReceipt;
   decoded?: any;
-  // Prediction fields
-  predictedInclusionBlock?: number | null;
-  inclusionProbability?: number;
-  priorityFeeRank?: number;
-  effectiveGasPriceGwei?: number;
 }
 
 const trackedPoolTxs = new Map<string, TrackedTx>();
-let inclusionMapping: InclusionMapping | null = null;
 
 // Load tokens from sample.json into a map for quick lookup
 const KNOWN_TOKENS: Record<string, { symbol: string; name: string; decimals: number }> = {};
@@ -47,7 +36,7 @@ if (tokenList && tokenList.tokens) {
     }
   });
 }
-// Token list loaded silently
+console.log(`📚 Loaded ${Object.keys(KNOWN_TOKENS).length} tokens from token list`);
 
 // Extended ERC20 ABI for decoding common functions
 const ERC20_ABI = [
@@ -242,7 +231,9 @@ async function getTxpoolContent(): Promise<{ pending: Record<string, Record<stri
 async function monitorTransactionPool() {
   try {
     const status = await getTxpoolStatus();
-    // Status checked silently
+    if (status) {
+      console.log(`\n📊 TXPOOL STATUS: ${status.pending} pending, ${status.queued} queued`);
+    }
 
     const content = await getTxpoolContent();
     if (!content) return;
@@ -275,20 +266,15 @@ async function monitorTransactionPool() {
                   
                   // Only track high-value transactions
                   if (valueUsd >= MIN_VALUE_USD) {
-                    // Check if we have a prediction for this transaction
-                    const prediction = gasPredictionService.getTransactionPrediction(txHash);
-                    
                     trackedPoolTxs.set(txHash.toLowerCase(), {
                       hash: txHash,
                       firstSeenInPool: now,
                       lastSeenInPool: now,
                       poolStatus: 'pending',
                       decoded: decoded,
-                      predictedInclusionBlock: prediction?.predictedInclusionBlock || null,
-                      inclusionProbability: prediction?.inclusionProbability,
-                      priorityFeeRank: prediction?.priorityFeeRank,
-                      effectiveGasPriceGwei: prediction?.effectiveGasPriceGwei,
                     });
+                    console.log(`\n🆕 NEW TX IN POOL (PENDING): ${txHash.slice(0, 16)}...`);
+                    console.log(`   Value: ${decoded.value} ETH (${formatUSD(valueUsd)})`);
                   }
                 }
               } catch (err) {
@@ -328,20 +314,15 @@ async function monitorTransactionPool() {
                   const valueUsd = valueEth * ethPrice;
                   
                   if (valueUsd >= MIN_VALUE_USD) {
-                    // Check if we have a prediction for this transaction
-                    const prediction = gasPredictionService.getTransactionPrediction(txHash);
-                    
                     trackedPoolTxs.set(txHash.toLowerCase(), {
                       hash: txHash,
                       firstSeenInPool: now,
                       lastSeenInPool: now,
                       poolStatus: 'queued',
                       decoded: decoded,
-                      predictedInclusionBlock: prediction?.predictedInclusionBlock || null,
-                      inclusionProbability: prediction?.inclusionProbability,
-                      priorityFeeRank: prediction?.priorityFeeRank,
-                      effectiveGasPriceGwei: prediction?.effectiveGasPriceGwei,
                     });
+                    console.log(`\n⏳ NEW TX IN POOL (QUEUED): ${txHash.slice(0, 16)}...`);
+                    console.log(`   Value: ${decoded.value} ETH (${formatUSD(valueUsd)})`);
                   }
                 }
               } catch (err) {
@@ -380,14 +361,25 @@ async function monitorTransactionPool() {
               tracked.timeToConfirm = timeToConfirm;
               tracked.receipt = receipt;
               
-              // Transaction confirmed - tracked silently
+              const statusEmoji = receipt.status === 1 ? '✅' : '❌';
+              const statusText = receipt.status === 1 ? 'CONFIRMED' : 'FAILED';
+              
+              console.log(`\n${statusEmoji} TX ${statusText}: ${hash.slice(0, 16)}...`);
+              console.log(`   Block: ${tracked.confirmedBlock}`);
+              console.log(`   Time to confirm: ${timeToConfirm.toFixed(2)} seconds`);
+              console.log(`   Status: ${receipt.status === 1 ? 'SUCCESS' : 'FAILED'}`);
+              if (tracked.decoded) {
+                console.log(`   Value: ${tracked.decoded.value} ETH`);
+              }
             }
           } else {
             // Transaction dropped (not in pool, not confirmed)
             tracked.poolStatus = 'dropped';
+            console.log(`\n🗑️ TX DROPPED: ${hash.slice(0, 16)}... (removed from pool)`);
           }
         } catch (err) {
           tracked.poolStatus = 'dropped';
+          console.log(`\n🗑️ TX DROPPED: ${hash.slice(0, 16)}... (error checking)`);
         }
       }
     }
@@ -402,41 +394,24 @@ async function monitorTransactionPool() {
     }
 
   } catch (err) {
-    // Error monitoring txpool - silent
+    console.error('Error monitoring txpool:', err);
   }
 }
 
 // Calculate gas cost in USD
 // Formula: gasCost = (gasLimit * gasPriceInGwei) / 1e9 * ethPriceInUSD
 // This calculates the MAXIMUM cost (using gasLimit). Actual cost may be lower if transaction uses less gas.
-function calculateGasCost(tx: ethers.TransactionResponse): { 
-  gasGwei: string; 
-  gasEth: number; 
-  gasUsd: number;
-  maxFeePerGasGwei?: string;
-  maxPriorityFeePerGasGwei?: string;
-  gasPriceGwei?: string;
-} {
+function calculateGasCost(tx: ethers.TransactionResponse): { gasGwei: string; gasEth: number; gasUsd: number } {
   const gasLimit = tx.gasLimit ? Number(tx.gasLimit) : 0;
 
-  // Extract all gas-related fields
+  // Determine gas price in gwei (1 Gwei = 10^9 Wei = 10^-9 ETH)
   let gasPriceGwei = 0;
-  let maxFeePerGasGwei: string | undefined;
-  let maxPriorityFeePerGasGwei: string | undefined;
-  let gasPriceGweiStr: string | undefined;
-
   if (tx.maxFeePerGas) {
     // For EIP-1559 transactions, use maxFeePerGas
     gasPriceGwei = parseFloat(ethers.formatUnits(tx.maxFeePerGas, "gwei"));
-    maxFeePerGasGwei = parseFloat(ethers.formatUnits(tx.maxFeePerGas, "gwei")).toFixed(2);
-    
-    if (tx.maxPriorityFeePerGas) {
-      maxPriorityFeePerGasGwei = parseFloat(ethers.formatUnits(tx.maxPriorityFeePerGas, "gwei")).toFixed(2);
-    }
   } else if (tx.gasPrice) {
     // For legacy transactions, use gasPrice
     gasPriceGwei = parseFloat(ethers.formatUnits(tx.gasPrice, "gwei"));
-    gasPriceGweiStr = gasPriceGwei.toFixed(2);
   }
 
   // Calculate ETH cost: gasLimit * (gasPriceInGwei / 1e9)
@@ -446,13 +421,19 @@ function calculateGasCost(tx: ethers.TransactionResponse): {
   // Convert to USD using current ETH price
   const gasUsd = gasEth * ethPrice;
   
+  // Debug logging
+  console.log("💰 Gas Cost Calculation:");
+  console.log(`   Gas Limit: ${gasLimit.toLocaleString()} gas`);
+  console.log(`   Gas Price: ${gasPriceGwei.toFixed(2)} Gwei`);
+  console.log(`   ETH Cost: ${gasEth.toFixed(8)} ETH`);
+  console.log(`   ETH Price: $${ethPrice.toFixed(2)}`);
+  console.log(`   USD Cost: $${gasUsd.toFixed(2)}`);
+  console.log(`   Note: This is MAXIMUM cost (gasLimit). Actual cost may be lower.`);
+  
   return {
     gasGwei: gasPriceGwei.toFixed(2),
     gasEth: parseFloat(gasEth.toFixed(8)),
     gasUsd: parseFloat(gasUsd.toFixed(2)),
-    maxFeePerGasGwei,
-    maxPriorityFeePerGasGwei,
-    gasPriceGwei: gasPriceGweiStr,
   };
 }
 
@@ -464,54 +445,21 @@ async function updateEthPrice() {
     abi: (await import("./abi/ethAbi.json", { assert: { type: "json" } })).default,
   });
   ethPrice = oracle.price || 0;
-  // ETH price updated silently
+  console.log(`💵 ETH/USD updated: ${oracle}`);
 }
 await updateEthPrice();
 setInterval(updateEthPrice, 30000);
 
-// Initialize gas prediction service
-initializeGasPredictionService(provider);
-const gasPredictionService = getGasPredictionService();
+console.log("🚀 Listening to mempool...");
+console.log(`💰 Filter: Only showing transactions with ETH value >= $${MIN_VALUE_USD.toLocaleString()}`);
 
 // Start transaction pool monitoring every 10 seconds
 setInterval(monitorTransactionPool, 10000);
+console.log("📊 Started transaction pool monitoring (every 10 seconds)");
 
-// Monitor new blocks to detect confirmations faster and update predictions
+// Monitor new blocks to detect confirmations faster
 provider.on("block", async (blockNumber) => {
   try {
-    // Update gas predictions for new block
-    try {
-      await gasPredictionService.updatePredictions(ethPrice, provider);
-      const predictions = gasPredictionService.getPredictions();
-      inclusionMapping = predictions.inclusionMapping;
-      
-      // Log predictions
-      console.log(gasPredictionService.formatPredictions());
-      
-      // Update tracked transactions with predictions
-      if (inclusionMapping) {
-        const allPredictions = [
-          ...inclusionMapping.nextBlock,
-          ...inclusionMapping.next2Blocks,
-          ...inclusionMapping.unlikely,
-          ...inclusionMapping.insufficientFee,
-          ...inclusionMapping.nonceBlocked,
-        ];
-        
-        for (const pred of allPredictions) {
-          const tracked = trackedPoolTxs.get(pred.hash.toLowerCase());
-          if (tracked) {
-            tracked.predictedInclusionBlock = pred.predictedInclusionBlock;
-            tracked.inclusionProbability = pred.inclusionProbability;
-            tracked.priorityFeeRank = pred.priorityFeeRank;
-            tracked.effectiveGasPriceGwei = pred.effectiveGasPriceGwei;
-          }
-        }
-      }
-    } catch (predErr) {
-      // Error updating gas predictions - silent
-    }
-
     // Check all tracked transactions when a new block arrives
     for (const [hash, tracked] of trackedPoolTxs.entries()) {
       if (tracked.poolStatus === 'pending' || tracked.poolStatus === 'queued') {
@@ -530,14 +478,19 @@ provider.on("block", async (blockNumber) => {
               tracked.timeToConfirm = timeToConfirm;
               tracked.receipt = receipt;
               
-              // Record actual inclusion for prediction accuracy tracking
-              gasPredictionService.recordTransactionInclusion(
-                hash,
-                Number(tx.blockNumber),
-                confirmedAt
-              );
+              const statusEmoji = receipt.status === 1 ? '✅' : '❌';
+              const statusText = receipt.status === 1 ? 'CONFIRMED' : 'FAILED';
               
-              // Transaction confirmed - tracked silently for accuracy
+              console.log(`\n${statusEmoji} TX ${statusText} IN BLOCK ${blockNumber}: ${hash.slice(0, 16)}...`);
+              console.log(`   Block: ${tracked.confirmedBlock}`);
+              console.log(`   Time to confirm: ${timeToConfirm.toFixed(2)} seconds`);
+              console.log(`   Status: ${receipt.status === 1 ? 'SUCCESS' : 'FAILED'}`);
+              if (tracked.decoded) {
+                console.log(`   Value: ${tracked.decoded.value} ETH (${formatUSD(Number(tracked.decoded.value) * ethPrice)})`);
+              }
+              if (receipt.status === 0) {
+                console.log(`   ⚠️ Transaction failed! Gas used: ${receipt.gasUsed.toString()}`);
+              }
             }
           }
         } catch (err) {
@@ -545,13 +498,8 @@ provider.on("block", async (blockNumber) => {
         }
       }
     }
-    
-    // Cleanup old prediction history periodically
-    if (blockNumber % 100 === 0) {
-      gasPredictionService.cleanupHistory();
-    }
   } catch (err) {
-    // Error checking block - silent
+    console.error('Error checking block for confirmations:', err);
   }
 });
 
@@ -572,7 +520,7 @@ provider.on("pending", async (txHash) => {
       return; // Skip transactions below threshold
     }
 
-    // Calculate gas cost (silently)
+    // Calculate gas cost
     const gasCost = calculateGasCost(tx);
 
     const entry = {
@@ -582,8 +530,6 @@ provider.on("pending", async (txHash) => {
       valueEth: `${valueEth.toFixed(6)} ETH`,
       valueUsd: formatUSD(valueUsd),
       gasPrice: `${gasCost.gasGwei} Gwei`,
-      maxFeePerGas: gasCost.maxFeePerGasGwei ? `${gasCost.maxFeePerGasGwei} Gwei` : null,
-      maxPriorityFeePerGas: gasCost.maxPriorityFeePerGasGwei ? `${gasCost.maxPriorityFeePerGasGwei} Gwei` : null,
       gasEth: `${gasCost.gasEth.toFixed(8)} ETH`,
       gasUsd: formatUSD(gasCost.gasUsd),
       token: decoded.token ? `${decoded.token.symbol} (${decoded.token.name})` : null,
@@ -601,15 +547,68 @@ provider.on("pending", async (txHash) => {
       timestamp: new Date().toISOString(),
     };
 
-    // Transaction processed silently - only gas predictions are logged
+    // Comprehensive logging
+    console.log("\n" + "=".repeat(80));
+    console.log("📋 TRANSACTION DECODED");
+    console.log("=".repeat(80));
+    console.log(`Hash:        ${decoded.hash}`);
+    console.log(`From:        ${decoded.from}`);
+    console.log(`To:          ${decoded.to || "Contract Creation"}`);
+    console.log(`ETH Value:   ${decoded.value} ETH (${formatUSD(valueUsd)})`);
+    console.log(`Gas Limit:   ${decoded.gasLimit}`);
+    console.log(`Gas Price:   ${gasCost.gasGwei} Gwei`);
+    console.log(`Gas Cost:    ${gasCost.gasEth.toFixed(8)} ETH (${formatUSD(gasCost.gasUsd)})`);
+    
+    if (decoded.token) {
+      console.log(`\n🪙 TOKEN INFO:`);
+      console.log(`  Symbol:    ${decoded.token.symbol}`);
+      console.log(`  Name:      ${decoded.token.name}`);
+      console.log(`  Decimals:  ${decoded.token.decimals}`);
+    }
+    
+    if (decoded.decodedData) {
+      console.log(`\n📝 DECODED DATA:`);
+      console.log(`  Function:  ${decoded.functionName || decoded.decodedData.function}`);
+      
+      if (decoded.decodedData.function === "transfer") {
+        console.log(`  Type:      ERC20 Transfer`);
+        console.log(`  Recipient: ${decoded.decodedData.recipient}`);
+        console.log(`  Amount:    ${decoded.decodedData.amount} ${decoded.decodedData.tokenSymbol}`);
+        console.log(`  Raw:       ${decoded.decodedData.amountRaw}`);
+      } else if (decoded.decodedData.function === "transferFrom") {
+        console.log(`  Type:      ERC20 Transfer From`);
+        console.log(`  From:      ${decoded.decodedData.from}`);
+        console.log(`  Recipient: ${decoded.decodedData.recipient}`);
+        console.log(`  Amount:    ${decoded.decodedData.amount} ${decoded.decodedData.tokenSymbol}`);
+        console.log(`  Raw:       ${decoded.decodedData.amountRaw}`);
+      } else if (decoded.decodedData.function === "approve") {
+        console.log(`  Type:      ERC20 Approval`);
+        console.log(`  Spender:   ${decoded.decodedData.spender}`);
+        console.log(`  Amount:    ${decoded.decodedData.amount} ${decoded.decodedData.tokenSymbol}`);
+        console.log(`  Raw:       ${decoded.decodedData.amountRaw}`);
+      } else if (decoded.decodedData.functionSelector) {
+        console.log(`  Selector:  ${decoded.decodedData.functionSelector}`);
+        console.log(`  Function:  ${decoded.decodedData.functionName}`);
+        if (decoded.decodedData.args) {
+          console.log(`  Args:      ${decoded.decodedData.args.join(", ")}`);
+        }
+      }
+    } else if (tx.data && tx.data.length > 2) {
+      console.log(`\n📝 RAW DATA:`);
+      console.log(`  Data:      ${tx.data.slice(0, 66)}...`);
+      console.log(`  Length:    ${tx.data.length} bytes`);
+    }
+    
+    console.log("=".repeat(80) + "\n");
+
     txs.unshift(entry);
     if (txs.length > MAX_TXS) txs.pop();
 
   } catch (err) {
-    // Error processing transaction - silent
+    console.error("❌ Error processing transaction:", err);
   }
 });
 
 provider.on("error", (err) => {
-  // WebSocket error - silent
+  console.error("❌ WebSocket error:", err.message);
 });

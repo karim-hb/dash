@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import './globals.css';
+import ConnectionIndicator from './components/ConnectionIndicator';
 
 export const metadata: Metadata = {
   title: 'Ethereum Mempool Tracker',
@@ -30,10 +31,7 @@ export default function RootLayout({
 
             {/* Status Bar */}
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 bg-[#00FF66] rounded-full animate-pulse shadow-[0_0_6px_rgba(0,255,102,0.6)]"></div>
-                <span className="text-[#00FF66] font-mono text-[10px] font-bold tracking-wide">LIVE</span>
-              </div>
+              <ConnectionIndicator connectedLabel="WS LIVE" reconnectingLabel="WS RECONNECTING" disconnectedLabel="WS OFFLINE" />
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 bg-[#0066FF] rounded-full animate-pulse shadow-[0_0_6px_rgba(0,102,255,0.6)]"></div>
                 <span className="text-[#0066FF] font-mono text-[10px] font-bold tracking-wide">SYNC</span>
@@ -52,11 +50,13 @@ export default function RootLayout({
               { href: '/dashboard', label: '📊 ANALYTICS' },
               { href: '/amm', label: '📈 AMM DASHBOARD' },
               { href: '/pools', label: '🏦 POOLS' },
-              { href: '/opportunities', label: '💎 OPPORTUNITIES' },
-              { href: '/live', label: '🔴 LIVE FEED' },
-              { href: '/included', label: '✅ INCLUDED' },
+              { href: '/arbitrage', label: '🎯 ARBITRAGE' },
+              { href: '/prices', label: '💰 PRICES' },
+              { href: '/liquidations', label: '💸 LIQUIDATIONS' },
+              { href: '/flashloans', label: '⚡ FLASH LOANS' },
               { href: '/tokens', label: '💹 TOKENS' },
               { href: '/oracle', label: '🛰️ ORACLES' },
+              { href: '/ws', label: '🌐 WEBSOCKET' },
             ].map((item) => (
               <Link
                 key={item.href}
@@ -78,10 +78,12 @@ export default function RootLayout({
         <footer className="bg-[#0D1117] border-t-2 border-[#0066FF] px-5 py-3.5 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 bg-[#00FF66] rounded-full animate-pulse shadow-[0_0_6px_rgba(0,255,102,0.6)]"></div>
-                <span className="text-[#00FF66] font-mono text-[10px] font-bold tracking-wide">WS ACTIVE</span>
-              </div>
+              <ConnectionIndicator
+                connectedLabel="WS ACTIVE"
+                reconnectingLabel="WS RECONNECTING"
+                disconnectedLabel="WS OFFLINE"
+                showTimestamp
+              />
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 bg-[#0066FF] rounded-full animate-pulse shadow-[0_0_6px_rgba(0,102,255,0.6)]"></div>
                 <span className="text-[#0066FF] font-mono text-[10px] font-bold tracking-wide">RPC SYNC</span>

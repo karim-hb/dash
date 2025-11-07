@@ -367,6 +367,15 @@ body {
   display: none;
 }
 
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+
 /* Mini Charts */
 .mini-chart {
   display: flex;

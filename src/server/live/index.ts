@@ -1,0 +1,321 @@
+import { ethers } from "ethers";
+import { getOraclePrice } from "./oracle";
+import tokenList from "./abi/sample.json" assert { type: "json" };
+
+const provider = new ethers.WebSocketProvider("ws://127.0.0.1:8545");
+const MAX_TXS = 50;
+let txs = [];
+let ethPrice = 0;
+
+// Load tokens from sample.json into a map for quick lookup
+const KNOWN_TOKENS: Record<string, { symbol: string; name: string; decimals: number }> = {};
+if (tokenList && tokenList.tokens) {
+  tokenList.tokens.forEach((token: any) => {
+    if (token.chainId === 1) { // Ethereum mainnet
+      KNOWN_TOKENS[token.address.toLowerCase()] = {
+        symbol: token.symbol,
+        name: token.name,
+        decimals: token.decimals,
+      };
+    }
+  });
+}
+console.log(`📚 Loaded ${Object.keys(KNOWN_TOKENS).length} tokens from token list`);
+
+// Extended ERC20 ABI for decoding common functions
+const ERC20_ABI = [
+  "function transfer(address to, uint256 amount) returns (bool)",
+  "function transferFrom(address from, address to, uint256 amount) returns (bool)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function balanceOf(address account) view returns (uint256)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function totalSupply() view returns (uint256)",
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  // Events
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+  "event Approval(address indexed owner, address indexed spender, uint256 value)",
+];
+
+// Common function selectors for quick identification
+const FUNCTION_SELECTORS: Record<string, string> = {
+  "0xa9059cbb": "transfer(address,uint256)",
+  "0x23b872dd": "transferFrom(address,address,uint256)",
+  "0x095ea7b3": "approve(address,uint256)",
+  "0x70a08231": "balanceOf(address)",
+  "0xdd62ed3e": "allowance(address,address)",
+  "0x18160ddd": "totalSupply()",
+  "0x06fdde03": "name()",
+  "0x95d89b41": "symbol()",
+  "0x313ce567": "decimals()",
+};
+
+// Format USD value properly, handling very small numbers
+function formatUSD(value: number): string {
+  if (value === 0) return "$0.00";
+  
+  // For very small values (< 0.01), show more decimal places
+  if (value < 0.01 && value > 0) {
+    // Find the first significant digit
+    const absValue = Math.abs(value);
+    const magnitude = Math.floor(Math.log10(absValue));
+    const decimals = Math.max(2, Math.abs(magnitude) + 2);
+    return `$${value.toFixed(decimals)}`;
+  }
+  
+  // For normal values, show 2 decimal places
+  if (value < 1) {
+    return `$${value.toFixed(4)}`;
+  }
+  
+  // For larger values, use standard formatting
+  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+// Decode transaction data completely
+function decodeTransactionData(tx: ethers.TransactionResponse) {
+  const result: any = {
+    // Basic transaction info
+    hash: tx.hash,
+    from: tx.from,
+    to: tx.to,
+    value: ethers.formatEther(tx.value || BigInt(0)),
+    gasPrice: tx.gasPrice ? ethers.formatUnits(tx.gasPrice, "gwei") : null,
+    maxFeePerGas: tx.maxFeePerGas ? ethers.formatUnits(tx.maxFeePerGas, "gwei") : null,
+    maxPriorityFeePerGas: tx.maxPriorityFeePerGas ? ethers.formatUnits(tx.maxPriorityFeePerGas, "gwei") : null,
+    gasLimit: tx.gasLimit.toString(),
+    nonce: tx.nonce,
+    chainId: tx.chainId.toString(),
+    type: tx.type,
+    
+    // Token info
+    token: null,
+    decodedData: null,
+    functionName: null,
+  };
+
+  // Check if this is a token contract
+  if (tx.to) {
+    const tokenInfo = KNOWN_TOKENS[tx.to.toLowerCase()];
+    if (tokenInfo) {
+      result.token = tokenInfo;
+    }
+  }
+
+  // Try to decode transaction data
+  if (tx.data && tx.data.length >= 10) {
+    const functionSelector = tx.data.slice(0, 10);
+    result.functionSelector = functionSelector;
+    result.functionName = FUNCTION_SELECTORS[functionSelector] || "Unknown";
+
+    // Try to decode as ERC20 function
+    try {
+      const iface = new ethers.Interface(ERC20_ABI);
+      const decoded = iface.parseTransaction({ data: tx.data });
+      
+      if (decoded) {
+        result.functionName = decoded.name;
+        const tokenInfo = result.token || { decimals: 18, symbol: "UNKNOWN", name: "Unknown Token" };
+        
+        if (decoded.name === "transfer") {
+          const [to, amount] = decoded.args;
+          const formattedAmount = ethers.formatUnits(amount, tokenInfo.decimals);
+          
+          result.decodedData = {
+            function: "transfer",
+            recipient: to,
+            amount: formattedAmount,
+            amountRaw: amount.toString(),
+            tokenSymbol: tokenInfo.symbol,
+            tokenName: tokenInfo.name,
+            decimals: tokenInfo.decimals,
+          };
+        } else if (decoded.name === "transferFrom") {
+          const [from, to, amount] = decoded.args;
+          const formattedAmount = ethers.formatUnits(amount, tokenInfo.decimals);
+          
+          result.decodedData = {
+            function: "transferFrom",
+            from: from,
+            recipient: to,
+            amount: formattedAmount,
+            amountRaw: amount.toString(),
+            tokenSymbol: tokenInfo.symbol,
+            tokenName: tokenInfo.name,
+            decimals: tokenInfo.decimals,
+          };
+        } else if (decoded.name === "approve") {
+          const [spender, amount] = decoded.args;
+          const formattedAmount = ethers.formatUnits(amount, tokenInfo.decimals);
+          
+          result.decodedData = {
+            function: "approve",
+            spender: spender,
+            amount: formattedAmount,
+            amountRaw: amount.toString(),
+            tokenSymbol: tokenInfo.symbol,
+            tokenName: tokenInfo.name,
+            decimals: tokenInfo.decimals,
+          };
+        } else {
+          result.decodedData = {
+            function: decoded.name,
+            args: decoded.args.map((arg: any) => arg.toString()),
+          };
+        }
+      }
+    } catch (err) {
+      // Not a standard ERC20 function, store raw data
+      result.decodedData = {
+        functionSelector: functionSelector,
+        functionName: FUNCTION_SELECTORS[functionSelector] || "Unknown Function",
+        rawData: tx.data,
+        error: "Could not decode",
+      };
+    }
+  }
+
+  return result;
+}
+
+// Calculate gas cost in USD
+function calculateGasCost(tx: ethers.TransactionResponse): { gasGwei: string; gasEth: number; gasUsd: number } {
+  const gasLimit = Number(tx.gasLimit || 0);
+  let gasPriceGwei = 0;
+  
+  if (tx.maxFeePerGas) {
+    gasPriceGwei = Number(ethers.formatUnits(tx.maxFeePerGas, "gwei"));
+  } else if (tx.gasPrice) {
+    gasPriceGwei = Number(ethers.formatUnits(tx.gasPrice, "gwei"));
+  }
+  
+  const gasEth = (gasLimit * gasPriceGwei) / 1e9;
+  const gasUsd = gasEth * ethPrice;
+  
+  return {
+    gasGwei: gasPriceGwei.toFixed(2),
+    gasEth: gasEth,
+    gasUsd: gasUsd,
+  };
+}
+
+// Fetch ETH/USD once and refresh every 30 seconds
+async function updateEthPrice() {
+  const oracle = await getOraclePrice({
+    name: "ETH / USD",
+    address: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
+    abi: (await import("./abi/ethAbi.json", { assert: { type: "json" } })).default,
+  });
+  ethPrice = oracle.price || 0;
+  console.log(`💵 ETH/USD updated: ${oracle}`);
+}
+await updateEthPrice();
+setInterval(updateEthPrice, 30000);
+
+console.log("🚀 Listening to mempool...");
+
+provider.on("pending", async (txHash) => {
+  try {
+    const tx = await provider.getTransaction(txHash);
+    if (!tx) return;
+
+    // Decode all transaction data
+    const decoded = decodeTransactionData(tx);
+    
+    // Calculate ETH value in USD
+    const valueEth = Number(decoded.value);
+    const valueUsd = valueEth * ethPrice;
+
+    // Calculate gas cost
+    const gasCost = calculateGasCost(tx);
+
+    const entry = {
+      hash: tx.hash,
+      from: tx.from,
+      to: tx.to || "Contract Creation",
+      valueEth: `${valueEth.toFixed(6)} ETH`,
+      valueUsd: formatUSD(valueUsd),
+      gasPrice: `${gasCost.gasGwei} Gwei`,
+      gasEth: `${gasCost.gasEth.toFixed(8)} ETH`,
+      gasUsd: formatUSD(gasCost.gasUsd),
+      token: decoded.token ? `${decoded.token.symbol} (${decoded.token.name})` : null,
+      functionName: decoded.functionName || null,
+      tokenTransfer: decoded.decodedData?.function === "transfer" ? {
+        recipient: decoded.decodedData.recipient,
+        amount: decoded.decodedData.amount,
+        symbol: decoded.decodedData.tokenSymbol,
+      } : decoded.decodedData?.function === "transferFrom" ? {
+        from: decoded.decodedData.from,
+        recipient: decoded.decodedData.recipient,
+        amount: decoded.decodedData.amount,
+        symbol: decoded.decodedData.tokenSymbol,
+      } : null,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Comprehensive logging
+    console.log("\n" + "=".repeat(80));
+    console.log("📋 TRANSACTION DECODED");
+    console.log("=".repeat(80));
+    console.log(`Hash:        ${decoded.hash}`);
+    console.log(`From:        ${decoded.from}`);
+    console.log(`To:          ${decoded.to || "Contract Creation"}`);
+    console.log(`ETH Value:   ${decoded.value} ETH (${formatUSD(valueUsd)})`);
+    console.log(`Gas Limit:   ${decoded.gasLimit}`);
+    console.log(`Gas Price:   ${gasCost.gasGwei} Gwei`);
+    console.log(`Gas Cost:    ${gasCost.gasEth.toFixed(8)} ETH (${formatUSD(gasCost.gasUsd)})`);
+    
+    if (decoded.token) {
+      console.log(`\n🪙 TOKEN INFO:`);
+      console.log(`  Symbol:    ${decoded.token.symbol}`);
+      console.log(`  Name:      ${decoded.token.name}`);
+      console.log(`  Decimals:  ${decoded.token.decimals}`);
+    }
+    
+    if (decoded.decodedData) {
+      console.log(`\n📝 DECODED DATA:`);
+      console.log(`  Function:  ${decoded.functionName || decoded.decodedData.function}`);
+      
+      if (decoded.decodedData.function === "transfer") {
+        console.log(`  Type:      ERC20 Transfer`);
+        console.log(`  Recipient: ${decoded.decodedData.recipient}`);
+        console.log(`  Amount:    ${decoded.decodedData.amount} ${decoded.decodedData.tokenSymbol}`);
+        console.log(`  Raw:       ${decoded.decodedData.amountRaw}`);
+      } else if (decoded.decodedData.function === "transferFrom") {
+        console.log(`  Type:      ERC20 Transfer From`);
+        console.log(`  From:      ${decoded.decodedData.from}`);
+        console.log(`  Recipient: ${decoded.decodedData.recipient}`);
+        console.log(`  Amount:    ${decoded.decodedData.amount} ${decoded.decodedData.tokenSymbol}`);
+        console.log(`  Raw:       ${decoded.decodedData.amountRaw}`);
+      } else if (decoded.decodedData.function === "approve") {
+        console.log(`  Type:      ERC20 Approval`);
+        console.log(`  Spender:   ${decoded.decodedData.spender}`);
+        console.log(`  Amount:    ${decoded.decodedData.amount} ${decoded.decodedData.tokenSymbol}`);
+        console.log(`  Raw:       ${decoded.decodedData.amountRaw}`);
+      } else if (decoded.decodedData.functionSelector) {
+        console.log(`  Selector:  ${decoded.decodedData.functionSelector}`);
+        console.log(`  Function:  ${decoded.decodedData.functionName}`);
+        if (decoded.decodedData.args) {
+          console.log(`  Args:      ${decoded.decodedData.args.join(", ")}`);
+        }
+      }
+    } else if (tx.data && tx.data.length > 2) {
+      console.log(`\n📝 RAW DATA:`);
+      console.log(`  Data:      ${tx.data.slice(0, 66)}...`);
+      console.log(`  Length:    ${tx.data.length} bytes`);
+    }
+    
+    console.log("=".repeat(80) + "\n");
+
+    txs.unshift(entry);
+    if (txs.length > MAX_TXS) txs.pop();
+
+  } catch (err) {
+    console.error("❌ Error processing transaction:", err);
+  }
+});
+
+provider.on("error", (err) => {
+  console.error("❌ WebSocket error:", err.message);
+});

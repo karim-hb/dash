@@ -2,9 +2,11 @@ import { TxState, Transaction } from '@/lib/types';
 import { getTrackerState } from '../state/state';
 import { getFeeHistoryAnalytics } from '../metrics/aggregator';
 import { hexToBigInt } from '@/lib/util/hex';
-import { formatUnits } from 'ethers';
+import { formatUnits, ethers } from 'ethers';
 import { logErrorWithConsole } from '../utils/errorLogger';
 import BigNumber from 'bignumber.js';
+import { predictNextBaseFees, calculatePercentiles, fetchLatestBlock } from './gasPredictor';
+import { getProvider } from '../modules/provider';
 
 type PercentileMap = {
   p10: number;
@@ -26,6 +28,7 @@ export type GasOracleSnapshot = {
   mempoolCount: number;
   baseFeeGwei: number | null;
   predictedBaseFeeGwei: number | null;
+  predictedBaseFeesNextBlocks: number[]; // Next 5 blocks predicted base fees
   predictedPriorityFeeGwei: number | null;
   priorityPercentiles: PercentileMap;
   suggestions: {
@@ -42,6 +45,7 @@ const DEFAULT_SNAPSHOT: GasOracleSnapshot = {
   mempoolCount: 0,
   baseFeeGwei: null,
   predictedBaseFeeGwei: null,
+  predictedBaseFeesNextBlocks: [],
   predictedPriorityFeeGwei: null,
   priorityPercentiles: { p10: 0, p25: 0, p50: 0, p75: 0, p90: 0 },
   suggestions: { slow: null, average: null, fast: null },
@@ -49,13 +53,7 @@ const DEFAULT_SNAPSHOT: GasOracleSnapshot = {
   blockHistory: [],
 };
 
-function percentile(sorted: number[], fraction: number): number {
-  if (!sorted.length) return 0;
-  if (fraction <= 0) return sorted[0];
-  if (fraction >= 1) return sorted[sorted.length - 1];
-  const index = Math.floor((sorted.length - 1) * fraction);
-  return sorted[index];
-}
+// Use calculatePercentiles from gasPredictor instead
 
 function toGwei(valueWei: number | null | undefined): number | null {
   if (valueWei == null || Number.isNaN(valueWei)) return null;
@@ -109,29 +107,55 @@ class GasOracle {
       p90: toGwei(feeHistory.percentiles['90'] ?? null) ?? 0,
     };
 
-    const p10 = percentile(priorityValues, 0.10);
-    const p25 = percentile(priorityValues, 0.25);
-    const p50 = percentile(priorityValues, 0.50);
-    const p75 = percentile(priorityValues, 0.75);
-    const p90 = percentile(priorityValues, 0.90);
-
+    // Use calculatePercentiles from gasPredictor
+    const percentilesMap = calculatePercentiles(priorityValues);
     const percentiles: PercentileMap = {
-      p10,
-      p25,
-      p50,
-      p75,
-      p90,
+      p10: percentilesMap.p10,
+      p25: percentilesMap.p25,
+      p50: percentilesMap.p50,
+      p75: percentilesMap.p75,
+      p90: percentilesMap.p90,
     };
+    const { p10, p25, p50, p75, p90 } = percentiles;
 
     // Use BigNumber for precise pressure and fee calculations
     const pressureBN = new BigNumber(mempoolCount).div(2000);
     const pressure = BigNumber.max(BigNumber.min(pressureBN, new BigNumber(0.5)), new BigNumber(0)).toNumber();
 
     let predictedBaseFeeGwei: number | null = null;
+    let predictedBaseFeesNextBlocks: number[] = [];
+    
     if (baseFeeGwei != null) {
-      const baseFeeBN = new BigNumber(baseFeeGwei);
-      const predictedBN = BigNumber.max(baseFeeBN, baseFeeBN.multipliedBy(new BigNumber(1).plus(pressure)));
-      predictedBaseFeeGwei = predictedBN.toNumber();
+      // Use EIP-1559 formula for more accurate prediction
+      // Fetch latest block to get gasUsed and gasLimit
+      try {
+        const provider = getProvider();
+        const latestBlock = await fetchLatestBlock(provider);
+        
+        if (latestBlock && latestBlock.gasUsed && latestBlock.gasLimit) {
+          const baseFeeWei = BigInt(Math.floor(baseFeeGwei * 1e9));
+          const predictedBaseFeesWei = predictNextBaseFees(
+            baseFeeWei,
+            latestBlock.gasUsed,
+            latestBlock.gasLimit,
+            5
+          );
+          predictedBaseFeesNextBlocks = predictedBaseFeesWei.map(bf => Number(formatUnits(bf, "gwei")));
+          predictedBaseFeeGwei = predictedBaseFeesNextBlocks[0] || baseFeeGwei;
+        } else {
+          // Fallback to pressure-based prediction
+          const baseFeeBN = new BigNumber(baseFeeGwei);
+          const predictedBN = BigNumber.max(baseFeeBN, baseFeeBN.multipliedBy(new BigNumber(1).plus(pressure)));
+          predictedBaseFeeGwei = predictedBN.toNumber();
+          predictedBaseFeesNextBlocks = [predictedBaseFeeGwei];
+        }
+      } catch (err) {
+        // Fallback to pressure-based prediction on error
+        const baseFeeBN = new BigNumber(baseFeeGwei);
+        const predictedBN = BigNumber.max(baseFeeBN, baseFeeBN.multipliedBy(new BigNumber(1).plus(pressure)));
+        predictedBaseFeeGwei = predictedBN.toNumber();
+        predictedBaseFeesNextBlocks = [predictedBaseFeeGwei];
+      }
     }
 
     const predictedPriorityFeeGwei = p75 || historyPercentiles.p90 || historyPercentiles.p50;
@@ -163,6 +187,7 @@ class GasOracle {
       mempoolCount,
       baseFeeGwei,
       predictedBaseFeeGwei,
+      predictedBaseFeesNextBlocks,
       predictedPriorityFeeGwei,
       priorityPercentiles: percentiles,
       suggestions,

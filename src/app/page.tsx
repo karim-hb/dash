@@ -4,12 +4,16 @@ export default function Home() {
   const navigationItems = [
     { href: '/dashboard', label: '📊 ANALYTICS TERMINAL' },
     { href: '/amm', label: '📈 AMM DASHBOARD' },
+    { href: '/arbitrage', label: '🎯 ARBITRAGE' },
+    { href: '/prices', label: '💰 PRICES' },
+    { href: '/liquidations', label: '💸 LIQUIDATIONS' },
+    { href: '/flashloans', label: '⚡ FLASH LOANS' },
+    { href: '/pools', label: '🏦 POOLS' },
+    { href: '/oracle', label: '🛰️ ORACLES' },
     { href: '/opportunities', label: '💎 OPPORTUNITIES' },
     { href: '/live', label: '🔴 LIVE FEED' },
     { href: '/included', label: '✅ INCLUDED' },
     { href: '/tokens', label: '💹 TOKENS' },
-    { href: '/pools', label: '🏦 POOLS' },
-    { href: '/oracle', label: '🛰️ ORACLES' },
   ];
 
   return (

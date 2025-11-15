@@ -7,6 +7,7 @@ import { Interface, getAddress, toBigInt } from 'ethers';
 import { logErrorWithConsole, logWarningWithConsole } from '../utils/errorLogger';
 
 const SWAP_FUNCTION_SIGNATURES = [
+  // Uniswap V2/V3 and similar
   'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)',
   'function swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)',
   'function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline)',
@@ -19,7 +20,21 @@ const SWAP_FUNCTION_SIGNATURES = [
   'function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 deadline,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96) params)',
   'function exactOutputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 deadline,uint256 amountOut,uint256 amountInMaximum,uint160 sqrtPriceLimitX96) params)',
   'function exactInput((bytes path,address recipient,uint256 deadline,uint256 amountIn,uint256 amountOutMinimum) params)',
-  'function exactOutput((bytes path,address recipient,uint256 deadline,uint256 amountOut,uint256 amountInMaximum) params)'
+  'function exactOutput((bytes path,address recipient,uint256 deadline,uint256 amountOut,uint256 amountInMaximum) params)',
+  // Uniswap V1
+  'function ethToTokenSwapInput(uint256 min_tokens, uint256 deadline)',
+  'function tokenToEthSwapInput(uint256 tokens_sold, uint256 min_eth, uint256 deadline)',
+  'function ethToTokenSwapOutput(uint256 tokens_bought, uint256 max_eth, uint256 deadline)',
+  'function tokenToEthSwapOutput(uint256 eth_bought, uint256 max_tokens, uint256 deadline)',
+  'function tokenToTokenSwapInput(uint256 tokens_sold, uint256 min_tokens_bought, uint256 min_eth_bought, uint256 deadline, address token_addr)',
+  'function tokenToTokenSwapOutput(uint256 tokens_bought, uint256 max_tokens_sold, uint256 max_eth_sold, uint256 deadline, address token_addr)',
+  // Curve V1 Old
+  'function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy)',
+  'function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy)',
+  // Custom AMM
+  'function swap(uint256 amount0Out, uint256 amount1Out, address to)',
+  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, uint24[] fees, address to, uint256 deadline)',
+  'function swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, uint24[] fees, address to, uint256 deadline)'
 ];
 
 const SWAP_INTERFACE = new Interface(SWAP_FUNCTION_SIGNATURES);
@@ -41,6 +56,26 @@ const V3_FUNCTION_NAMES = new Set([
   'exactOutputSingle',
   'exactInput',
   'exactOutput'
+]);
+
+const V1_FUNCTION_NAMES = new Set([
+  'ethToTokenSwapInput',
+  'tokenToEthSwapInput',
+  'ethToTokenSwapOutput',
+  'tokenToEthSwapOutput',
+  'tokenToTokenSwapInput',
+  'tokenToTokenSwapOutput'
+]);
+
+const CURVE_V1_OLD_FUNCTION_NAMES = new Set([
+  'exchange',
+  'exchange_underlying'
+]);
+
+const CUSTOM_AMM_FUNCTION_NAMES = new Set([
+  'swap',
+  'swapExactTokensForTokens',
+  'swapTokensForExactTokens'
 ]);
 
 function normalizeAddressLower(value: any): string | null {

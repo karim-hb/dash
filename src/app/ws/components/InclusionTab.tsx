@@ -16,6 +16,7 @@ const bucketLabels: Record<string, string> = {
 };
 
 export default function InclusionTab({ inclusion, mempool }: InclusionTabProps) {
+  console.log("inclusion => " ,inclusion);
   const buckets = Object.entries(bucketLabels).map(([key, label]) => ({
     key,
     label,
@@ -70,6 +71,7 @@ function BucketCard({ label, items, summary }: { label: string; items: Inclusion
                 <span className="font-mono">{item.hash.slice(0, 8)}…{item.hash.slice(-6)}</span>
                 <span className="text-[#8B949E]">{item.status ?? label}</span>
               </div>
+              <TokenChipRow item={item} />
               <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-[#8B949E]">
                 <div>
                   <span className="font-semibold text-[#C9D1D9]">Probability:</span>{' '}
@@ -140,5 +142,54 @@ function renderPercentiles(percentiles?: Record<string, number>) {
 function formatValue(value: number | string) {
   if (typeof value === 'number') return value.toFixed(4);
   return value;
+}
+
+function TokenChipRow({ item }: { item: InclusionEntry }) {
+  const tokenSymbol = item.token?.symbol ?? item.tokenSymbol ?? undefined;
+  const tokenName = item.token?.name ?? item.tokenName ?? undefined;
+  const tokenAmount = item.token?.amount ?? item.tokenAmount ?? undefined;
+  const rawTokenUsd = item.token?.usdValue ?? item.tokenValueUsd ?? undefined;
+  const tokenUsd = formatUsd(rawTokenUsd);
+
+  if (!tokenSymbol && !tokenAmount && !tokenUsd) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-[#8B949E]">
+      <div className="inline-flex items-center gap-2 px-2 py-1 rounded bg-[#111C2B] border border-[#1F2A3A]">
+        {tokenSymbol && <span className="text-[#C9D1D9] font-semibold">{tokenSymbol}</span>}
+        {tokenName && tokenName !== tokenSymbol && <span className="text-[#8B949E]">{tokenName}</span>}
+        {tokenAmount != null && tokenAmount !== '' && <span className="text-[#C9D1D9]">{formatTokenAmount(tokenAmount)}</span>}
+        {tokenUsd && <span className="text-[#6EE7B7]">{tokenUsd}</span>}
+      </div>
+    </div>
+  );
+}
+
+function formatTokenAmount(value: number | string | null | undefined) {
+  if (value == null) return '';
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) return '';
+    if (Math.abs(value) >= 1) {
+      return value.toLocaleString(undefined, { maximumFractionDigits: 4 });
+    }
+    return value.toFixed(6);
+  }
+  return value;
+}
+
+function formatUsd(value: number | string | null | undefined) {
+  if (value == null) return '';
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return '';
+  if (numeric === 0) return '$0.00';
+  if (Math.abs(numeric) < 0.01) {
+    return `$${numeric.toFixed(4)}`;
+  }
+  if (Math.abs(numeric) < 1) {
+    return `$${numeric.toFixed(4)}`;
+  }
+  return `$${numeric.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 

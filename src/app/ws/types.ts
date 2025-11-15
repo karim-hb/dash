@@ -113,6 +113,16 @@ export interface InclusionEntry {
   reason?: string;
   firstSeen?: number;
   timeInPool?: number;
+  token?: {
+    symbol?: string | null;
+    name?: string | null;
+    amount?: number | string | null;
+    usdValue?: number | null;
+  } | null;
+  tokenSymbol?: string | null;
+  tokenName?: string | null;
+  tokenAmount?: number | string | null;
+  tokenValueUsd?: number | null;
 }
 
 export interface MempoolStats {

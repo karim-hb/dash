@@ -39,7 +39,15 @@ export default function TrackedTab({ tracked }: TrackedTabProps) {
     {
       key: 'effectiveGasPriceGwei',
       header: 'Gas (gwei)',
-      render: (value: number | null | undefined) => (value != null ? value.toFixed(2) : '—'),
+      render: (value: number | string | null | undefined) => {
+        const numeric =
+          typeof value === 'string'
+            ? Number.parseFloat(value)
+            : typeof value === 'number'
+              ? value
+              : null;
+        return numeric != null && Number.isFinite(numeric) ? numeric.toFixed(2) : '—';
+      },
       className: 'text-right',
     },
     {

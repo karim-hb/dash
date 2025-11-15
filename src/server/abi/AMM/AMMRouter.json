@@ -1,0 +1,32 @@
+[
+  {
+    "type": "function",
+    "name": "swapExactTokensForTokens",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "amountIn", "type": "uint256" },
+      { "name": "amountOutMin", "type": "uint256" },
+      { "name": "path", "type": "address[]" },
+      { "name": "fees", "type": "uint24[]" },
+      { "name": "to", "type": "address" },
+      { "name": "deadline", "type": "uint256" }
+    ],
+    "outputs": [{ "name": "amounts", "type": "uint256[]" }]
+  },
+  {
+    "type": "function",
+    "name": "swapTokensForExactTokens",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "amountOut", "type": "uint256" },
+      { "name": "amountInMax", "type": "uint256" },
+      { "name": "path", "type": "address[]" },
+      { "name": "fees", "type": "uint24[]" },
+      { "name": "to", "type": "address" },
+      { "name": "deadline", "type": "uint256" }
+    ],
+    "outputs": [{ "name": "amounts", "type": "uint256[]" }]
+  }
+]
+
+

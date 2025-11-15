@@ -24,6 +24,9 @@ import { startHoldersBackfillAndPolling } from './holders/erc20HLL';
 import { startTokenDiscovery } from './market/tokenDiscovery';
 import { startBalancerV2Indexer } from './indexers/amm/balancerV2';
 import { startCurveIndexer } from './indexers/amm/curve';
+import { startCustomAmmIndexer } from './indexers/amm/customAmm';
+import { startUniswapV1Indexer } from './indexers/ingest/uniswapv1.realtime';
+import { startCurveV1OldIndexer } from './indexers/ingest/curvev1old.realtime';
 import { initializeMarketRegistries } from './market/registry';
 import { startAmmEngine } from './market/ammEngine';
 import { startTokenStatsRefresh } from './market/tokenStats';
@@ -149,6 +152,24 @@ async function main() {
         await startCurveIndexer();
       } else {
         console.log('🔒 Curve indexer disabled (ENABLE_CURVE=false)');
+      }
+      if (cfg.ENABLE_AMM_CUSTOM) {
+        console.log('🏦 Starting Custom AMM indexer...');
+        await startCustomAmmIndexer();
+      } else {
+        console.log('🔒 Custom AMM indexer disabled (ENABLE_AMM_CUSTOM=false)');
+      }
+      if (cfg.ENABLE_UNISWAP_V1) {
+        console.log('🏦 Starting Uniswap V1 indexer...');
+        await startUniswapV1Indexer();
+      } else {
+        console.log('🔒 Uniswap V1 indexer disabled (ENABLE_UNISWAP_V1=false)');
+      }
+      if (cfg.ENABLE_CURVE_V1_OLD) {
+        console.log('🏦 Starting Curve V1 Old indexer...');
+        await startCurveV1OldIndexer();
+      } else {
+        console.log('🔒 Curve V1 Old indexer disabled (ENABLE_CURVE_V1_OLD=false)');
       }
       console.log('✅ AMM indexers started');
 
@@ -690,6 +711,57 @@ async function startHttpApi(port: number): Promise<void> {
           return;
         } catch (e) {
           logErrorWithConsole(e, 'AMM health API');
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Internal server error' }));
+          return;
+        }
+      }
+
+      // Custom AMM endpoints
+      if (req.method === 'GET' && pathname === '/api/amm/custom/pools') {
+        try {
+          const { getAmmPoolsCollection } = await import('@/lib/db/mongo');
+          const poolsCollection = getAmmPoolsCollection();
+          const pools = await poolsCollection.find({}).sort({ liquidityUSD: -1 }).limit(100).toArray();
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' });
+          res.end(serializeResponse({ total: pools.length, rows: pools }));
+          return;
+        } catch (e) {
+          logErrorWithConsole(e, 'Custom AMM pools API');
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Internal server error' }));
+          return;
+        }
+      }
+
+      if (req.method === 'GET' && pathname === '/api/amm/custom/stats') {
+        try {
+          const { getAmmPoolsCollection, getAmmSwapsCollection } = await import('@/lib/db/mongo');
+          const poolsCollection = getAmmPoolsCollection();
+          const swapsCollection = getAmmSwapsCollection();
+          
+          const totalPools = await poolsCollection.countDocuments({ status: 'active' });
+          const activePools = await poolsCollection.countDocuments({ status: 'active', liquidityUSD: { $gt: 0 } });
+          
+          // Calculate 24h volume from swaps
+          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          const recentSwaps = await swapsCollection.find({ timestamp: { $gte: oneDayAgo } }).toArray();
+          const totalVolume24h = recentSwaps.reduce((sum, swap) => sum + (swap.volumeUSD || 0), 0);
+          
+          // Calculate total liquidity
+          const pools = await poolsCollection.find({}).toArray();
+          const totalLiquidity = pools.reduce((sum, pool) => sum + (pool.liquidityUSD || 0), 0);
+          
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' });
+          res.end(serializeResponse({
+            totalPools,
+            activePools,
+            totalVolume24h,
+            totalLiquidity
+          }));
+          return;
+        } catch (e) {
+          logErrorWithConsole(e, 'Custom AMM stats API');
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Internal server error' }));
           return;

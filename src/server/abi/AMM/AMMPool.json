@@ -1,0 +1,70 @@
+[
+  {
+    "type": "event",
+    "name": "Swap",
+    "inputs": [
+      { "name": "sender", "type": "address", "indexed": true },
+      { "name": "recipient", "type": "address", "indexed": true },
+      { "name": "amount0", "type": "int256", "indexed": false },
+      { "name": "amount1", "type": "int256", "indexed": false },
+      { "name": "sqrtPriceX96", "type": "uint160", "indexed": false },
+      { "name": "liquidity", "type": "uint128", "indexed": false },
+      { "name": "tick", "type": "int24", "indexed": false }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Sync",
+    "inputs": [
+      { "name": "reserve0", "type": "uint112", "indexed": false },
+      { "name": "reserve1", "type": "uint112", "indexed": false }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Mint",
+    "inputs": [
+      { "name": "sender", "type": "address", "indexed": true },
+      { "name": "amount0", "type": "uint256", "indexed": false },
+      { "name": "amount1", "type": "uint256", "indexed": false }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Burn",
+    "inputs": [
+      { "name": "sender", "type": "address", "indexed": true },
+      { "name": "amount0", "type": "uint256", "indexed": false },
+      { "name": "amount1", "type": "uint256", "indexed": false },
+      { "name": "to", "type": "address", "indexed": true }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "function",
+    "name": "getReserves",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      { "name": "reserve0", "type": "uint112" },
+      { "name": "reserve1", "type": "uint112" },
+      { "name": "blockTimestampLast", "type": "uint32" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "swap",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "amount0Out", "type": "uint256" },
+      { "name": "amount1Out", "type": "uint256" },
+      { "name": "to", "type": "address" }
+    ],
+    "outputs": []
+  }
+]
+
+

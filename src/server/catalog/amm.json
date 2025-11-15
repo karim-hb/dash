@@ -1,8 +1,5 @@
 {
   "network": "mainnet",
-  "uniswap_v1": {
-    "factory": "0xc0a47dFe034B400B47cDaD5FecDa2621de6c4d95"
-  },
   "uniswap_v2": {
     "factory": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"
   },
@@ -17,6 +14,16 @@
   },
   "curve": {
     "registry": null
+  },
+  "custom_amm": {
+    "factory": null
+  },
+  "uniswap_v1": {
+    "factory": "0xc0a47dFe034B400B47cDaD5FecDa2621de6c4d95",
+    "exchanges": []
+  },
+  "curve_v1_old": {
+    "pools": []
   }
 }
 

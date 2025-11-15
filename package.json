@@ -10,9 +10,18 @@
     "start": "next start",
     "lint": "eslint",
     "server": "PORT=3005 UI_WS_PORT=3006 tsx src/server/index.ts",
-    "ws-server": "UI_WS_PORT=3006 tsx src/server/ws-server.ts"
+    "ws-server": "UI_WS_PORT=3007 tsx src/server/ws-server.ts",
+    "aave:pull-history": "tsx src/server/jobs/pullHistory.ts",
+    "ingest:amm:historical": "tsx src/server/indexers/amm/customAmm.historical.ts",
+    "ingest:uniswapv1:historical": "tsx src/server/indexers/ingest/uniswapv1.historical.ts",
+    "ingest:curvev1old:historical": "tsx src/server/indexers/ingest/curvev1old.historical.ts",
+    "abi:export": "node scripts/export-abis.js",
+    "compile": "hardhat compile"
   },
   "dependencies": {
+    "@aave/contract-helpers": "^1.36.2",
+    "@aave/math-utils": "^1.36.2",
+    "@bgd-labs/aave-address-book": "^4.36.0",
     "@nivo/bar": "^0.99.0",
     "@nivo/calendar": "^0.99.0",
     "@nivo/core": "^0.99.0",
@@ -28,6 +37,7 @@
     "@types/pg": "^8.15.6",
     "@types/redis": "^4.0.10",
     "@types/ws": "^8.18.1",
+    "big.js": "^7.0.1",
     "bignumber.js": "^9.3.1",
     "d3-array": "^3.2.4",
     "d3-scale": "^4.0.2",
@@ -35,7 +45,7 @@
     "date-fns": "^4.1.0",
     "decimal.js-light": "^2.5.1",
     "dotenv": "^17.2.3",
-    "ethers": "^6.15.0",
+    "ethers": "^5.8.0",
     "lodash": "^4.17.21",
     "mongodb": "^6.20.0",
     "next": "16.0.0",
@@ -59,8 +69,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/big.js": "^6.2.2",
     "@types/lodash": "^4.17.20",
-    "@types/node": "^20",
+    "@types/node": "^20.19.25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-plotly.js": "^2.6.3",
@@ -69,7 +80,8 @@
     "eslint-config-next": "16.0.0",
     "hardhat": "^3.0.10",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   }
 }

@@ -6,11 +6,21 @@ import OverviewTab from './components/OverviewTab';
 import InclusionTab from './components/InclusionTab';
 import MetricsTab from './components/MetricsTab';
 import PredictionsTab from './components/PredictionsTab';
+import DeFiTab from './components/DeFiTab';
+import PoolsTab from './components/PoolsTab';
 import TransactionsTab from './components/TransactionsTab';
 import TrackedTab from './components/TrackedTab';
 import { useWebSocketDashboard } from './hooks';
 
-type DashboardView = 'overview' | 'transactions' | 'tracked' | 'predictions' | 'inclusion' | 'metrics';
+type DashboardView =
+  | 'overview'
+  | 'transactions'
+  | 'tracked'
+  | 'predictions'
+  | 'inclusion'
+  | 'defi'
+  | 'pools'
+  | 'metrics';
 
 const tabs: Array<{ id: DashboardView; label: string; sublabel: string; icon: string }> = [
   { id: 'overview', label: 'Overview', sublabel: 'Network pulse', icon: '🛰️' },
@@ -18,6 +28,8 @@ const tabs: Array<{ id: DashboardView; label: string; sublabel: string; icon: st
   { id: 'tracked', label: 'Tracked', sublabel: 'Smart monitoring', icon: '🎯' },
   { id: 'predictions', label: 'Predictions', sublabel: 'Gas forecast', icon: '🔮' },
   { id: 'inclusion', label: 'Inclusion', sublabel: 'In-flight analysis', icon: '📊' },
+  { id: 'defi', label: 'DeFi', sublabel: 'Credit & farming', icon: '🏦' },
+  { id: 'pools', label: 'Pools', sublabel: 'AMM landscape', icon: '🌊' },
   { id: 'metrics', label: 'Metrics', sublabel: 'Decoders & events', icon: '📈' },
 ];
 
@@ -37,6 +49,10 @@ export default function WebSocketDashboardPage() {
         return 'Gas market trajectory for the next blocks';
       case 'inclusion':
         return 'Inclusion likelihood across mempool segments';
+      case 'defi':
+        return 'Protocol credit, leverage, and yield signals';
+      case 'pools':
+        return 'AMM liquidity heatmap & flow diagnostics';
       case 'metrics':
         return 'Decoder coverage & WebSocket activity log';
       default:
@@ -113,6 +129,10 @@ export default function WebSocketDashboardPage() {
               mempool={state.predictions?.mempoolStats}
             />
           )}
+
+          {activeTab === 'defi' && <DeFiTab />}
+
+          {activeTab === 'pools' && <PoolsTab />}
 
           {activeTab === 'metrics' && (
             <MetricsTab metrics={state.metrics} snapshot={state.snapshot} events={state.events} />

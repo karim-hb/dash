@@ -1,6 +1,7 @@
 import { MongoClient, Db, Collection } from 'mongodb';
 import { Transaction, Receipt, Token } from '@/lib/types/transaction';
-import { PoolMetadata, PoolEvent } from '@/types/amm';
+import { PoolMetadata, PoolEvent, AMMPoolMetadata, AMMSwap, AMMPosition, AMMLiquidityEvent } from '@/types/amm';
+import { AssetTrendDocument, AssetMetricsDocument } from '@/lib/db/types/aave';
 import { logErrorWithConsole, logWarningWithConsole } from '@/server/utils/errorLogger';
 
 // Global connection cache
@@ -14,6 +15,13 @@ let signaturesCacheCollection: Collection<{ selector: string; signature: string 
 let tokensCollection: Collection<Token> | null = null;
 let poolMetadataCollection: Collection<PoolMetadata> | null = null;
 let poolEventsCollection: Collection<PoolEvent> | null = null;
+let assetTrendCollection: Collection<AssetTrendDocument> | null = null;
+let assetMetricsCollection: Collection<AssetMetricsDocument> | null = null;
+// Custom AMM collections (separate from existing pool collections)
+let ammPoolsCollection: Collection<AMMPoolMetadata> | null = null;
+let ammSwapsCollection: Collection<AMMSwap> | null = null;
+let ammPositionsCollection: Collection<AMMPosition> | null = null;
+let ammLiquidityEventsCollection: Collection<AMMLiquidityEvent> | null = null;
 
 // Initialize MongoDB connection
 export async function initMongo(url: string = 'mongodb://127.0.0.1:27017/tracker'): Promise<void> {
@@ -31,6 +39,13 @@ export async function initMongo(url: string = 'mongodb://127.0.0.1:27017/tracker
     tokensCollection = db.collection<Token>('tokens');
     poolMetadataCollection = db.collection<PoolMetadata>('pool_metadata');
     poolEventsCollection = db.collection<PoolEvent>('pool_events');
+    assetTrendCollection = db.collection<AssetTrendDocument>('asset_trend');
+    assetMetricsCollection = db.collection<AssetMetricsDocument>('asset_metrics');
+    // Custom AMM collections
+    ammPoolsCollection = db.collection<AMMPoolMetadata>('amm_pools');
+    ammSwapsCollection = db.collection<AMMSwap>('amm_swaps');
+    ammPositionsCollection = db.collection<AMMPosition>('amm_positions');
+    ammLiquidityEventsCollection = db.collection<AMMLiquidityEvent>('amm_liquidity_events');
 
     // Create indexes for performance
     await transactionsCollection.createIndex({ hash: 1 }, { unique: true });
@@ -48,6 +63,28 @@ export async function initMongo(url: string = 'mongodb://127.0.0.1:27017/tracker
     await poolEventsCollection.createIndex({ poolAddress: 1, blockNumber: 1 });
     await poolEventsCollection.createIndex({ timestamp: 1 });
     await poolEventsCollection.createIndex({ eventType: 1 });
+
+    // Asset analytics indexes
+    await assetTrendCollection.createIndex({ assetAddress: 1, timestamp: 1 });
+    await assetTrendCollection.createIndex({ assetAddress: 1, blockNumber: 1 });
+    await assetTrendCollection.createIndex({ updateType: 1, timestamp: -1 });
+    await assetMetricsCollection.createIndex({ assetAddress: 1 }, { unique: true });
+
+    // Custom AMM indexes
+    await ammPoolsCollection.createIndex({ poolAddress: 1 }, { unique: true });
+    await ammPoolsCollection.createIndex({ creationBlock: 1 });
+    await ammPoolsCollection.createIndex({ status: 1 });
+    await ammPoolsCollection.createIndex({ lastActivityBlock: 1 });
+    await ammSwapsCollection.createIndex({ poolAddress: 1, blockNumber: 1 });
+    await ammSwapsCollection.createIndex({ txHash: 1, logIndex: 1 }, { unique: true });
+    await ammSwapsCollection.createIndex({ timestamp: 1 });
+    await ammPositionsCollection.createIndex({ owner: 1, poolAddress: 1 });
+    await ammPositionsCollection.createIndex({ poolAddress: 1 });
+    await ammPositionsCollection.createIndex({ positionId: 1 }, { unique: true, sparse: true });
+    await ammLiquidityEventsCollection.createIndex({ poolAddress: 1, blockNumber: 1 });
+    await ammLiquidityEventsCollection.createIndex({ txHash: 1, logIndex: 1 }, { unique: true });
+    await ammLiquidityEventsCollection.createIndex({ timestamp: 1 });
+    await ammLiquidityEventsCollection.createIndex({ eventType: 1 });
 
     console.log('✅ MongoDB connected and initialized');
   } catch (error) {
@@ -93,6 +130,37 @@ export function getPoolEventsCollection(): Collection<PoolEvent> {
   return poolEventsCollection;
 }
 
+export function getAssetTrendCollection(): Collection<AssetTrendDocument> {
+  if (!assetTrendCollection) throw new Error('Asset trend collection not initialized');
+  return assetTrendCollection;
+}
+
+export function getAssetMetricsCollection(): Collection<AssetMetricsDocument> {
+  if (!assetMetricsCollection) throw new Error('Asset metrics collection not initialized');
+  return assetMetricsCollection;
+}
+
+// Custom AMM collection getters
+export function getAmmPoolsCollection(): Collection<AMMPoolMetadata> {
+  if (!ammPoolsCollection) throw new Error('AMM pools collection not initialized');
+  return ammPoolsCollection;
+}
+
+export function getAmmSwapsCollection(): Collection<AMMSwap> {
+  if (!ammSwapsCollection) throw new Error('AMM swaps collection not initialized');
+  return ammSwapsCollection;
+}
+
+export function getAmmPositionsCollection(): Collection<AMMPosition> {
+  if (!ammPositionsCollection) throw new Error('AMM positions collection not initialized');
+  return ammPositionsCollection;
+}
+
+export function getAmmLiquidityEventsCollection(): Collection<AMMLiquidityEvent> {
+  if (!ammLiquidityEventsCollection) throw new Error('AMM liquidity events collection not initialized');
+  return ammLiquidityEventsCollection;
+}
+
 // Close connection
 export async function closeMongo(): Promise<void> {
   if (client) {
@@ -105,6 +173,12 @@ export async function closeMongo(): Promise<void> {
     tokensCollection = null;
     poolMetadataCollection = null;
     poolEventsCollection = null;
+    assetTrendCollection = null;
+    assetMetricsCollection = null;
+    ammPoolsCollection = null;
+    ammSwapsCollection = null;
+    ammPositionsCollection = null;
+    ammLiquidityEventsCollection = null;
     console.log('✅ MongoDB connection closed');
   }
 }

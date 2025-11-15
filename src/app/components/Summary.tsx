@@ -1,10 +1,92 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import { useWsSnapshot } from '../hooks/useWsSnapshot';
 import Card from './Card';
 
+const API_BASE = 'http://127.0.0.1:3000';
+
+type ApiSummary = {
+  loading: boolean;
+  error: string | null;
+  flashloans: number;
+  lendingMarkets: number;
+  farmingPools: number;
+  dexPairs: number;
+  dexPools: number;
+  dexProtocols: number;
+};
+
+async function fetchCount(path: string): Promise<number> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    cache: 'no-store',
+    headers: {
+      'Cache-Control': 'no-cache',
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Request failed (${res.status})`);
+  }
+  const json = await res.json();
+  if (Array.isArray(json)) return json.length;
+  if (json && typeof json === 'object') return Object.keys(json).length;
+  return 0;
+}
+
 export default function Summary() {
   const { snapshot } = useWsSnapshot();
+  const [apiSummary, setApiSummary] = useState<ApiSummary>({
+    loading: true,
+    error: null,
+    flashloans: 0,
+    lendingMarkets: 0,
+    farmingPools: 0,
+    dexPairs: 0,
+    dexPools: 0,
+    dexProtocols: 0,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const [flashloanCount, lendingCount, farmingCount, pairCount, poolCount, tvlCount] = await Promise.all([
+          fetchCount('/flashloans'),
+          fetchCount('/lending/markets'),
+          fetchCount('/farming/pools'),
+          fetchCount('/pairs'),
+          fetchCount('/pools'),
+          fetchCount('/tvl'),
+        ]);
+        if (cancelled) return;
+        setApiSummary({
+          loading: false,
+          error: null,
+          flashloans: flashloanCount,
+          lendingMarkets: lendingCount,
+          farmingPools: farmingCount,
+          dexPairs: pairCount,
+          dexPools: poolCount,
+          dexProtocols: tvlCount,
+        });
+      } catch (error) {
+        if (cancelled) return;
+        setApiSummary((prev) => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : 'Failed to reach API',
+        }));
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (!snapshot) {
     return (
@@ -20,7 +102,8 @@ export default function Summary() {
     );
   }
 
-  const { summary, status } = snapshot;
+  const { summary, status: snapshotStatus } = snapshot;
+  const rpcLatency = snapshotStatus?.rpc_latency_ms ?? 'N/A';
 
   const stats = [
     {
@@ -116,7 +199,7 @@ export default function Summary() {
                 </div>
                 <div className="flex justify-between items-center text-sm font-mono">
                   <span className="text-slate-400">WS LATENCY</span>
-                  <span className="text-slate-200">{status.rpc_latency_ms || 'N/A'}ms</span>
+                  <span className="text-slate-200">{rpcLatency}{typeof rpcLatency === 'number' ? 'ms' : ''}</span>
                 </div>
               </div>
             </div>
@@ -204,7 +287,8 @@ export default function Summary() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             {Object.entries(summary.state_counts).map(([state, count]) => {
-              const total = Object.values(summary.state_counts).reduce((a, b) => (a as number) + (b as number), 0) as number;
+              const stateCounts = summary.state_counts ?? {};
+              const total = Object.values(stateCounts).reduce((acc, value) => acc + Number(value ?? 0), 0);
               const percentage = total > 0 ? ((count as number) / total * 100) : 0;
               return (
                 <div key={state} className="text-center p-2 glass-card border border-slate-700/20">
@@ -238,6 +322,43 @@ export default function Summary() {
           </div>
         </div>
       )}
+
+      <div className="glass-card border border-slate-700/30 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sky-400 text-sm">🛰️</span>
+            <span className="text-sm font-mono font-semibold text-slate-300 uppercase tracking-widest">
+              API COVERAGE
+            </span>
+          </div>
+          {apiSummary.loading && <span className="text-[10px] text-[#58A6FF]">Fetching…</span>}
+          {apiSummary.error && !apiSummary.loading && (
+            <span className="text-[10px] text-rose-400">{apiSummary.error}</span>
+          )}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 text-xs text-slate-400 font-mono">
+          <ApiMetric label="Flashloans" value={apiSummary.flashloans} loading={apiSummary.loading} />
+          <ApiMetric label="Lending markets" value={apiSummary.lendingMarkets} loading={apiSummary.loading} />
+          <ApiMetric label="Farming pools" value={apiSummary.farmingPools} loading={apiSummary.loading} />
+          <ApiMetric label="Tracked pairs" value={apiSummary.dexPairs} loading={apiSummary.loading} />
+          <ApiMetric label="AMM pools" value={apiSummary.dexPools} loading={apiSummary.loading} />
+          <ApiMetric label="DEX protocols" value={apiSummary.dexProtocols} loading={apiSummary.loading} />
+        </div>
+        <div className="mt-3 text-[10px] text-slate-500 font-mono">
+          Explore <span className="text-sky-400">DeFi</span> and <span className="text-sky-400">Pools</span> tabs for deeper analytics powered by the core API.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ApiMetric({ label, value, loading }: { label: string; value: number; loading: boolean }) {
+  return (
+    <div className="glass-card border border-slate-700/30 p-3">
+      <div className="text-[9px] uppercase tracking-widest text-slate-500 mb-1">{label}</div>
+      <div className="text-lg font-bold text-slate-200">
+        {loading ? <span className="text-slate-500">…</span> : value.toLocaleString()}
+      </div>
     </div>
   );
 }

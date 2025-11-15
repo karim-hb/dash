@@ -1,0 +1,5 @@
+2025-11-14T12:09:22.966Z [UniswapV1.historical.main] | TypeError: ethers.WebSocketProvider is not a constructor
+TypeError: ethers.WebSocketProvider is not a constructor
+    at getProvider (/media/hb/ssd2/projects/dashboard/tracker_web/src/server/modules/provider.ts:28:7)
+    at main (/media/hb/ssd2/projects/dashboard/tracker_web/src/server/indexers/ingest/uniswapv1.historical.ts:179:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
